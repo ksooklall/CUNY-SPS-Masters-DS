@@ -1,0 +1,72 @@
+---
+title: "Homework 2"
+author: "Kenan Sooklall"
+date: "12/20/2020"
+output: html_document
+---
+```{r}
+library(RCurl)
+```
+# Dataset - Fertility and Contraception
+
+Data - https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey.csv
+
+Docs - https://vincentarelbundock.github.io/Rdatasets/doc/carData/Robey.html
+
+Column data:
+
+* region -A factor with levels: Africa; Asia, Asia and Pacific; Latin.Amer, Latin America and Caribbean; Near.East, Near East and North Africa.
+* tfr - Total fertility rate (children per woman).
+* contraceptors - Percent of contraceptors among married women of childbearing age.
+
+```{r}
+df <- read.csv('https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey.csv')
+```
+
+#### 1. Use the summary function to gain an overview of the data set. Then display the mean and median for at least two attributes.
+```{r}
+summary(df)
+print(mean(df$tfr))
+print(median(df$contraceptors))
+```
+World population statistics
+
+#### 2. Create a new data frame with a subset of the columns and rows. Make sure to rename it.
+```{r}
+sdf <- subset(df, region == 'Latin.Amer', select=c(region, tfr, contraceptors))
+sdf
+```
+This subset trims the dataframe from 50 rows 4 columns to 16 rows and 3 columns
+#### 3. Create new column names for the new data frame.
+```{r}
+colnames(sdf) <- c('region', 'tfr', 'contra')
+```
+
+#### 4. Use the summary function to create an overview of your new data frame. The print the mean and median for the same two attributes. Please compare.
+```{r}
+summary(sdf)
+print(mean(sdf$tfr))
+print(median(sdf$contra))
+```
+For just Latin America the mean and median are smaller as expected
+
+#### 5. For at least 3 values in a column please rename so that every value in that column is renamed. For example, suppose I have 20 values of the letter “e” in one column. Rename those values so that all 20 would show as “excellent”.
+```{r}
+df$region <- as.character(df$region)
+df$region[df$region == 'Latin.Amer'] <- "LatinAmerica"
+df$region[df$region == 'Near.East'] <- "East"
+df$region[df$region == 'Africa'] <- "africa"
+```
+
+#### 6. Display enough rows to see examples of all of steps 1-5 above.
+```{r}
+print(sdf)
+print(df)
+```
+
+#### 7. BONUS – place the original .csv in a github file and have R read from the link. This will be a very useful skill as you progress in your data science education and career.
+```{r}
+text_data <- getURL('https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey.csv')
+github_df <- read.csv(text=text_data)
+head(github_df)
+```
