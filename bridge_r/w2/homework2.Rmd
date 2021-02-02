@@ -26,11 +26,12 @@ df <- read.csv('https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey
 #### 1. Use the summary function to gain an overview of the data set. Then display the mean and median for at least two attributes.
 ```{r}
 summary(df)
+```
+World population statistics
+```{r}
 print(mean(df$tfr))
 print(median(df$contraceptors))
 ```
-World population statistics
-
 #### 2. Create a new data frame with a subset of the columns and rows. Make sure to rename it.
 ```{r}
 sdf <- subset(df, region == 'Latin.Amer', select=c(region, tfr, contraceptors))
@@ -41,15 +42,17 @@ This subset trims the dataframe from 50 rows 4 columns to 16 rows and 3 columns
 ```{r}
 colnames(sdf) <- c('region', 'tfr', 'contra')
 ```
+I shortened contraceptors to contra
 
 #### 4. Use the summary function to create an overview of your new data frame. The print the mean and median for the same two attributes. Please compare.
 ```{r}
 summary(sdf)
+```
+For just Latin America the mean is smaller but the median is higher
+```{r}
 print(mean(sdf$tfr))
 print(median(sdf$contra))
 ```
-For just Latin America the mean and median are smaller as expected
-
 #### 5. For at least 3 values in a column please rename so that every value in that column is renamed. For example, suppose I have 20 values of the letter “e” in one column. Rename those values so that all 20 would show as “excellent”.
 ```{r}
 df$region <- as.character(df$region)
@@ -59,14 +62,20 @@ df$region[df$region == 'Africa'] <- "africa"
 ```
 
 #### 6. Display enough rows to see examples of all of steps 1-5 above.
+Subset df filtered for LatinAmerica and column values renamed
 ```{r}
 print(sdf)
+```
+Original df with regions renamed based on question 5
+```{r}
 print(df)
 ```
 
 #### 7. BONUS – place the original .csv in a github file and have R read from the link. This will be a very useful skill as you progress in your data science education and career.
+On github locate the csv file and click raw on the top right then use that link
 ```{r}
-text_data <- getURL('https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey.csv')
+link <- 'https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/bridge_r/w2/fertility_and_contraception.csv'
+text_data <- getURL(link)
 github_df <- read.csv(text=text_data)
 head(github_df)
 ```

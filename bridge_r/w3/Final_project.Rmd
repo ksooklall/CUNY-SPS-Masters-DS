@@ -6,6 +6,7 @@ output: html_document
 ---
 
 # Storm track dataset
+As the planet temperature has been increasing due to human-made global warming it has created conditions that increase the chances of extreme weather. This report is will investigate the claim of increasing storm rates.
 
 Description
 This data is a subset of the NOAA Atlantic hurricane database best track data, https://www.nhc.noaa.gov/data/#hurdat. The data includes the positions and attributes of 198 tropical storms, measured every six hours during the lifetime of a storm.
@@ -23,19 +24,25 @@ This data is a subset of the NOAA Atlantic hurricane database best track data, h
 * hu_diameter - Diameter of the area experiencing hurricane strength winds (64 knots or above)
 "
 
-```{r}
+```{r, include=FALSE}
 library("ggplot2")
 library('dplyr')
 library("wordcloud")
 library("reshape2")
+library('tidyverse')
+library('leaflet')
 options(warn=-1)
 ```
 
 > Read in the dataset and remove unnessary columns
+Begin by reading the data and performing simple data cleaning operations
+
 ```{r}
 df <- read.csv('https://vincentarelbundock.github.io/Rdatasets/csv/dplyr/storms.csv')
 df$date <- paste(df$year, df$month, df$day, sep='-')
 df <- df[ , !(names(df) %in% c('month', 'day', 'hour', 'X'))]
+df <- df %>% replace(is.na(.), 0)
+df$total_diameter <- df$ts_diameter + df$hu_diameter
 ```
 
 Global statistics
@@ -43,45 +50,96 @@ Global statistics
 summary(df)
 ```
 
-> From 1975 to 2015 how many of storms have occurred each year
-```{r}
+> From 1975 to 2015 how many of storms have occurred each year and is the rate increasing?
+
+```{r, message=FALSE}
 ydf <- as.data.frame(table(df$year))
 colnames(ydf) <- c('Year', 'Frequency')
 ggplot(ydf, aes(x = Year, y = Frequency)) + geom_col(aes(fill = Frequency)) + geom_text(aes(label = Frequency), angle = 90, nudge_y=30) + scale_x_discrete(guide = guide_axis(angle = 90))
+
+ydf$Year <- as.integer(ydf$Year)
+ggplot(ydf, aes(x=Year, y=Frequency)) + geom_point(shape=18, color="blue") + geom_smooth(method=lm,  linetype="dashed", color="darkred", fill="blue")
 ```
 
-> How do the storms vary by category for each year
+Both the bar graph and regression line show an increase in the number of stroms for the last 40 years
+
+> How do the storms vary by category for each year?
+
 ```{r}
 tb1 <- table(df$status, df$year)
-barplot(tb1, xlab='Year', ylab='Status Counts', col=c('red','green','blue'))
-legend(x=1, y=575, legend=unique(df$status), fill=c('red','green','blue'))
+barplot(tb1, xlab='Year', ylab='Status Counts', col=c('green','blue','red'))
+legend(x=1, y=575, legend=unique(df$status), fill=c('green','blue','red'))
 ```
 
-> What makes a storm change status
+The rise of more storms has also lead to more hurricanes
+
+> What makes a storm change status?
+
 ```{r}
-qplot(df$wind, df$pressure, main='Pressure vs Wind', xlab='Wind (knots)', ylab='Pressure (millibars)', col=df$status) + theme(plot.title = element_text(hjust = 0.5))
+qplot(df$wind, df$pressure, main='Pressure vs Wind', xlab='Wind (knots)', ylab='Pressure (millibars)', col=df$status) + theme(plot.title = element_text(hjust = 0.5)) + labs(colour = 'Status')
 ```
+
+From the plot above it looks like there is a wide range in wind speed for a storm to be classified as a hurricane, that can be verified with a box plot
+
+```{r}
+ggplot(df, aes(x=status, y=wind)) + geom_boxplot(color="black", fill="blue", alpha=0.2)
+```
+
+As expected hurricanes have the most values outside the box
+
+> Which storm has covered more land area ?
+
+```{r, echo=FALSE, message=FALSE}
+hdf <- df %>% group_by(name) %>% summarise(diameter = sum(total_diameter))
+#hdf <- filter(hdf, Tropical_Storm > 0)
+#hdf <- melt(hdf, id.vars ="name", measure.vars = c("Hurricane", "Tropical_Storm"))
+hdf <- filter(hdf, diameter > 5000)
+hdf$diameter <- as.integer(hdf$diameter)
+#hdf <- hdf[order(hdf$diameter, decreasing=TRUE), c(1,2)]
+
+#colnames(hdf) <- c('name', 'Storm_Type', 'value')
+
+#ggplot(hdf, aes(name, value, colour = Storm_Type)) + labs(title="Storm Area", x ="Name", y = "Area (miles^2)") + theme(plot.title = element_text(hjust = 0.5)) + scale_x_discrete(guide = guide_axis(angle = 90)) + geom_point()
+ggplot(hdf, aes(x=name, y=diameter)) + scale_x_discrete(guide = guide_axis(angle = 90)) + geom_point() + labs(title="Storm Area", x ="Name", y = "Area (miles^2)") + theme(plot.title = element_text(hjust = 0.5)) + geom_text(aes(label = diameter), nudge_x=2, nudge_y=0.6, vjust=0, check_overlap = TRUE)
+```
+
+It looks like Nadine has covered more land than any other storm
 
 > Which storm name was most popular?
+
 ```{r}
 cdf <- count(df, name)
+cdf <- filter(cdf, n > 70)
 wordcloud(words = cdf$name, freq = cdf$n, color = 'blue', size = 1, shape = "rectangle", backgroundColor = "white") 
 ```
 
-> Which storm did the most damage
-```{r}
-hdf <- df %>% group_by(name) %>% summarise(Hurricane = sum(hu_diameter), Tropical_Storm = sum(ts_diameter))
-hdf <- filter(hdf, Tropical_Storm > 0)
-hdf <- melt(hdf, id.vars ="name", measure.vars = c("Hurricane", "Tropical_Storm"))
-colnames(hdf) <- c('name', 'Storm_Type', 'value')
+> The name Emily is used the most, let's take a look at her path and status change.
 
-ggplot(hdf, aes(name, value, colour = Storm_Type)) + labs(title="Storm Damage", x ="Name", y = "Area (miles^2)") + theme(plot.title = element_text(hjust = 0.5)) + scale_x_discrete(guide = guide_axis(angle = 90)) + geom_point()
+```{r}
+edf <- filter(df, name == 'Emily')
+pal <- colorFactor(c('green','blue','red'), domain = c("tropical depression", "tropical storm", "hurricane"))
+
+edf %>% 
+  leaflet(width = '100%') %>%
+  addTiles() %>%
+  setView(lng=-60, lat=32, zoom=3.3) %>%
+  addCircleMarkers(lat = ~lat, lng = ~long, popup = edf$name, color=~pal(status), weight=2, stroke=FALSE, fillOpacity = 0.2, label=edf$year)
 ```
 
-> Most recent storm paths
-```{r}
-rdf <- filter(df, year == 2015)
-head(rdf)
-#geoplot(lat=df$lat, lon=df$long)
+> From the first plot we saw 1995 had the most storms, let's take a look at their pathing.
+
+```{r, echo=FALSE}
+adf <- filter(df, year == 1995)
+#adf %>% unite(label, name, status, remove=FALSE)
+colors37 = c("#466791","#60bf37","#953ada","#4fbe6c","#ce49d3","#a7b43d","#5a51dc","#d49f36","#552095","#507f2d","#db37aa","#84b67c","#a06fda","#df462a","#5b83db","#c76c2d","#4f49a3","#82702d","#dd6bbb","#334c22","#d83979","#55baad","#dc4555","#62aad3","#8c3025","#417d61","#862977","#bba672","#403367","#da8a6d","#a79cd4","#71482c","#c689d0","#6b2940","#d593a7","#895c8b","#bd5975")
+apal <- colorFactor(tail(colors37, 21), domain = as.vector(unique(adf$name)))
+
+adf %>% 
+  leaflet(width = '100%') %>%
+  addTiles() %>%
+  setView(lng=-60, lat=32, zoom=3.3) %>%
+  addCircleMarkers(lat = ~lat, lng = ~long, popup = adf$name, color=~apal(name), weight=2, stroke=FALSE, fillOpacity = 0.2, label=adf$status)
 ```
 
+# Conclusion
+From 1975 to 2015 storms have affected many countries along the east cost including the US and Mexico. Since the current rate of storms are increasing we need to do more work in reducing human-made global warming.

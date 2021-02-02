@@ -1,0 +1,2 @@
+R,python
+pnorm(z, mean, sd), st.norm.cdf(z)

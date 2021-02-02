@@ -403,11 +403,11 @@ summary {
 ##  Brazil    : 1                   3rd Qu.:5.975   3rd Qu.:55.00  
 ##  Burundi   : 1                   Max.   :7.300   Max.   :77.00  
 ##  (Other)   :44</code></pre>
+<p>World population statistics</p>
 <pre class="r"><code>print(mean(df$tfr))</code></pre>
 <pre><code>## [1] 4.688</code></pre>
 <pre class="r"><code>print(median(df$contraceptors))</code></pre>
 <pre><code>## [1] 41</code></pre>
-<p>World population statistics</p>
 </div>
 <div id="create-a-new-data-frame-with-a-subset-of-the-columns-and-rows.-make-sure-to-rename-it." class="section level4">
 <h4>2. Create a new data frame with a subset of the columns and rows. Make sure to rename it.</h4>
@@ -432,6 +432,7 @@ sdf</code></pre>
 ## 44 Latin.Amer 3.1            54</code></pre>
 <p>This subset trims the dataframe from 50 rows 4 columns to 16 rows and 3 columns #### 3. Create new column names for the new data frame.</p>
 <pre class="r"><code>colnames(sdf) &lt;- c(&#39;region&#39;, &#39;tfr&#39;, &#39;contra&#39;)</code></pre>
+<p>I shortened contraceptors to contra</p>
 </div>
 <div id="use-the-summary-function-to-create-an-overview-of-your-new-data-frame.-the-print-the-mean-and-median-for-the-same-two-attributes.-please-compare." class="section level4">
 <h4>4. Use the summary function to create an overview of your new data frame. The print the mean and median for the same two attributes. Please compare.</h4>
@@ -443,11 +444,11 @@ sdf</code></pre>
 ##  Near.East : 0   Mean   :4.05   Mean   :49.94  
 ##                  3rd Qu.:4.60   3rd Qu.:58.25  
 ##                  Max.   :6.00   Max.   :70.00</code></pre>
+<p>For just Latin America the mean is smaller but the median is higher</p>
 <pre class="r"><code>print(mean(sdf$tfr))</code></pre>
 <pre><code>## [1] 4.05</code></pre>
 <pre class="r"><code>print(median(sdf$contra))</code></pre>
 <pre><code>## [1] 54.5</code></pre>
-<p>For just Latin America the mean and median are smaller as expected</p>
 </div>
 <div id="for-at-least-3-values-in-a-column-please-rename-so-that-every-value-in-that-column-is-renamed.-for-example-suppose-i-have-20-values-of-the-letter-e-in-one-column.-rename-those-values-so-that-all-20-would-show-as-excellent." class="section level4">
 <h4>5. For at least 3 values in a column please rename so that every value in that column is renamed. For example, suppose I have 20 values of the letter “e” in one column. Rename those values so that all 20 would show as “excellent”.</h4>
@@ -458,6 +459,7 @@ df$region[df$region == &#39;Africa&#39;] &lt;- &quot;africa&quot;</code></pre>
 </div>
 <div id="display-enough-rows-to-see-examples-of-all-of-steps-1-5-above." class="section level4">
 <h4>6. Display enough rows to see examples of all of steps 1-5 above.</h4>
+<p>Subset df filtered for LatinAmerica and column values renamed</p>
 <pre class="r"><code>print(sdf)</code></pre>
 <pre><code>##        region tfr contra
 ## 29 Latin.Amer 4.5     47
@@ -476,6 +478,7 @@ df$region[df$region == &#39;Africa&#39;] &lt;- &quot;africa&quot;</code></pre>
 ## 42 Latin.Amer 4.6     48
 ## 43 Latin.Amer 3.5     59
 ## 44 Latin.Amer 3.1     54</code></pre>
+<p>Original df with regions renamed based on question 5</p>
 <pre class="r"><code>print(df)</code></pre>
 <pre><code>##                  X       region tfr contraceptors
 ## 1         Botswana       africa 4.8            35
@@ -531,7 +534,9 @@ df$region[df$region == &#39;Africa&#39;] &lt;- &quot;africa&quot;</code></pre>
 </div>
 <div id="bonus-place-the-original-.csv-in-a-github-file-and-have-r-read-from-the-link.-this-will-be-a-very-useful-skill-as-you-progress-in-your-data-science-education-and-career." class="section level4">
 <h4>7. BONUS – place the original .csv in a github file and have R read from the link. This will be a very useful skill as you progress in your data science education and career.</h4>
-<pre class="r"><code>text_data &lt;- getURL(&#39;https://vincentarelbundock.github.io/Rdatasets/csv/carData/Robey.csv&#39;)
+<p>On github locate the csv file and click raw on the top right then use that link</p>
+<pre class="r"><code>link &lt;- &#39;https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/bridge_r/w2/fertility_and_contraception.csv&#39;
+text_data &lt;- getURL(link)
 github_df &lt;- read.csv(text=text_data)
 head(github_df)</code></pre>
 <pre><code>##          X region tfr contraceptors
