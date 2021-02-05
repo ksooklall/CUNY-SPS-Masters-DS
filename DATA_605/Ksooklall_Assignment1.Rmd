@@ -1,0 +1,62 @@
+My initials
+
+```{r}
+library(animation)
+
+xf = c(rep(0, 500), seq(0, 1, length.out=500), seq(0, 1, length.out=500))
+yf = c(seq(-1, 1, length.out=500), seq(0, 1, length.out=500), seq(0, -1, length.out=500))
+
+st = 1.5
+end = 2.5
+
+xl = c(seq(st, end, length.out = 500), rep(end, 500), seq(st, end, length.out = 500), rep(st, 500), seq(st, end, length.out = 500))
+yl = c(rep(-1, 500), seq(-1, 0, length.out = 500), rep(0, 500), seq(0, 1, length.out = 500), rep(1, 500))
+
+zf = rbind(xf, yf)
+zl = rbind(xl, yl)
+
+plot(xf, yf, xlim=c(-3, 3), ylim=c(-3,3))
+par(new=T)
+plot(xl, yl, xlim=c(-3, 3), ylim=c(-3,3))
+
+dev.control('enable')
+myani = ani.record(reset=TRUE, replay.cur=FALSE)
+
+# Square matrix a
+a = diag(2)
+x11()
+
+# Vertical rotation
+for (i in seq(-3, 3, length.out=100)) {
+  a[1, 1] = i
+  newmat = apply(zl, 2, function(yl)  a%*%yl)
+  plot(newmat[2,] ~ newmat[1,], xlim=c(-3, 3), ylim=c(-3, 3))
+  ani.record()
+}
+
+# Rotate on point
+a = diag(2)
+for (i in seq(-3, 3, length.out=100)) {
+  a[1, 2] = i
+  newmat = apply(zf, 2, function(xf)  a%*%xf)
+  plot(newmat[2,] ~ newmat[1,], xlim=c(-3, 3), ylim=c(-3, 3))
+  ani.record()
+}
+
+a = diag(2)
+for (i in seq(-3, 3, length.out=100)) {
+  a[2, 1] = i
+  newmat = apply(zf, 2, function(xf)  a%*%xf)
+  plot(newmat[2,] ~ newmat[1,], xlim=c(-3, 3), ylim=c(-3, 3))
+  ani.record()
+}
+
+# Scale
+a = diag(2)
+for (i in seq(-3, 3, length.out=100)) {
+  a[2, 2] = i
+  newmat = apply(zf, 2, function(xf)  a%*%xf)
+  plot(newmat[2,] ~ newmat[1,], xlim=c(-3, 3), ylim=c(-3, 3))
+  ani.record()
+}
+```

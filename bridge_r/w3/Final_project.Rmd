@@ -2,7 +2,10 @@
 title: "Final Project"
 author: "Kenan"
 date: "12/24/2020"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
+always_allow_html: yes
 ---
 
 # Storm track dataset

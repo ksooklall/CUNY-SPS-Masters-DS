@@ -1,0 +1,81 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+## Problem 1
+
+
+(1) Show that $A^T A \neq A A^T$ in general. (Proof and demonstration.)
+(2) For a special type of square matrix A, we get A T A = AA T . Under what conditions
+could this be true? (Hint: The Identity matrix I is an example of such a matrix).
+
+### Proof by contradiction
+
+#### Let: 
+
+  $A$ be a matrix of shape $m x n$ where $m$ and $n$ are in $\mathbb{N}$ and $m \neq n$
+
+#### Suppose:
+
+  $A^T A = A A^T$
+
+#### Then:
+
+  $n x m \times m x n = m x n \times n x m$ ->  $n x n = m x m$
+
+That equation is only true when $n=m$ which contradicts our assumption that $m\neq n$
+
+#### Therefore:
+
+$A^T A \neq A A^T$
+
+#### Exception:
+
+$m=n$ then $A$ is a square matrix and consequently $A^T A = A A^T$ will hold 
+
+
+# Problem 2
+
+Matrix factorization is a very important problem. There are supercomputers built just
+to do matrix factorizations. Every second you are on an airplane, matrices are being
+factorized. Radars that track flights use a technique called Kalman filtering. At the heart
+of Kalman Filtering is a Matrix Factorization operation. Kalman Filters are solving linear
+systems of equations when they track your flight using radars.
+
+Write an R function to factorize a square matrix A into LU or LDU, whichever you
+prefer. Please submit your response in an R Markdown document using our class naming
+convention, E.g. LFulton_Assignment2_PS2.png
+
+You don’t have to worry about permuting rows of A and you can assume that A is less
+than 5x5, if you need to hard-code any variables in your code. If you doing the entire
+assignment in R, then please submit only one markdown document for both the problems.
+
+```{r}
+factorize <- function(X){
+  n <- NROW(X)
+  U <- X
+  L <- diag(n)
+  
+  for (j in c(1:n)){
+    for(i in c(2:n)){
+      if(i > j){
+        r <- U[j, ]
+        v <- U[i, j] / r[j]
+        U[i,] <- U[i,] - (v * r)
+        L[i, j] <- v
+      }
+    }
+  }
+  
+  return (list(L=L, U=U))
+}
+```
+
+```{r}
+A <- matrix(c(1,2,3,1,1,1,2,0,1), nrow=3)
+f <- factorize(A)
+B <- f$L %*% f$U
+
+sum(B == A) == length(A)
+```
