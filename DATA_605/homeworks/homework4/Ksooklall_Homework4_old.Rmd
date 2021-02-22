@@ -1,0 +1,194 @@
+---
+title: "Ksooklall_Homework4"
+author: "Kenan Sooklall"
+date: "2/10/2021"
+output: html_document
+---
+
+Let 
+
+\[
+A = 
+  \begin{bmatrix}
+    1 & 2 & 3   \\
+    -1 & 0 & 4  \\
+  \end{bmatrix}
+\]
+
+compute $X = AA^T$ and $Y = A^TA$
+
+```{r}
+A <- matrix(c(c(1,-1), c(2, 0), c(3,4)), nrow=2, ncol=3)
+At <- t(A)
+```
+
+```{r}
+X = A %*% At
+X
+```
+
+```{r}
+Y = At %*% A
+Y
+```
+Then, compute the eigenvalues and eigenvectors of X and Y using the built-in commands in R.
+
+```{r}
+Xe <- eigen(X)
+print(Xe$values)
+print(Xe$vectors)
+```
+
+```{r}
+Ye <- eigen(Y)
+print(Ye$values)
+print(Ye$vectors)
+```
+Compute the left-singular, singular values, and right-singular vectors of $A$
+
+```{r}
+s <- svd(A)
+```
+
+Left singular
+
+```{r}
+ls <- s$u
+```
+
+Right singular
+
+```{r}
+rs <- s$v
+```
+
+Singular
+
+```{r}
+singular <- s$d
+```
+
+Check left and right singular with eigen vectors
+
+```{r}
+print(all.equal(abs(Xe$vectors), abs(ls)))
+print(all.equal(abs(Ye$vectors), abs(rs)))
+```
+
+In addition, the two non-zero eigenvalues (the 3rd value will be very close to zero, if not zero) of both X and Y are the same and are squares of the
+non-zero singular values of A.
+
+```{r}
+round(Xe$values, 3)
+round(Ye$values, 3)
+```
+
+Indeed the first two values are the same and the third of Ye is 0
+
+# Load images
+
+Set up global variables
+
+```{r}
+library(EBImage)
+library(OpenImageR)
+library(jpeg)
+
+path <- "/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/homeworks/homework4/images/"
+n=17
+files=list.files(path, pattern="*.jpg")[1:n]
+height=1200
+width=2500
+scale=20
+```
+
+Function to read in images from path and plot them
+
+
+```{r}
+plot_image = function(img)
+{ 
+  #res = dim(img)[2:1] # get the resolution, [x, y]
+  #plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
+  imageShow(img)
+}
+```
+
+resize and populate vector $im $ with all images $dim(im) = (17, 60, 125, 3)
+
+```{r}
+im=array(rep(0,length(files)*height/scale*width/scale*3), dim=c(length(files), width/scale, height/scale, 3))
+
+for (i in 1:n){
+  im[i,,,]=resizeImage(readImage(paste0(path, files[i])),width=width/scale, height=height/scale)
+  }
+```
+
+Plot
+
+```{r}
+par(mfrow=c(3,3))
+par(mai=c(.3,.3,.3,.3))
+
+for (i in 1:9){  #plot the first images only
+  plot_image(im[i,,,])
+}
+```
+
+Flatten each vector so dim(im) is 17 x 22500
+
+```{r}
+#flat=matrix(0, n, prod(dim(im)))
+flat=matrix(0, n, prod(dim(im)[2:4]))
+for (i in 1:n) {
+  newim <- readImage(paste0(path, files[i]))
+  r=as.vector(im[i,,,1]) 
+  g=as.vector(im[i,,,2])
+  b=as.vector(im[i,,,3])
+  flat[i,] <- t(c(r, g, b))
+}
+shoes=as.data.frame(t(flat))
+```
+
+Scale all values to have mean of 0 and standard deviation of 1
+
+```{r}
+scaled=scale(shoes, center = TRUE, scale = TRUE)
+mean.shoe=attr(scaled, "scaled:center") #saving for classification
+std.shoe=attr(scaled, "scaled:scale") 
+Sigma_=cor(scaled)
+myeigen=eigen(Sigma_)
+cumsum(myeigen$values) / sum(myeigen$values)
+```
+
+```{r}
+scaling=diag(myeigen$values[1:5]^(-1/2)) / (sqrt(nrow(scaled)-1))
+eigenshoes=scaled%*%myeigen$vectors[,1:5]%*%scaling
+imageShow(array(eigenshoes[,1], c(125,60,3)))
+```
+
+
+```{r}
+height=1200
+width=2500
+scale=20
+newdata=im
+dim(newdata)=c(length(files),height*width*3/scale^2)
+mypca=princomp(t(as.matrix(newdata)), scores=TRUE, cor=TRUE)
+```
+
+```{r}
+mypca2=t(mypca$scores)
+dim(mypca2)=c(length(files),height/scale,width/scale,3)
+par(mfrow=c(5,5))
+par(mai=c(.001,.001,.001,.001))
+for (i in 1:n){#plot the first 25 Eigenshoes only
+plot_image(mypca2[i,,,], from_file = FALSE)  #complete without reduction
+}
+```
+
+```{r}
+a=round(mypca$sdev[1:n]^2/ sum(mypca$sdev^2),3)
+cumsum(a)
+```
+

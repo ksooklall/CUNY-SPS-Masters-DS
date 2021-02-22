@@ -1,0 +1,4 @@
+clairemeyer- package FSelector requres Java	
+ramnivas - data engineer for sql set up
+
+andrew gelman bayesian workflow	

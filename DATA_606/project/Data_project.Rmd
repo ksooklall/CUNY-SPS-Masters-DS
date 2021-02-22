@@ -1,0 +1,14 @@
+---
+title: "Data_Project"
+author: "Kenan Sooklall"
+date: "2/17/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+df <-  read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/raw_covid_fci_data.csv')
+```

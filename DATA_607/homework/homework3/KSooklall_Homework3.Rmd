@@ -1,0 +1,87 @@
+---
+title: "Homework_3"
+author: "Kenan Sooklall"
+date: "2/10/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+#1. Using the 173 majors listed in fivethirtyeight.com’s College Majors dataset [https://fivethirtyeight.com/features/the-economic-guide-to-picking-a-college-major/], provide code that identifies the majors that contain either "DATA" or "STATISTICS" 
+```{r}
+library(tidyverse)
+df <- read.csv('https://raw.githubusercontent.com/fivethirtyeight/data/master/college-majors/majors-list.csv')
+df %>% filter(across(Major, ~ grepl('DATA|STATISTICS', .)))
+```
+
+#2 Write code that transforms the data below:
+
+```{r}
+df <- data.frame(x1=c("bell pepper", "bilberry", "blackberry", "blood orange"), x2=c("blueberry", "cantaloupe", "chili pepper", "cloudberry"), 
+                x3=c("elderberry", "lime", "lychee", "mulberry"))
+```
+[1] "bell pepper"  "bilberry"     "blackberry"   "blood orange"
+
+[5] "blueberry"    "cantaloupe"   "chili pepper" "cloudberry"  
+
+[9] "elderberry"   "lime"         "lychee"       "mulberry"    
+
+[13] "olive"        "salal berry"
+
+Into a format like this:
+
+```{r}
+vect <- as.vector(as.matrix(df[,c("x1", "x2", "x3")]))
+vect
+```
+c("bell pepper", "bilberry", "blackberry", "blood orange", "blueberry", "cantaloupe", "chili pepper", "cloudberry", "elderberry", "lime", "lychee", "mulberry", "olive", "salal berry")
+
+The two exercises below are taken from R for Data Science, 14.3.5.1 in the on-line version:
+
+#3 Describe, in words, what these expressions will match:
+
+Regex checked on https://regexr.com/ and https://regex101.com/
+  
+(.)\1\1
+
+Matches a text that is repeated 3 times like 
+Will match: (111)1(222)2)(333)(aaa)z(bbb)d(ccc)
+
+(.)(.)\\2\\1
+
+Matches any character for the first two steps then the number 2 and 1 separated by a backslash
+Will match: ab\2\1 AND bb\2\1
+Will not match: xy\3\1
+
+(..)\1
+
+Two capture groups, matches the first pair then the (\1) will match those pairs. A total of 4 characters will match
+Will match: (2222)(3333)
+Will not match: aaac
+
+(.).\\1.\\1
+
+Matches any first two character then (\1) exactly then any other character then a (\1)
+Will match: qb\1f\1 ab\1c\1
+Will not match: qb\1f\2 ab\4d\2
+
+(.)(.)(.).*\\3\\2\\1
+
+Matches any first 3 character then an infinate amount of characters followed by (\3)(\2)(\1) exactly
+Will match: abcwgasdhrhrana\3\2\1
+Will not match: dgasdhgaheghjlhlasg\4\2\1
+
+#4 Construct regular expressions to match words that:
+
+Start and end with the same character.
+
+"(^.).*\1$"
+
+Contain a repeated pair of letters (e.g. "church" contains "ch" repeated twice.)
+
+"(..).*\1"
+
+Contain one letter repeated in at least three places (e.g. "eleven" contains three "e"s.)
+
+([a-z]).*\1.*\1
+

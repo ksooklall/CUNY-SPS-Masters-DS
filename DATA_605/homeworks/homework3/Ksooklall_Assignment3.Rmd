@@ -1,0 +1,230 @@
+---
+title: "Homework3"
+author: "Kenan Sooklall"
+date: "2/6/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+### Problem set 1
+(1) What is the rank of the matrix A?
+\[
+A=
+  \begin{bmatrix}
+    1 & 2 & 3 & 4 \\
+    -1 & 0 & 1 & 3 \\
+    0 & 1 & -2 & 1 \\
+    5 & 4 & -2 & -3
+  \end{bmatrix}
+\]
+
+```{r}
+library(Matrix)
+m <- matrix(c(c(1,-1,0,5), c(2,0,1,4), c(3,1,-2,-2), c(4,3,1,-3)), nrow=4)
+rankMatrix(m)
+```
+The rank of matrix $A$ is 4, each row is linearly independent
+
+(2) Given an mxn matrix where m > n, what can be the maximum rank? The mini-
+mum rank, assuming that the matrix is non-zero?
+
+The maximum rank a matrix of the shape mxn where m>n can be is m, the max(m, 1).
+The minimum rank a non-zero matrix can have is 1 where all rows are a linear combination of one row.
+
+(3) What is the rank of matrix B?
+\[
+B = \begin{bmatrix}
+    1 & 2 & 1 \\
+    3 & 6 & 3 \\
+    2 & 4 & 2 \\
+    \end{bmatrix}
+\]
+
+```{r}
+m <- matrix(c(c(1,3,2), c(2,6,4), c(1,3,2)), nrow=3)
+rankMatrix(m)
+```
+Rows 2 and 3 are a linear combination of row 1, 
+
+$row 2 =  row1 * 3 \\$ 
+$row 3 = row1 * 2 \\$
+
+Therefore the rank of matrix B = 1
+
+### Problem set 2
+
+Compute the eigenvalues and eigenvectors of matrix A. You'll need to show your work. You’ll need to write out the characteristic polynomial and show your solution.
+
+\[
+A = \begin{bmatrix}
+    1 & 2 & 1 \\
+    0 & 4 & 5 \\
+    0 & 0 & 6 \\
+    \end{bmatrix}
+\]
+
+Please show your work using an R-markdown document. Please name your assignment
+submission with your first initial and last name.
+
+#### eigenvalues
+
+
+Starting with $det(A -	\lambda * I) = 0$
+
+Then
+
+\[
+X = \begin{bmatrix}
+    \lambda & 0 & 0 \\
+    0 & \lambda & 0 \\
+    0 & 0 & \lambda \\
+    \end{bmatrix}
+    -
+    \begin{bmatrix} 
+	1 & 2 & 3 \\ 
+	0 & 4 & 5 \\ 
+	0 & 0 & 6 \\ 
+	\end{bmatrix}
+	=
+	\begin{bmatrix}
+    \lambda - 1 & -2 & -3 \\
+    0 & \lambda - 4 & -5 \\
+    0 & 0 & \lambda - 6 \\
+    \end{bmatrix}
+\]
+
+Next find the determinant
+
+$det(X) = 0$
+
+$(\lambda - 1)(\lambda - 4)(\lambda - 6) - (-2)(0) - 3(0) = (\lambda - 1)(\lambda^2 - 10\lambda + 24) = \lambda^3 - 11\lambda^2 + 3\lambda - 24 = 0$
+
+Solving that cubic equation and assuming integer solutions. Factors of 24 are [1, 2, 3, 4, 6, 8, 12, 24], 12 and 24 will blow up with the cube so will check those last
+
+$1: 1^3 - 11 * 1^2 + 34 * 1 - 24 = -10 + 34 - 24 = 0 \quad\quad \checkmark \\$
+$2: 2^3 - 11 * 2^2 + 34 * 2 - 24 = 8 + 24 - 24 = 8   \quad\quad\quad X \\$
+$3: 3^3 - 11 * 3^2 + 34 * 3 - 24 = 27 + 3 - 24 = 6   \quad\quad\quad X \\$
+$4: 4^3 - 11 * 4^2 + 34 * 4 - 24 = 64 - 40 - 24 = 0 \quad\quad\quad \checkmark \\$
+$6: 6^3 - 11 * 6^2 + 34 * 6 - 24 = 216 - 192 - 24 = 0 \quad\quad \checkmark$
+
+3 eigenvalues
+
+$\lambda_1 = 1 \\$
+$\lambda_2 = 4 \\$
+$\lambda_3 = 6 \\$ 
+
+
+\newpage
+#### eigenvectors
+
+For $\lambda_1 = 1 \\$
+
+$A -\lambda I$ = 
+\[
+\begin{bmatrix} 
+	0 & 2 & 3 \\ 
+	0 & 3 & 5 \\ 
+	0 & 0 & 5 \\ 
+	\end{bmatrix}
+	\begin{bmatrix} 
+	x \\y \\ z
+	\end{bmatrix}
+	=0
+\]
+
+Simplifying
+
+$2y + 3z=0 \\$
+$3y + 5z=0 \\$
+$5z=0 \\$
+
+$z = 0 \rightarrow y=0 \rightarrow x=x \\$
+
+Getting the vector
+
+\[
+x\begin{bmatrix} 
+	1 \\0 \\ 0
+	\end{bmatrix}
+\]
+
+- $\lambda_1 = 1 \quad \overrightarrow V_1 = (1, 0, 0)$
+
+\newpage
+For $\lambda_1 = 4$
+
+$A -\lambda I$ = 
+
+\[
+\begin{bmatrix} 
+	-3 & 2 & 3 \\ 
+	0 & 0 & 5 \\ 
+	0 & 0 & 2 \\ 
+	\end{bmatrix}
+	\begin{bmatrix} 
+	x \\y \\ z
+	\end{bmatrix}
+	=0
+\]
+
+Simplifying
+$-3x+2y + 3z=0 \\$ 
+$5z=0 \\$
+$2z=0 \\$
+
+$z=0 \rightarrow 2y=3x \rightarrow x=2, y=3$
+
+Getting the vector
+\[
+\begin{bmatrix} 
+	2 \\3 \\0
+	\end{bmatrix}
+\]
+
+- $\lambda_1 = 4 \quad \overrightarrow V_2 = (2, 3, 0)$
+
+\newpage
+For $\lambda_1 = 6$
+
+$A -\lambda I$ = 
+
+\[
+\begin{bmatrix} 
+	-5 & 2 & 3 \\ 
+	0 & -2 & 5 \\ 
+	0 & 0 & 0 \\ 
+	\end{bmatrix}
+	\rightarrow[\text{RREF}]
+	\begin{bmatrix} 
+	-5 & 0 & 3 \\ 
+	0 & -2 & 5 \\ 
+	0 & 0 & 0 \\ 
+	\end{bmatrix}
+	\begin{bmatrix} 
+	x \\y \\ z
+	\end{bmatrix}
+	=0
+\]
+
+Simplifying
+$-5xy + 8z=0 \\$
+$-2y + 5z=0 \\$
+
+$8z=5x \\$
+$5z=2y \\$
+
+$x=8, z=5, y=12.5 \\$
+
+Multiply by $2$ for integer values
+
+\[
+	\begin{bmatrix} 
+	16 \\25 \\10
+	\end{bmatrix}
+\]
+
+- $\lambda=6 \quad \overrightarrow V_3 = (16, 25, 10)$
+
+
+

@@ -1,0 +1,127 @@
+---
+title: "Principal Components Analysis (PCA)"
+author: "Kenan Sooklall"
+date: "2/10/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+The goal of this homework is to show how PCA can take advantage of the linear combination between pixel values to create a lower dimensional representation.
+
+Set up global variables
+
+```{r}
+library(EBImage)
+library(OpenImageR)
+library(jpeg)
+
+path <- "/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/homeworks/homework4/images/shoes/"
+
+files=list.files(path, pattern="*.jpg")
+n=length(files)
+
+# shoes dim
+height=1200
+width=2500
+scale=20
+
+# Pokemon dim
+#height=224
+#width=224
+#scale=2
+```
+
+Function to read in images from path and plot them
+
+
+```{r}
+plot_jpeg = function(path, add=FALSE)
+{ jpg = readJPEG(path, native=T) # read the file
+  res = dim(jpg)[2:1] # get the resolution, [x, y]
+  if (!add) # initialize an empty plot area if add==FALSE
+    plot(1,1,xlim=c(1,res[1]),ylim=c(1,res[2]),asp=1,type='n',xaxs='i',yaxs='i',xaxt='n',yaxt='n',xlab='',ylab='',bty='n')
+  rasterImage(jpg,1,1,res[1],res[2])
+}
+```
+
+Resize each image and populate vector $im$ with all images $dim(im) = (17, 60, 125, 3)$
+where 17 is $n$ the number of images and (60,125,3) are each image dimensions
+
+```{r}
+im=array(rep(0,length(files)*height/scale*width/scale*3), dim=c(length(files), width/scale, height/scale, 3))
+
+for (i in 1:n){
+  im[i,,,]=resizeImage(readImage(paste0(path, files[i])),width=width/scale, height=height/scale)
+  }
+```
+
+Plot first 9 images
+
+```{r}
+par(mfrow=c(3,3))
+par(mai=c(.3,.3,.3,.3))
+
+for (i in 1:9){
+  plot_jpeg(writeJPEG(im[i,,,]))
+}
+```
+
+To begin PCA each image is flatten into a matrix where each column is one image
+$mshoes$ will be the matrix of  $dim(im) = 22500 x 17$
+
+```{r}
+flat=matrix(0, n, prod(dim(im)[2:4]))
+for (i in 1:n) {
+  newim <- readImage(paste0(path, files[i]))
+  r=as.vector(im[i,,,1]) 
+  g=as.vector(im[i,,,2])
+  b=as.vector(im[i,,,3])
+  flat[i,] <- t(c(r, g, b))
+}
+mshoes=t(flat)
+```
+
+
+The principal components in PCA are the eigen vectors of the covariance matrix
+
+We compute the covariance matrix by first standardizing each image by $(X - \mu) / \sigma$
+Once standardized each image will have a 
+$\mu=0\\\sigma=1$
+
+With the standarized values we compute the covariance matrix to get the linear combination 
+between each shoe, the shape of the covariance matrix is 17x17
+
+```{r}
+scaled=scale(mshoes, center = TRUE, scale = TRUE)
+means=attr(scaled, "scaled:center") #saving for classification
+std=attr(scaled, "scaled:scale") 
+cshoes=cov(scaled)
+```
+
+
+With the covariance matrix the eigen values are corresponding eigen vectors can be computed
+
+```{r}
+edf=eigen(cshoes)
+```
+
+The eigen values tell you how much variance can be captured with the $ith$ eigen values
+
+```{r}
+lambda_dist<-as.data.frame(t(cumsum(edf$values) / sum(edf$values)))
+lambda_dist
+```
+
+It looks like the first 3 eigen values can be used to represent more than 80% of the data with 6 we are at 90%
+and by 11 it's 95% of the pixel variance.
+
+Now to visualize what an image looks like with only 80%
+
+```{r}
+scaling=diag(edf$values[1:3]^(-1/2)) / (sqrt(nrow(scaled)-1))
+eigenshoes=scaled%*%edf$vectors[,1:3]%*%scaling
+imageShow(array(eigenshoes[,1], c(width/scale,height/scale,3)))
+```

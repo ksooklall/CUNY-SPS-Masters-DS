@@ -1,0 +1,67 @@
+---
+title: "Ksooklall_Homework2"
+author: "Kenan Sooklall"
+date: "2/11/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, message=FALSE, echo=FALSE}
+library(RPostgreSQL)
+library(DBI)
+library(ggplot2)
+library(tidyverse)
+```
+
+### R and PostgreSQL
+
+Connect and pull a table into a data frame from postgres
+
+```{r, message=FALSE}
+conn <- dbConnect(RPostgres::Postgres(), user='kenan', password='password', dbname='postgres', host='localhost')
+sql <- 'SELECT * from movie_ratings'
+df <- dbGetQuery(conn, sql)
+disconnected <- dbDisconnect(conn)
+df
+```
+
+
+#### Rating distribution
+
+
+```{r}
+df %>% group_by(movie) %>% summarise(means = mean(ratings), .groups='drop') %>%
+ggplot(aes(x=reorder(movie, means), y=means, fill=movie)) + 
+  geom_col() + labs(x= 'Movies')
+```
+
+The most loved movie from my group is the queens gambit
+
+\clearpage
+
+#### Reviewer distribution
+
+
+```{r}
+df %>% group_by(reviewer) %>% summarise(means = mean(ratings), .groups='drop') %>%
+ggplot(aes(x=reorder(reviewer, means), y=means, fill=reviewer)) + 
+  geom_col()  + labs(x='Reviewers')
+```
+
+The easiest person to please here is Prince, he likes everything.
+
+\clearpage
+
+#### Tabular statistics
+
+```{r}
+mdf <- df %>%
+  group_by(movie) %>%
+  summarise(min=min(ratings),
+            mean=mean(ratings),
+            median=median(ratings),
+            max=max(ratings),
+            iqr=IQR(ratings), .groups='drop')
+mdf
+```

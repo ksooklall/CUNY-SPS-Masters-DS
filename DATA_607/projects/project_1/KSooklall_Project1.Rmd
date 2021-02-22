@@ -1,0 +1,86 @@
+---
+title: "DATA 607 Project 1"
+author: "Kenan Sooklall"
+date: "2021-02-10"
+output: html_document
+---
+
+## Description
+
+The goal of this project is to parse chess tournament results into:
+
+Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+
+```{r load_libraries, warning=FALSE, message=FALSE}
+library(readr)
+library(stringr)
+library(dplyr)
+```
+
+Read the file with `read lines`, the data can be obtained from my github
+
+```{r}
+lines <- read_lines("https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/projects/project_1/tournamentinfo.txt")
+lines[1:7]
+```
+
+Prase the file skipping rows that don't contains any data and populate two vectors
+ - Player data (player_rows)
+ - Match data (mdf)
+
+```{r}
+player_rows = c()
+mdf = c()
+
+for (i in seq(5, 195, 3)) {
+  row1 <- unlist(strsplit(lines[i], '\\|'))
+  player_num <- as.numeric(gsub(' ', '', row1[1]))
+  player_name <- str_to_title(str_trim(row1[2]))
+  total_points <- str_trim(row1[3])
+  
+  row2 <- unlist(strsplit(lines[i+1], '\\|'))
+  players_state <- str_trim(row2[1])
+  players_pre_rating <- unlist(str_extract_all(row2[2], "[[:digit:]]+"))[2]
+  
+  player_rows <- rbind(player_rows, c(player_num, player_name, players_state, total_points, players_pre_rating))
+  temp_df <- data.frame(row1[4:10])
+  temp_df$player_num <- player_num
+  temp_df$players_pre_rating <- players_pre_rating
+  
+  mdf <- rbind(mdf, temp_df)
+}
+```
+
+Aggregate the player_rows data into a dataframe
+
+```{r}
+df <- data.frame(player_rows)
+colnames(df) <- c('player_num', 'player_name', 'player_state', 'total_points', 'players_pre_rating')
+head(df)
+```
+
+Aggregate the match rows data into a dataframe
+
+```{r}
+colnames(mdf) <- c('wl_opponent_id', 'player_num', 'players_pre_rating')
+mdf$wl <- sapply(strsplit(as.character(mdf$wl_opponent_id), ' '), '[', 1)
+mdf$opponent_id <- sapply(mdf$wl_opponent_id, function(x)gsub('\\s+', ' ', x))
+mdf$opponent_id <- as.numeric(sapply(strsplit(as.character(mdf$opponent_id), ' '), '[', 2))
+mdf$players_pre_rating <- as.numeric(mdf$players_pre_rating)
+mdf <- mdf[, c('player_num', 'wl', 'opponent_id', 'players_pre_rating')]
+head(mdf)
+```
+Calculate the averages
+
+```{r}
+final_cols <- c('player_name', 'player_state', 'total_points', 'players_pre_rating', 'avg')
+avg_pre <- mdf %>% group_by(opponent_id) %>% summarise(avg = as.integer(mean(players_pre_rating)), .groups='drop')
+df <- merge(df, avg_pre, by.x="player_num", by.y="opponent_id")[, final_cols]
+head(df)
+```
+
+Save the result into a csv for further use
+
+```{r save_csv}
+write.csv(df, 'chess_data.csv')
+```
