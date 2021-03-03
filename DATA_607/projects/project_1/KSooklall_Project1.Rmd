@@ -1,20 +1,23 @@
 ---
 title: "DATA 607 Project 1"
 author: "Kenan Sooklall"
-date: "2021-02-10"
-output: html_document
+date: '2021-02-27'
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ## Description
 
 The goal of this project is to parse chess tournament results into:
 
-Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
+Player Number, Player’s Name, Player’s State, Total Number of Points, Player’s Pre-Rating, and Average Pre Chess Rating of Opponents
 
-```{r load_libraries, warning=FALSE, message=FALSE}
+```{r load_libraries, warning=FALSE, message=FALSE, echo=FALSE}
 library(readr)
 library(stringr)
 library(dplyr)
+library(ggplot2)
 ```
 
 Read the file with `read lines`, the data can be obtained from my github
@@ -24,13 +27,15 @@ lines <- read_lines("https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Master
 lines[1:7]
 ```
 
-Prase the file skipping rows that don't contains any data and populate two vectors
- - Player data (player_rows)
- - Match data (mdf)
+My approach will involved two dataframes
+- Player data (player_rows)
+- Round data (round_rows)
+
+Look at the raw data I see the first row with player data is row 5. Each row containing player_name is followed by another row with player data. Finally the entire file is 195 rows in total. My approach will be to iterate over a vector starting at 5 ending at 195 at steps of 3. Each row and row+1 that is read will be parsed for player data and round data
 
 ```{r}
 player_rows = c()
-mdf = c()
+round_rows = c()
 
 for (i in seq(5, 195, 3)) {
   row1 <- unlist(strsplit(lines[i], '\\|'))
@@ -47,11 +52,11 @@ for (i in seq(5, 195, 3)) {
   temp_df$player_num <- player_num
   temp_df$players_pre_rating <- players_pre_rating
   
-  mdf <- rbind(mdf, temp_df)
+  round_rows <- rbind(round_rows, temp_df)
 }
 ```
 
-Aggregate the player_rows data into a dataframe
+With the file completely parsed the player rows can now be aggregate into a dataframe and the column names renamed
 
 ```{r}
 df <- data.frame(player_rows)
@@ -59,23 +64,31 @@ colnames(df) <- c('player_num', 'player_name', 'player_state', 'total_points', '
 head(df)
 ```
 
-Aggregate the match rows data into a dataframe
+Similary aggregate the round rows data into a dataframe
+There is a lot of string cleaning ans well as data conversion done in this dataframe
 
 ```{r}
-colnames(mdf) <- c('wl_opponent_id', 'player_num', 'players_pre_rating')
-mdf$wl <- sapply(strsplit(as.character(mdf$wl_opponent_id), ' '), '[', 1)
-mdf$opponent_id <- sapply(mdf$wl_opponent_id, function(x)gsub('\\s+', ' ', x))
-mdf$opponent_id <- as.numeric(sapply(strsplit(as.character(mdf$opponent_id), ' '), '[', 2))
-mdf$players_pre_rating <- as.numeric(mdf$players_pre_rating)
-mdf <- mdf[, c('player_num', 'wl', 'opponent_id', 'players_pre_rating')]
-head(mdf)
+colnames(round_rows) <- c('wl_opponent_id', 'player_num', 'players_pre_rating')
+round_rows$wl <- sapply(strsplit(as.character(round_rows$wl_opponent_id), ' '), '[', 1)
+round_rows$opponent_id <- sapply(round_rows$wl_opponent_id, function(x)gsub('\\s+', ' ', x))
+round_rows$opponent_id <- as.numeric(sapply(strsplit(as.character(round_rows$opponent_id), ' '), '[', 2))
+round_rows$players_pre_rating <- as.numeric(round_rows$players_pre_rating)
+round_rows <- round_rows[, c('player_num', 'wl', 'opponent_id', 'players_pre_rating')]
+head(round_rows)
 ```
-Calculate the averages
+
+With the round_rows clean I now calculate the averages
 
 ```{r}
 final_cols <- c('player_name', 'player_state', 'total_points', 'players_pre_rating', 'avg')
-avg_pre <- mdf %>% group_by(opponent_id) %>% summarise(avg = as.integer(mean(players_pre_rating)), .groups='drop')
+avg_pre <- round_rows %>% group_by(opponent_id) %>% summarise(avg = as.integer(mean(players_pre_rating)), .groups='drop')
+```
+
+Finally merge the round_data and player_data into one dataframe
+
+```{r}
 df <- merge(df, avg_pre, by.x="player_num", by.y="opponent_id")[, final_cols]
+df$total_points<-as.numeric(df$total_points)
 head(df)
 ```
 
@@ -84,3 +97,28 @@ Save the result into a csv for further use
 ```{r save_csv}
 write.csv(df, 'chess_data.csv')
 ```
+
+\pagebreak
+# Exploratory data analysis
+
+The best player by average
+
+```{r}
+df %>% top_n(n=20, avg) %>% ggplot(aes(x=reorder(player_name, avg), y=avg, fill=avg)) + geom_col() + coord_flip() + labs(y='Average', x='Player Name', title = 'Player Averages')
+```
+
+\pagebreak
+The best player by total points
+
+```{r}
+df %>% top_n(n=20, total_points) %>% ggplot(aes(x=reorder(player_name, total_points), y=total_points, fill=total_points)) + geom_col() + coord_flip() + labs(y='Total Points', x='Player Name', title = 'Player Total Points')
+```
+
+It looks like Gary Hua is the best overall
+
+\pagebreak
+```{r}
+as.data.frame(table(df$player_state)) %>% ggplot(aes(x=Var1, y=Freq, fill=Freq)) + geom_col() + geom_text(aes(label=Freq), nudge_y = 1) + labs(x='Player State')
+```
+
+MI is by far the most common player state

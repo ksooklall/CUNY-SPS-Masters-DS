@@ -1,65 +1,65 @@
 "","player_name","player_state","total_points","players_pre_rating","avg"
-"1","Gary Hua","ON","6.0","1794",1605
-"2","Anvit Rao","MI","5.0","1365",1554
-"3","Cameron William Mc Leman","MI","4.5","1712",1467
-"4","Kenneth J Tack","MI","4.5","1663",1506
-"5","Torrance Henry Jr","MI","4.5","1666",1497
-"6","Bradley Shaw","MI","4.5","1610",1515
-"7","Zachary James Houghton","MI","4.5","1220",1483
-"8","Mike Nikitin","MI","4.0","1604",1385
-"9","Ronald Grzegorczyk","MI","4.0","1629",1498
-"10","David Sundeen","MI","4.0","1600",1480
-"11","Dipankar Roy","MI","4.0","1564",1426
-"12","Dakshesh Daruri","MI","6.0","1553",1469
-"13","Jason Zheng","MI","4.0","1595",1410
-"14","Dinh Dang Bui","ON","4.0","1563",1470
-"15","Eugene L Mcclure","MI","4.0","1555",1300
-"16","Alan Bui","ON","4.0","1363",1213
-"17","Michael R Aldrich","MI","4.0","1229",1357
-"18","Loren Schwiebert","MI","3.5","1745",1363
-"19","Max Zhu","ON","3.5","1579",1506
-"20","Gaurav Gidwani","MI","3.5","1552",1221
-"21","Sofia Adina Stanescu-Bellu","MI","3.5","1507",1522
-"22","Chiedozie Okorie","MI","3.5","1602",1313
-"23","Aditya Bajaj","MI","6.0","1384",1563
-"24","George Avery Jones","ON","3.5","1522",1144
-"25","Rishi Shetty","MI","3.5","1494",1259
-"26","Joshua Philip Mathews","ON","3.5","1441",1378
-"27","Jade Ge","MI","3.5","1449",1276
-"28","Michael Jeffery Thomas","MI","3.5","1399",1375
-"29","Joshua David Lee","MI","3.5","1438",1149
-"30","Siddharth Jha","MI","3.5","1355",1388
-"31","Amiyatosh Pwnanandam","MI","3.5","980",1384
-"32","Brian Liu","MI","3.0","1423",1539
-"33","Joel R Hendon","MI","3.0","1436",1429
-"34","Patrick H Schilling","MI","5.5","1716",1573
-"35","Forest Zhang","MI","3.0","1348",1390
-"36","Kyle William Murphy","MI","3.0","1403",1248
-"37","Jared Ge","MI","3.0","1332",1149
-"38","Robert Glen Vasey","MI","3.0","1283",1106
-"39","Justin D Schilling","MI","3.0","1199",1327
-"40","Derek Yan","MI","3.0","1242",1152
-"41","Jacob Alexander Lavalley","MI","3.0","377",1357
-"42","Eric Wright","MI","2.5","1362",1392
-"43","Daniel Khain","MI","2.5","1382",1355
-"44","Michael J Martin","MI","2.5","1291",1285
-"45","Hanshi Zuo","MI","5.5","1655",1500
-"46","Shivam Jha","MI","2.5","1056",1296
-"47","Tejas Ayyagari","MI","2.5","1011",1356
-"48","Ethan Guo","MI","2.5","935",1494
-"49","Jose C Ybarra","MI","2.0","1393",1345
-"50","Larry Hodge","MI","2.0","1270",1206
-"51","Alex Kong","MI","2.0","1186",1406
-"52","Marisa Ricci","MI","2.0","1153",1414
-"53","Michael Lu","MI","2.0","1092",1363
-"54","Viraj Mohile","MI","2.0","917",1391
-"55","Sean M Mc Cormick","MI","2.0","853",1319
-"56","Hansen Song","OH","5.0","1686",1518
-"57","Julia Shen","MI","1.5","967",1330
-"58","Jezzel Farkas","ON","1.5","955",1327
-"59","Ashwin Balaji","MI","1.0","1530",1186
-"60","Thomas Joseph Hosmer","MI","1.0","1175",1350
-"61","Ben Li","MI","1.0","1163",1263
-"62","Gary Dee Swathell","MI","5.0","1649",1372
-"63","Ezekiel Houghton","MI","5.0","1641",1468
-"64","Stefano Lee","ON","5.0","1411",1523
+"1","Gary Hua","ON",6,"1794",1605
+"2","Anvit Rao","MI",5,"1365",1554
+"3","Cameron William Mc Leman","MI",4.5,"1712",1467
+"4","Kenneth J Tack","MI",4.5,"1663",1506
+"5","Torrance Henry Jr","MI",4.5,"1666",1497
+"6","Bradley Shaw","MI",4.5,"1610",1515
+"7","Zachary James Houghton","MI",4.5,"1220",1483
+"8","Mike Nikitin","MI",4,"1604",1385
+"9","Ronald Grzegorczyk","MI",4,"1629",1498
+"10","David Sundeen","MI",4,"1600",1480
+"11","Dipankar Roy","MI",4,"1564",1426
+"12","Dakshesh Daruri","MI",6,"1553",1469
+"13","Jason Zheng","MI",4,"1595",1410
+"14","Dinh Dang Bui","ON",4,"1563",1470
+"15","Eugene L Mcclure","MI",4,"1555",1300
+"16","Alan Bui","ON",4,"1363",1213
+"17","Michael R Aldrich","MI",4,"1229",1357
+"18","Loren Schwiebert","MI",3.5,"1745",1363
+"19","Max Zhu","ON",3.5,"1579",1506
+"20","Gaurav Gidwani","MI",3.5,"1552",1221
+"21","Sofia Adina Stanescu-Bellu","MI",3.5,"1507",1522
+"22","Chiedozie Okorie","MI",3.5,"1602",1313
+"23","Aditya Bajaj","MI",6,"1384",1563
+"24","George Avery Jones","ON",3.5,"1522",1144
+"25","Rishi Shetty","MI",3.5,"1494",1259
+"26","Joshua Philip Mathews","ON",3.5,"1441",1378
+"27","Jade Ge","MI",3.5,"1449",1276
+"28","Michael Jeffery Thomas","MI",3.5,"1399",1375
+"29","Joshua David Lee","MI",3.5,"1438",1149
+"30","Siddharth Jha","MI",3.5,"1355",1388
+"31","Amiyatosh Pwnanandam","MI",3.5,"980",1384
+"32","Brian Liu","MI",3,"1423",1539
+"33","Joel R Hendon","MI",3,"1436",1429
+"34","Patrick H Schilling","MI",5.5,"1716",1573
+"35","Forest Zhang","MI",3,"1348",1390
+"36","Kyle William Murphy","MI",3,"1403",1248
+"37","Jared Ge","MI",3,"1332",1149
+"38","Robert Glen Vasey","MI",3,"1283",1106
+"39","Justin D Schilling","MI",3,"1199",1327
+"40","Derek Yan","MI",3,"1242",1152
+"41","Jacob Alexander Lavalley","MI",3,"377",1357
+"42","Eric Wright","MI",2.5,"1362",1392
+"43","Daniel Khain","MI",2.5,"1382",1355
+"44","Michael J Martin","MI",2.5,"1291",1285
+"45","Hanshi Zuo","MI",5.5,"1655",1500
+"46","Shivam Jha","MI",2.5,"1056",1296
+"47","Tejas Ayyagari","MI",2.5,"1011",1356
+"48","Ethan Guo","MI",2.5,"935",1494
+"49","Jose C Ybarra","MI",2,"1393",1345
+"50","Larry Hodge","MI",2,"1270",1206
+"51","Alex Kong","MI",2,"1186",1406
+"52","Marisa Ricci","MI",2,"1153",1414
+"53","Michael Lu","MI",2,"1092",1363
+"54","Viraj Mohile","MI",2,"917",1391
+"55","Sean M Mc Cormick","MI",2,"853",1319
+"56","Hansen Song","OH",5,"1686",1518
+"57","Julia Shen","MI",1.5,"967",1330
+"58","Jezzel Farkas","ON",1.5,"955",1327
+"59","Ashwin Balaji","MI",1,"1530",1186
+"60","Thomas Joseph Hosmer","MI",1,"1175",1350
+"61","Ben Li","MI",1,"1163",1263
+"62","Gary Dee Swathell","MI",5,"1649",1372
+"63","Ezekiel Houghton","MI",5,"1641",1468
+"64","Stefano Lee","ON",5,"1411",1523

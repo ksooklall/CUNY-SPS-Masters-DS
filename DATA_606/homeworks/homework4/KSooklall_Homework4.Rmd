@@ -3,8 +3,13 @@ title: "Chapter 4 - Distributions of Random Variables"
 author: "Kenan Sooklall"
 date: "2/15/2021"
 output:
-    pdf_document:
-        extra_dependencies: ["geometry", "multicol", "multirow"]
+  html_document:
+    df_print: paged
+  pdf_document:
+    extra_dependencies:
+    - geometry
+    - multicol
+    - multirow
 ---
 
 
@@ -55,12 +60,13 @@ Remember: a better performance corresponds to a faster finish.
 
 (a) Write down the short-hand for these two normal distributions.
 
-$Men: N(\mu = 4313, \sigma=503)$
+$Men: N(\mu = 4313, \sigma=503) \\$
 $Women: N(\mu = 5261, \sigma=807)$
 
 (b) What are the Z-scores for Leo's and Mary's finishing times? What do these Z-scores tell you?
 
 Z(leo) = (4948 - 4313)/583 = 1.089 -> Leo performed at 88 percentile
+
 Z(Mary) = (5513 - 5261) / 807 = 0.312 -> Mary performed at 62 percentile
 
 (c) Did Leo or Mary rank better in their respective groups? Explain your reasoning.
@@ -77,13 +83,7 @@ Mary performed at 62% of her group
 
 (f) If the distributions of finishing times are not nearly normal, would your answers to parts (b) - (e) change? Explain your reasoning.
 
-Part (b) answer wouldn't not change as Z-scores can be calcu-
-lated for distributions that are not normal. However,
-we could not answer parts (d)-(f) since we cannot use
-the normal probability table to calculate probabilities
-and percentiles without a normal model.
-
-
+Part (b) answer wouldn't not change as Z-scores can be calculated for distributions that are not normal. However, we could not answer parts (d)-(f) since we cannot use the normal probability table to calculate probabilities and percentiles without a normal model.
 
 
 --------------------------------------------------------------------------------

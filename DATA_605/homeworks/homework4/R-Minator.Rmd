@@ -9,6 +9,7 @@ output: html_document
 library(EBImage)
 library(OpenImageR)
 library(jpeg)
+library(ggplot)
 
 path <- "/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/homeworks/homework4/images/"
 n=17
@@ -49,6 +50,30 @@ for (i in 1:n) {
 shoes=as.data.frame(t(flat))
 ```
 
+KEN
+```{r}
+img <- im[1,,,]
+org <- t(flat)
+#imageShow(array((org[,1]), c(60,125,3)))
+
+sdata<-scale(org)
+means<-attr(sdata, "scaled:center")
+std<-attr(sdata, "scaled:scale")
+
+# Check
+# bb<-sdata * std + means
+# all(round(bb[1,]) == org[1,])
+
+scov<-cov(sdata)
+seign<-eigen(scov)
+
+lambda <- seign$values
+vect <- seign$vectors
+
+# Reconstruct
+aa <- std * (vect %*% t(sdata) * lambda) + means
+imageShow(array(aa[,1], c(60,125,3)))
+```
 
 ```{r}
 par(mfrow=c(3,3))
@@ -63,12 +88,15 @@ plot_jpeg(writeJPEG(im[i,,,]))
 scaled=scale(shoes, center = TRUE, scale = TRUE)
 mean.shoe=attr(scaled, "scaled:center") #saving for classification
 std.shoe=attr(scaled, "scaled:scale")  #saving for classification...later
-Sigma_=cor(scaled)
+Sigma_=cov(scaled)
 ```
 
+The eigen values tells you how much variance your capturing
 
 ```{r}
 myeigen=eigen(Sigma_)
+lamda <- myeigen$values
+vect <- myeigen$vectors
 cumsum(myeigen$values) / sum(myeigen$values)
 ```
 
