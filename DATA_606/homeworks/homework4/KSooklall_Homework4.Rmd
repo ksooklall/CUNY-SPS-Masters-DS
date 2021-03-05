@@ -1,5 +1,5 @@
 ---
-title: "Chapter 4 - Distributions of Random Variables"
+title: "Chapter 4 - Distributions of Random Variables DATA-606"
 author: "Kenan Sooklall"
 date: "2/15/2021"
 output:
@@ -38,9 +38,13 @@ DATA606::normalPlot(0, 1, c(-0.4, 1.5))
 ```
 
 (d) $|Z| > 2$
+The two plots below show the distribution, I couldn't figure out how to put them in one plot
+```{r}
+DATA606::normalPlot(0, 1, c(2, 10), tails=FALSE)
+```
 
 ```{r}
-DATA606::normalPlot(0, 1, c(-2, 2))
+DATA606::normalPlot(0, 1, c(-10, -2), tails=FALSE)
 ```
 
 
@@ -65,13 +69,19 @@ $Women: N(\mu = 5261, \sigma=807)$
 
 (b) What are the Z-scores for Leo's and Mary's finishing times? What do these Z-scores tell you?
 
-Z(leo) = (4948 - 4313)/583 = 1.089 -> Leo performed at 88 percentile
+Z(leo) = (4948 - 4313)/583 = 1.089 -> Leo performed at 86 percentile
+```{r}
+pnorm(1.089)
+```
 
 Z(Mary) = (5513 - 5261) / 807 = 0.312 -> Mary performed at 62 percentile
+```{r}
+pnorm(0.312)
+```
 
 (c) Did Leo or Mary rank better in their respective groups? Explain your reasoning.
 
-Within their respective groups Leo performed better since he is amont the top 4/5 of his group while Mary is in 3/5.
+Within their respective groups Leo performed better since he is among the top 4/5 of his group while Mary is in 3/5.
 
 (d) What percent of the triathletes did Leo finish faster than in his group?
 
@@ -79,7 +89,7 @@ Leo performed better than 88% of his group
 
 (e) What percent of the triathletes did Mary finish faster than in her group?
 
-Mary performed at 62% of her group
+Mary performed bettered than 62% of her group
 
 (f) If the distributions of finishing times are not nearly normal, would your answers to parts (b) - (e) change? Explain your reasoning.
 
@@ -101,6 +111,23 @@ Part (b) answer wouldn't not change as Z-scores can be calculated for distributi
 \stackrel{25}{73} \]
 
 (a) The mean height is 61.52 inches with a standard deviation of 4.58 inches. Use this information to determine if the heights approximately follow the 68-95-99.7% Rule.
+
+```{r}
+vect <- c(54,55,56,56,57,58,58,59,60,60,60,61,61,62,62,63,63,63,64,65,65,67,67,69,73)
+mu <- mean(vect)
+st <- sd(vect)
+
+s1<- c(mu + st, mu-st)
+s2<- c(mu + st*2, mu-st*2)
+s3<- c(mu + st*3, mu-st*3)
+```
+
+```{r}
+print(length(vect[vect < s1[1] & vect > s1[2]])/length(vect))
+print(length(vect[vect < s2[1] & vect > s2[2]])/length(vect))
+print(length(vect[vect < s3[1] & vect > s3[2]])/length(vect))
+```
+
 (b) Do these data appear to follow a normal distribution? Explain your reasoning using the graphs provided below.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.show="hold", out.width="50%", fig.height=3}
@@ -114,6 +141,12 @@ x <- heights
 xfit <- seq(min(x)-5, max(x)+5, length = 400)
 yfit <- dnorm(xfit, mean = mean(x), sd = sd(x))
 lines(xfit, yfit, col = COL[4], lwd = 2)
+abline(v=s1[1], lty=2, lwd=4, col='green')
+abline(v=s1[2], lty=2, lwd=4, col='green')
+abline(v=s2[1], lty=2, lwd=4, col='blue')
+abline(v=s2[2], lty=2, lwd=4, col='blue')
+abline(v=s3[1], lty=2, lwd=4, col='pink')
+abline(v=s3[2], lty=2, lwd=4, col='pink')
 par(mar=c(3.7,3.7,1,1), las=1, mgp=c(2.5,0.7,0), mfrow = c(1,1), cex.lab = 1.5, cex.axis = 1.5)
 qqnorm(heights, col = COL[1], pch = 19, main = "", axes = FALSE)
 axis(1)
@@ -121,9 +154,7 @@ axis(2)
 qqline(heights, col = COL[1])
 ```
 
-```{r}
-# Use the DATA606::qqnormsim function
-```
+The line going through the qqnorm plot fits the data very close, therefore the data can be treated as normally distributed. I drew dash lines to show data within 1 std (green) 2 std(blue) and 3 std(pink)
 
 
 
@@ -131,17 +162,37 @@ qqline(heights, col = COL[1])
 --------------------------------------------------------------------------------
 
 \clearpage
-
 **Defective rate.** (4.14, p. 148) A machine that produces a special type of transistor (a component of computers) has a 2% defective rate. The production is considered a random process where each transistor is independent of the others.
 
 (a) What is the probability that the 10th transistor produced is the first with a defect?
+```{r}
+p=0.02
+n=10
+print((1-p)^9*p)
+dgeom(n-1, p)
+```
+
 (b) What is the probability that the machine produces no defective transistors in a batch of 100?
+```{r}
+(1-p)^100
+```
+
 (c) On average, how many transistors would you expect to be produced before the first with a defect? What is the standard deviation?
+
+$\mu=1/p=50 \\$
+
+$\sigma=sqrt((1-p)/p^2)=49.49$
+
 (d) Another machine that also produces transistors has a 5% defective rate where each transistor
 is produced independent of the others. On average how many transistors would you expect to be produced with this machine before the first with a defect? What is the standard deviation?
+
+$\mu=1/0.05=20 \\$
+
+$\sigma=sqrt((1-0.05)/0.05^2)=19.49$
+
 (e) Based on your answers to parts (c) and (d), how does increasing the probability of an event affect the mean and standard deviation of the wait time until success?
 
-
+Increasing he probability of an event from 2% to 5% a 2.5x increased caused the mean to drop by the same multiple (2.5) and the std by about the same (2.54)
 
 
 
@@ -152,12 +203,23 @@ is produced independent of the others. On average how many transistors would you
 **Male children.** While it is often assumed that the probabilities of having a boy or a girl are the same, the actual probability of having a boy is slightly higher at 0.51. Suppose a couple plans to have 3 kids.
 
 (a) Use the binomial model to calculate the probability that two of them will be boys.
+
+```{r}
+p=0.51
+dbinom(2,3,p)
+choose(3,2)*(p)^2*(1-p)^1
+```
+
 (b) Write out all possible orderings of 3 children, 2 of whom are boys. Use these scenarios to calculate the same probability from part (a) but using the addition rule for disjoint outcomes. Confirm that your answers from parts (a) and (b) match.
+
+(b,b,g),(b,g,b),(g,b,b)
+```{r}
+p*p*(1-p) + p*(1-p)*p + (1-p)*p*p
+```
+
 (c) If we wanted to calculate the probability that a couple who plans to have 8 kids will have 3 boys, briefly describe why the approach from part (b) would be more tedious than the approach from part (a).
 
-
-
-
+There are 2^8=256 combinations which will be very tedious to type out
 
 
 --------------------------------------------------------------------------------
@@ -167,9 +229,18 @@ is produced independent of the others. On average how many transistors would you
 **Serving in volleyball.** (4.30, p. 162) A not-so-skilled volleyball player has a 15% chance of making the serve, which involves hitting the ball so it passes over the net on a trajectory such that it will land in the opposing team's court. Suppose that her serves are independent of each other.
 
 (a) What is the probability that on the 10th try she will make her 3rd successful serve?
+```{r}
+p=0.15
+dbinom(3, 10, p)
+```
+
 (b) Suppose she has made two successful serves in nine attempts. What is the probability that her 10th serve will be successful?
+
+0.15
+
 (c) Even though parts (a) and (b) discuss the same scenario, the probabilities you calculated should be different. Can you explain the reason for this discrepancy?
 
+For part a the the 3 successful serves could be any of the 10, ie (1,3,7); however part b fixes the last successful serve to be the last one, ie(1,3,10)
 
 
 

@@ -359,9 +359,9 @@ pre code {
 <h3>Problem 1 - Bayesian</h3>
 <p>A new test for multinucleoside-resistant (MNR) human immunodeficiency virus type 1 (HIV-1) variants was recently developed. The test maintains 96% sensitivity, meaning that, for those with the disease, it will correctly report “positive” for 96% of them. The test is also 98% specific, meaning that, for those without the disease, 98% will be correctly reported as “negative.” MNR HIV-1 is considered to be rare (albeit emerging), with about a .1% or .001 prevalence rate. Given the prevalence rate, sensitivity, and specificity estimates, what is the probability that an individual who is reported as positive by the new test actually has the disease?</p>
 <p><span class="math inline">\(P(+ | HIV) = 0.96 \\\)</span> <span class="math inline">\(P(- | HIV) = 0.98 \\\)</span> <span class="math inline">\(P(HIV) = 0.001 \\\)</span></p>
-<p><span class="math inline">\(P(HIV | +) = P(+ | HIV) * P(HIV) / (P(+)) \\\)</span> <span class="math inline">\(\rightarrow P(+ | HIV) * P(HIV) /( P(+ | HIV) * P(HIV) + P(- | HIV) * P(HIV) ) \\\)</span></p>
+<p><span class="math inline">\(P(HIV | +) = P(+ | HIV) * P(HIV) / (P(+)) \\\)</span> <span class="math inline">\(\rightarrow P(+ | HIV) * P(HIV) /( P(+ | HIV) * P(HIV) + P(+ | !HIV) * P(!HIV) ) \\\)</span></p>
 <p>Plugging in the values</p>
-<p><span class="math inline">\(0.96*0.001/(0.96*0.001 + 0.98*0.001) = 0.4949\)</span></p>
+<p><span class="math inline">\(0.96*0.001/(0.96*0.001 + 0.02*0.999) = 0.04584\)</span></p>
 <p>The probability that an individual who is reported as positive by the new test actually has ~50% of being positive with the disease. That high percentage is due to the fact that HIV is very rare 0.1%.</p>
 <p>If the median cost (consider this the best point estimate) is about $100,000 per positive case total and the test itself costs $1000 per administration, what is the total first-year cost for treating 100,000 individuals?</p>
 <p>With a population of 100000 and a prevalence rate of 0.1% that implies 100 individuals will get HIV. Of the 100 and a test sensitivity of 96% implies 96 of the 100 cases will be true positive that leaves 4 (100 - 96) false positive cases.</p>

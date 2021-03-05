@@ -1,0 +1,111 @@
+                                         Homework 6
+
+1.   A bag contains 6 green and 9 red jellybeans. How many ways can 5 jellybeans be
+     withdrawn from the bag so that the number of green ones withdrawn will be less than
+     4?
+
+
+
+
+     Answer: _______________
+
+
+2.   A certain congressional committee consists of 14 senators and 13 representatives. How
+     many ways can a subcommittee of 7 be formed if at least 4 of the members must be
+     senators?
+
+
+
+
+     Answer: _______________
+
+
+3.   If a coin is tossed 2 times, and then a standard six-sided die is rolled 4 times, and finally
+     a group of three cards are drawn from a standard deck of 52 cards without
+     replacement, how many different outcomes are possible?
+Answer: _______________
+4.   3 cards are drawn from a standard deck without replacement. What is the probability
+     that at least one of the cards drawn is a heart? Express your answer as a fraction or a
+     decimal number rounded to four decimal places.
+
+
+
+
+     Answer: _______________
+
+
+5.   Leanne is picking out some movies to rent, and she is primarily interested in children's
+     movies and comedies. She has narrowed down her selections to 18 children's movies
+     and 7 comedies.
+
+
+
+     Step 1. How many different combinations of 3 movies can she rent?
+
+     Answer: _______________
+
+
+
+     Step 2. How many different combinations of 3 movies can she rent if she wants at least
+     one comedy?
+
+     Answer: _______________
+
+
+6.   DJ Jacqueline is making a playlist for an internet radio show; she is trying to decide what
+     6 songs to play and in what order they should be played. If she has her choices
+     narrowed down to 7 hip-hop, 14 pop, and 22 blues songs, and she wants to play an
+     equal number of hip-hop, pop, and blues songs, how many different playlists are
+     possible? Express your answer in scientific notation rounding to the hundredths place.
+
+
+
+
+     Answer: ____________________
+
+7.   DJ Howard is making a playlist for a friend; he is trying to decide what 9 songs to play
+     and in what order they should be played.
+     Step 1. If he has his choices narrowed down to 7 pop, 3 hip-hop, 6 country, and 7 blues
+     songs, and he wants to play no more than 3 country songs, how many different playlists
+     are possible? Express your answer in scientific notation rounding to the hundredths
+     place.
+
+     Answer: ____________________
+
+
+     Step 2. If he has his choices narrowed down to 7 pop, 3 hip-hop, 6 country, and 7 blues
+     songs, and he wants to play all 7 blues songs, how many different playlists are possible?
+     Express your answer in scientific notation rounding to the hundredths place.
+
+     Answer: ____________________
+
+8.   Mallory is planting trees along her driveway, and she has 3 beech trees and 3 eucalyptus
+     trees to plant in one row. What is the probability that she randomly plants the trees so
+     that all 3 beech trees are next to each other and all 3 eucalyptus trees are next to each
+     other? Express your answer as a fraction or a decimal number rounded to four decimal
+     places.
+
+
+
+
+     Answer: _______________
+
+
+9.   If you draw a queen or lower from a standard deck of cards, I will pay you $4. If not, you
+     pay me $14. (Aces are considered the highest card in the deck.)
+
+
+
+     Step 1. Find the expected value of the proposition. Round your answer to two decimal
+     places. Losses must be expressed as negative values.
+
+     Answer: $_______________
+
+
+
+     Step 2. If you played this game 759 times how much would you expect to win or lose?
+     Round your answer to two decimal places. Losses must be expressed as negative
+     values.
+
+     Answer: $_______________
+

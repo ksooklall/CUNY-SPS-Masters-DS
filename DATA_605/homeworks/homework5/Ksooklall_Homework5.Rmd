@@ -22,11 +22,11 @@ $P(HIV) = 0.001 \\$
 
 
 $P(HIV | +) = P(+ | HIV) * P(HIV) / (P(+)) \\$
-$\rightarrow P(+ | HIV) * P(HIV) /( P(+ | HIV) * P(HIV) + P(- | HIV) * P(HIV) ) \\$
+$\rightarrow P(+ | HIV) * P(HIV) /( P(+ | HIV) * P(HIV) + P(+ | !HIV) * P(!HIV) ) \\$
 
 Plugging in the values
 
-$0.96*0.001/(0.96*0.001 + 0.98*0.001) = 0.4949$
+$0.96*0.001/(0.96*0.001 + 0.02*0.999) = 0.04584$
 
 The probability that an individual who is reported as positive by the new test actually has ~50% of being positive with the disease. That high percentage is due to the fact that HIV is very rare 0.1%.
 
