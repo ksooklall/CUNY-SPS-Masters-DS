@@ -1,0 +1,23 @@
+choose(15,5)-choose(6,4)*choose(9,1)-choose(6,5)*choose(9,0) #1
+
+phyper(3,14,13,7,lower.tail=FALSE)*choose(27,7) #2
+
+(2^2)*(6^4)*choose(52,3) #3
+
+1-dhyper(0,13,39,3) #4
+
+choose(25,3) #5a
+
+choose(25,3)-choose(7,0)*choose(18,3) #5b
+
+factorial(6)*choose(7,2)*choose(14,2)*choose(22,2) #6
+
+factorial(9)*(choose(6,0)*choose(17,9)+choose(6,1)*choose(17,8)+choose(6,2)*choose(17,7)+choose(6,3)*choose(17,8)) #7a
+
+factorial(9)*choose(16,2) #7b
+
+choose(2,1)*choose(3,3)*choose(3,0)/choose(6,3) #8
+
+4*(44/52)-14*(8/52) #9a
+
+(4*(44/52)-14*(8/52))*759 #9b

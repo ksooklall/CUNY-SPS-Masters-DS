@@ -2,13 +2,13 @@
 title: "The normal distribution"
 author: "Kenan Sooklall"
 output:
+  pdf_document: default
   html_document:
     includes:
     highlight: pygments
     theme: cerulean
     # toc: true
     toc_float: true
-  pdf_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -263,9 +263,9 @@ As you can see, normal probability plots can be used both to assess normality an
 ggplot(data=bk, aes(x=total_carb)) +
         geom_blank() +
         geom_histogram(aes(y=..density..)) +
-        stat_function(fun=dnorm, args=c(mean=dqmean, sd=dqsd), col="tomato")
+        stat_function(fun=dnorm, args=c(mean=mean(bk$total_carb), sd=sd((bk$total_carb))), col="tomato")
 ```
 
-THe histogram looks kinda normal with a slight right skewness
+THe histogram looks normally distributed, symmetric
 
 * * *

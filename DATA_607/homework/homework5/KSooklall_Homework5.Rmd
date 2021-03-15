@@ -13,7 +13,7 @@ library(wordcloud)
 ```
 
 #### Read in the data 
-Read csv and transform to have shape `nx4`
+Read csv and transform to have shape `nx4`. The dataset can be found [here](https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework5/flightdata.csv)
 
 - Airline - ALASKA or AM WEST
 - Status - On time or Delayed
@@ -21,7 +21,7 @@ Read csv and transform to have shape `nx4`
 - Count - The number of flights to a certain location
 
 ```{r}
-df<-read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/homework/homework5/flightdata.csv', sep=',')
+df <- read.csv('https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework5/flightdata.csv', sep=',')
 colnames(df) <- c('airline', 'status', 'los_angeles', 'phoenix', 'san_diego', 'san_francisco', 'seattle')
 df <- df %>% mutate_all(list(~na_if(.,''))) %>% fill(airline)
 df <- df %>% pivot_longer(!c('airline', 'status'), names_to='location', values_to='count')

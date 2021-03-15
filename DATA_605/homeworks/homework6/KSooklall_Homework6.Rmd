@@ -2,7 +2,9 @@
 title: "KSooklall_Homework6 DATA-605"
 author: "Kenan Sooklall"
 date: "3/3/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 1.   A bag contains 6 green and 9 red jellybeans. How many ways can 5 jellybeans be
@@ -24,9 +26,8 @@ output: html_document
      Answer: 4
 
 
-3.   If a coin is tossed 2 times, and then a standard six-sided die is rolled 4 times, and finally
-     a group of three cards are drawn from a standard deck of 52 cards without
-     replacement, how many different outcomes are possible?
+3.   If a coin is tossed 2 times, and then a standard six-sided die is rolled 4 times, and finally a group of three cards are drawn from a standard deck of 52 cards without replacement, how many different outcomes are possible?
+
 2^2 * 4*6 + 52*51*50
 
     Answer: 132696
@@ -51,8 +52,8 @@ choose(18+7,3)
 
      Answer: 2300
 
-     Step 2. How many different combinations of 3 movies can she rent if she wants at least
-     one comedy?
+   Step 2. How many different combinations of 3 movies can she rent if she wants at least
+   one comedy?
      
 choose(18+6,2) + 1
 
@@ -113,7 +114,9 @@ same logic for choosing eucalyptus first -> 2 * 1/20 = 1/10
      places. Losses must be expressed as negative values.
 
 higher_than_queen = 8 (4*(K,A)) -> 15.4% win
+
 queen_or_lower = 52 -8 = 44 -> 84.6% win
+
 E(X) = 4*44/52-14*8/52
 
      Answer: $1.23

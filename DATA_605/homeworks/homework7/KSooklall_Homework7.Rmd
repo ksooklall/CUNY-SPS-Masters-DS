@@ -1,0 +1,99 @@
+---
+title: "Homework7 - DATA 605"
+author: "Kenan Sooklall"
+date: "3/10/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### Question 1
+1. Let X1, X2, . . . , Xn be n mutually independent random variables, each of which is uniformly distributed on the integers from 1 to k. Let Y denote the minimum of the Xi’s. Find the distribution of Y.
+
+Each Xi has k possibilities [1,2,3....k] for i in K therefore for all possibilities of X's = k^n
+The number of way to get Y= 1 -> k^n ways to get 1 and (k-1)^n to not get 1
+So 
+
+$P(X=1) = k^n * (k-1)^n / k^n \\$
+$\rightarrow P(X=2) = (k-2+1)^n * (k-2)^n / k^n \\$
+$\rightarrow P(X=3) = (k-3+1)^n * (k-3)^n / k^n \\$
+
+$\rightarrow P(X=j) = (k-j+1)^n * (k-j)^n / k^n$
+
+### Question 2
+2. Your organization owns a copier (future lawyers, etc.) or MRI (future doctors). This machine has a manufacturer’s expected lifetime of 10 years. This means that we expect one failure every ten years. (Include the probability statements and R Code for each part.).
+
+```{r}
+p = 1/10
+```
+
+#### Geometric
+a. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as a geometric. (Hint: the probability is
+equivalent to not failing during the first 8 years..)
+
+$ P(X = k) = (1-p) ^ {k - 1}*p$
+
+P(X>8) = 1 - P(X<=8)
+
+Expected Value = 1/ 0.1 = 10
+
+Standard deviation = sqrt((1-p)/p^2) = 9.48
+
+```{r}
+1 - pgeom(8-1,p)
+(1-p)^(8-1)*p
+```
+
+#### Exponential
+
+b. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as an exponential.
+
+$P (X >= k) = e^{-k/\mu}$
+
+Expected Value = 10
+
+Standard deviation = 10
+
+P(X>=8)
+
+```{r}
+1 - pexp(8, p)
+exp(-8/10)
+```
+
+#### Binomial
+
+c. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as a binomial. (Hint: 0 success in 8
+years)
+
+$P (X > k) = p ^ k * ( 1-p ) ^{n-k}$
+
+Expected Value = 8 * 0.1 = 0.8
+
+Standard deviation = sqrt(8 * 0.1 * 0.9) = 0.85
+
+```{r}
+k=0
+n=8
+pbinom(0, size=n, prob=p)
+0.1^0 * (0.9) ^ (8-0)
+```
+
+#### Poisson
+
+d. What is the probability that the machine will fail after 8 years?. Provide also the
+expected value and standard deviation. Model as a Poisson.
+
+$P(X = 8) = \lambda ^ x e^{-\lambda} / (x!)$
+
+Expected Value = 8 * 0.1 = 0.8
+
+Standard deviation = sqrt(0.8) = 0.89
+
+```{r}
+ppois(0, 0.8)
+0.8 ^ 0 * exp(-0.8) / (factorial(0))
+```

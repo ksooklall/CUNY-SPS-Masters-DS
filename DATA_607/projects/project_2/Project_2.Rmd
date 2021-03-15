@@ -1,0 +1,154 @@
+---
+title: "Project 2 DATA-607"
+author: "Kenan Sooklall"
+date: "3/5/2021"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r, echo=FALSE, results=FALSE, warning=FALSE, message=FALSE}
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(corrplot)
+```
+
+For this project I will be cleaning and visualize 3 different datasets
+
+### Country prision admissions
+
+Clean country_prision_admissions.csv data set
+This dataset has 16 columns and 3143 rows
+
+```{r}
+pdf <- read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_2/datasets/country_prision_admissions.csv')
+
+glimpse(pdf)
+```
+
+I am only interested in the admission per 10k for the years os 2006, 2013 and 2014.
+Also the format of the data need to change since I want all the years in one column and their corresponding counts in another. I will also rename the column names to something more appropriate. 
+
+```{r}
+cols= c('county', 'state', 'admitsPer10k2006', 'admitsPer10k2013', 'admitsPer10k2014')
+
+pdf <- pdf[,cols]
+pdf <- pdf %>% rename('2006'='admitsPer10k2006', '2013'='admitsPer10k2013', '2014'='admitsPer10k2014') %>% pivot_longer(!c('county', 'state'), names_to='year', values_to='count') %>% drop_na
+
+glimpse(pdf)
+```
+
+With the dataset cleaned I can now perform EDA
+
+```{r}
+pdf %>% group_by(state, year) %>% summarise(val=sum(count)) %>% ggplot(aes(x=reorder(state, val), y=val, fill=year)) + geom_col() + coord_flip()
+```
+
+Wow Texas wins by a landslide, it seems like if you have a pulse in Texas you qualify for some prison sentence. 
+
+```{r}
+pdf %>% filter(state == 'NY') %>% ggplot(aes(x=count, y=reorder(county, count), fill=year)) + geom_col()
+boxplot(count~year, data=pdf, col='red', border='brown')
+```
+
+For just NY these box plot show more there are outlier from 2006 to 2014
+
+### County dataset
+
+The county dataset has 37 columns and 3220 rows, this dataset has a lot of grainular information for race to income to commute and many more.
+
+```{r}
+cdf <- read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_2/datasets/acs2017_county_data.csv')
+
+glimpse(cdf)
+```
+
+Given the side of this dataset I would first filter for NY and drop a lot of the columns I won't be using and rows that contain NA.
+
+```{r}
+usecols = c('County', 'IncomePerCap', 'Unemployment', 'MeanCommute', 'WorkAtHome')
+cdf <- cdf %>% filter(State == "New York") %>% select(usecols) %>% drop_na
+
+glimpse(cdf)
+```
+
+Which country has the highest IncomePerCap, Unemployment?
+
+```{r}
+cdf %>% ggplot(aes(x=reorder(County, IncomePerCap), y=IncomePerCap)) + geom_col() + coord_flip()
+```
+
+It looks like New York County (Manhattan) has the highest Income per capital and Bronx County has the lowest
+
+Which country has the highest Unemployment rate?
+
+```{r}
+cdf %>% ggplot(aes(x=reorder(County, Unemployment), y=Unemployment)) + geom_col() + coord_flip()
+```
+
+From our first plot we saw Bronx County has the lowest income per capital so it makes sense that they has the highest unemployment rate. Surprisingly New York County doesn't have the lowerst unemployment, that goes to Madison County.
+
+
+Which county commutes the most?
+
+```{r}
+cdf %>% ggplot(aes(x=reorder(County, MeanCommute), y=MeanCommute)) + geom_col() + coord_flip()
+```
+
+Four of the top 5 NY counties with the longest mean commute times are right here in New York City, Bronx, Queens, Richmond and Kings County.
+
+How has work from home has affected income?
+
+```{r}
+cdf %>% ggplot(aes(x=WorkAtHome , y=IncomePerCap)) + geom_point()
+```
+
+I am not sure what to make of this scatter plot, it looks like as people work from home loner their income goes up. That might be due to money being saved from commuting.
+
+Finally how do these 4 columns relate
+
+```{r, results=FALSE}
+rownames(cdf) <- cdf$County
+cdf %>% select(-c(County))
+```
+
+```{r}
+corrplot(cor(cdf %>% select(-c(County))), method='circle')
+```
+
+
+### Foodprices
+
+The foodprices dataset is huge, it takes a full 10 seconds to load on my computer. With 18 columns and 1.8 Million rows there is no surprise on why it takes so long.
+
+```{r}
+fdf <- read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_2/datasets/wfpvam_foodprices.csv')
+
+glimpse(fdf)
+```
+
+Given the massive size of this dataset, the first thing I'll do is filter a specific region of interest and drop a lot of columns that won't be used. I manage a team from Belarus so that's a good starting point
+
+```{r}
+fdf <- fdf %>% filter(adm0_name == 'Belarus') %>% select(c('mp_month', 'mp_year', 'mp_price')) %>% rename('month'='mp_month', 'year'='mp_year', 'price'='mp_price')
+
+glimpse(fdf)
+```
+
+How have prices change over the years?
+
+```{r}
+fdf %>% group_by(year) %>% summarise(meanprice=mean(price)) %>% ggplot(aes(x=year, y=meanprice)) + geom_line()
+```
+
+The prices are trending up from 2009 to now
+
+
+How prices change on a specific year?
+
+```{r}
+fdf %>% group_by(month) %>% summarise(meanmonth=mean(price)) %>% ggplot(aes(x=month, y=meanmonth)) + geom_line()
+```
+
+It looks like prices slowly raise at the start of the year then peak during the middle of the year and drop towards the end.

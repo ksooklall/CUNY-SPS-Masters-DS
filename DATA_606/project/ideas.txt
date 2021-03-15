@@ -1,2 +1,3 @@
 algorithms and judge rulings
 using pisson to predict future natural disasters for the states
+how many startup suceed and how many fail
