@@ -1,17 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Books>
    <Book>
-      <Name>Hello World</Name>
+      <Book>Hello World</Book>
       <Author>Hannah Fry</Author>
       <Cover_color>Green</Cover_color>
    </Book>
    <Book>
-      <Name>The signal and the noise</Name>
+      <Book>The signal and the noise</Book>
       <Author>Nate Silver</Author>
       <Cover_color>Yellow</Cover_color>
    </Book>
    <Book>
-      <Name>Why we sleep</Name>
+      <Book>Why we sleep</Book>
       <Author>Matthew Walker</Author>
       <Cover_color>Black</Cover_color>
    </Book>

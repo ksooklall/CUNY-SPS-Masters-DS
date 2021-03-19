@@ -12,13 +12,14 @@ Pick three of your favorite books on one of your favorite subjects. At least one
 library(XML)
 library(jsonlite)
 library(rvest)
+library(RCurl)
 ```
 
 Topic Computer Science
 ```{r}
 books = c('Hello World', 'The signal and the noise', 'Why we sleep')
 authors = c('Hannah Fry', 'Nate Silver', 'Matthew Walker')
-cover_color = c('green cover', 'yellow cover', 'black cover')
+cover_color = c('Green', 'Yellow', 'Black')
 
 df <- cbind(books, authors, cover_color)
 df
@@ -28,27 +29,27 @@ Take the information that you’ve selected about these three books, and separat
 
 Write R code, using your packages of choice, to load the information from each of the three sources into separate R data frames. 
 
+### XML data
 ```{r}
-
 xurl <- 'https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework6/books.xml'
 
-data <- xmlParse(xlink)
-xdf <- xmlToDataFrame(data)
+xdf <- getURI(xurl) %>% xmlParse %>% xmlToDataFrame
 xdf
 ```
 
+### JSON data
 ```{r}
-jurl <- 'https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework6/books.jsn'
+jurl <- 'https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework6/books.json'
 
-jdf <- fromJSON(jlink)
+jdf <- fromJSON(jurl)$Books_Table
 jdf
 ```
 
-
+### HTML data
 ```{r}
-hurl <- 'https://github.com/ksooklall/CUNY-SPS-Masters-DS/blob/main/DATA_607/homework/homework6/books.html'
+hurl <- 'https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework6/books.html'
 
-hdf <- as.data.frame(read_html(hbook) %>% html_table(fill=TRUE))
+hdf <- as.data.frame(read_html(hurl) %>% html_table(fill=TRUE))
 hdf
 ```
 
