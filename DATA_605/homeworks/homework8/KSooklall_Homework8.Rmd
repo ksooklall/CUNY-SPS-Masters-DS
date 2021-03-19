@@ -1,0 +1,77 @@
+---
+title: "Homework 8 DATA-605"
+author: "Kenan Sooklall"
+date: "3/15/2021"
+output: html_document
+---
+
+#### Exercise 11 
+A company buys 100 lightbulbs, each of which has an exponential lifetime of
+1000 hours. What is the expected time for the first of these bulbs to burn
+out? (See Exercise 10.)
+
+```{r}
+n=100
+lifetime=1000
+lifetime/n
+```
+
+#### Exercise 14 
+Assume that X_1 and X_2 are independent random variables, each having an
+exponential density with parameter $\lambda$. 
+Show that $Z = X 1 − X 2$ has density
+
+$f_Z(z) = (1/2)λe^{−λ|z|}$
+
+Expanding the solution
+
+$$f_Z(z) = λ/2e^{−λ|z|} \; \begin{cases} 
+      λ/2e^{−λz} & z >= 0 \\
+      λ/2e^{λz} & z < 0 \\
+   \end{cases}$$
+   
+let $X = X_1 \& Y = X_2 \rightarrow Z=X-Y \rightarrow Y = X - Z$
+
+For $z >= 0 \rightarrow x \in (z , \infty)$ 
+
+$$ \int_{z}^{\infty}\lambda e ^{-\lambda x} \lambda e ^ {-\lambda(x-z)}dx = \lambda^2\int_{z}^{\infty} e ^{\lambda(z - 2x)} dx $$
+Using u substitution 
+
+$u = \lambda * (z - 2x) \rightarrow du=-2\lambda dx$
+
+Simplify
+$$(-\frac{\lambda}{2}e^ {z - 2x}|_z^{\infty}) = \frac{\lambda}{2}e^{-\lambda z}$$
+For $z < 0 \rightarrow x \in (0 , \infty)$
+
+$$(-\frac{\lambda}{2}e^ {z - 2x}|_0^{\infty}) = \frac{\lambda}{2}e^{\lambda z}$$
+
+#### Exercise 1
+Let X be a continuous random variable with mean $\mu = 10$ and variance
+$σ^2 = 100/3$. Using Chebyshev’s Inequality, find an upper bound for the
+following probabilities
+
+$\sigma = 5.77$
+
+(a) $P (|X − 10| ≥ 2) \rightarrow 2 = k\sigma \rightarrow k=0.346 \rightarrow 1/k^2 = 0.12$
+
+(b) P (|X − 10| ≥ 5)
+
+```{r}
+std = sqrt(100/3)
+k = 5/std
+1/k^2
+```
+
+(c) P (|X − 10| ≥ 9).
+
+```{r}
+k = 9/std
+1/k^2
+```
+
+(d) P (|X − 10| ≥ 20).
+
+```{r}
+k = 20/std
+1/k^2
+```
