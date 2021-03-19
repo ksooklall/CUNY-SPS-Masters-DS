@@ -1,0 +1,15 @@
+{"Books_Table" :
+	[ 
+	{"Book": "Hellow World",
+	 "Author": "Hannah Fry",
+	 "Cover_color": "Green"
+	},
+	{"Book": "The signal and the noise",
+	 "Author": "Nate Silver",
+	 "Cover_color": "Yellow"
+	},
+	{"Book": "Why we sleep",
+	 "Author": "Matthew Walker",
+	 "Cover_color": "Black"
+	}]
+}
