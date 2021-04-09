@@ -1,0 +1,95 @@
+---
+title: "Untitled"
+author: "Kenan Sooklall"
+date: "3/27/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(tidytext)
+library(wordcloud)
+library(rvest)
+```
+
+https://martinctc.github.io/blog/vignette-scraping-amazon-reviews-in-r/
+```{r}
+scrape_amazon <- function(ASIN, page_num){
+  
+  url_reviews <- paste0("https://www.amazon.com/product-reviews/",ASIN,"/?pageNumber=",page_num)
+  
+  doc <- read_html(url_reviews) # Assign results to `doc`
+  
+  # Review Title
+  doc %>% 
+    html_nodes("[class='a-size-base a-link-normal review-title a-color-base review-title-content a-text-bold']") %>%
+    html_text() -> review_title
+  
+  # Review Text
+  doc %>% 
+    html_nodes("[class='a-size-base review-text review-text-content']") %>%
+    html_text() -> review_text
+  
+  # Number of stars in review
+  doc %>%
+    html_nodes("[data-hook='review-star-rating']") %>%
+    html_text() -> review_star
+  
+  # Review date
+  doc %>%
+    html_nodes("[class='a-size-base a-color-secondary review-date']")  %>%
+    html_text() -> review_date
+  
+  #print(length(review_title))
+  #print(length(review_text))
+  #print(length(review_star))
+  #print(length(review_date[3:12]))
+
+  # Return a tibble
+  tibble(review_title,
+         review_text,
+         review_star,
+         review_date[3:12],
+         page = page_num) %>% return()
+}
+```
+
+
+```{r}
+ASIN <- "B00QQA0H3S" # Specify ASIN
+page_range <- 1:50 # Let's say we want to scrape pages 1 to 10
+
+match_key <- tibble(n = page_range,
+                    key = sample(page_range,length(page_range)))
+
+lapply(page_range, function(i){
+  j <- match_key[match_key$n==i,]$key
+
+  message("Getting page ",i, " of ",length(page_range), "; Actual: page ",j) # Progress bar
+
+  Sys.sleep(1) # Take a three second break
+
+  if((i %% 3) == 0){ # After every three scrapes... take another two second break
+    
+    message("Taking a break...") # Prints a 'taking a break' message on your console
+    
+    Sys.sleep(1) # Take an additional two second break
+  }
+  scrape_amazon(ASIN = ASIN, page_num = j) # Scrape
+}) -> output_list
+
+df <- data.frame(output_list)
+write.csv(df, paste0('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/', ASIN, '.csv'))
+```
+
+
+```{r}
+word_tb <- output_list %>% 
+  bind_rows() %>%
+  unnest_tokens(output = "word", input = "review_text", token = "words") %>%
+  count(word) %>%
+  filter(!(word %in% c("book","books"))) %>%
+  anti_join(tidytext::stop_words, by = "word")
+
+wordcloud(words = word_tb$word, freq = word_tb$n)
+```

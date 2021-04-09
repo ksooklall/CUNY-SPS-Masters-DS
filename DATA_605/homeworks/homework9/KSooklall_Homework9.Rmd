@@ -1,0 +1,70 @@
+---
+title: "Homework 9 - DATA 605"
+author: "Kenan Sooklall"
+date: "3/24/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+### Problem 1
+The price of one share of stock in the Pilsdorff Beer Company (see Exercise 8.2.12) is given by $Y_n$ on the nth day of the year. Finn observes that the differences $X_n = Y_{n+1} − Y_n$ appear to be independent random variables with a common distribution having mean $\mu = 0$ and variance $\sigma^2 = 1/4$. If $Y_1 = 100$, estimate the probability that $Y_{365}$ is
+
+(a) ≥ 100.
+```{r}
+q = 100 - 100
+n = 364
+std <- sqrt(1/4)
+1 - pnorm(q = q, sd = std)
+```
+
+(b) ≥ 110.
+
+```{r}
+q = (110-100)/sqrt(n)
+1 - pnorm(q = q, sd = std)
+```
+
+(c) ≥ 120.
+
+```{r}
+q = (120-100)/sqrt(n)
+1 - pnorm(q = q, sd = std)
+```
+
+### Problem 2
+Calculate the expected value and variance of the binomial distribution using the moment
+generating function.
+Let $q=1-p$
+
+\begin{align*}
+g(t) = \sum_{j=0}^{n} e^{tj}{n \choose j}p^jq^{n-j}
+     = \sum_{j=0}^{n} {n \choose j}(pe^t)^jq^{n-j}
+     =(pe^t+ q)^n
+\end{align*}
+
+Expected value: Taking the derivative of the function with respect to t
+
+$$E(X) =u_1=\frac{dg(0)}{dt} = pe^t n(pe^t+ q)^{n-1} = np(p + q)^{n-1} = np (p + 1 - p)^{n-1} = np$$
+Variance:
+Taking the second derivative
+
+$$\frac{dg(0)}{dt} - (\frac{d^2g(0)}{dt^2})^2 = np - n(n-1)p^2+np$$
+$$\sigma^2 = u_2 - u_1^2 = n(n-1)p^2+np - (np)^2 =  np(1-p)$$
+
+### Problem 3
+
+Calculate the expected value and variance of the exponential distribution using the moment generating function.
+
+$$g(t) =  \sum_{j=1}^{\infty} e^{tx}\lambda e^{-\lambda x} = \frac{\lambda}{t- \lambda}$$
+Expected value:
+
+$$E(x) = u_1 = \frac{\lambda}{(t- \lambda)^2}|_{t=0} = \frac{1}{\lambda}$$
+
+Variance:
+
+$$ u_2 = \frac{2\lambda}{(\lambda-t)^3}=\frac{2}{\lambda^2}$$
+
+$$V = u_2-u_1^2 = \frac{2\lambda}{(t- \lambda)^3}|_{t=0} = \frac{1}{\lambda^2}$$
+
+

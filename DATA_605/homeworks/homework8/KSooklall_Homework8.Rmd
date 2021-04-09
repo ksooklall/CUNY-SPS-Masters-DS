@@ -2,7 +2,9 @@
 title: "Homework 8 DATA-605"
 author: "Kenan Sooklall"
 date: "3/15/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 #### Exercise 11 

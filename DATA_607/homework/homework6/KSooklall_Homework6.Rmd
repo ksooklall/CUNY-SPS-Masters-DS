@@ -2,7 +2,9 @@
 title: "Homework 6 - DATA 607"
 author: "Kenan Sooklall"
 date: "3/18/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
                 Assignment – Working with XML and JSON in R
 

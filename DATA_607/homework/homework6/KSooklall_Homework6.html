@@ -376,7 +376,7 @@ df</code></pre>
 
 xdf &lt;- getURI(xurl) %&gt;% xmlParse %&gt;% xmlToDataFrame
 xdf</code></pre>
-<pre><code>##                       Name         Author Cover_color
+<pre><code>##                       Book         Author Cover_color
 ## 1              Hello World     Hannah Fry       Green
 ## 2 The signal and the noise    Nate Silver      Yellow
 ## 3             Why we sleep Matthew Walker       Black</code></pre>
@@ -398,8 +398,8 @@ jdf</code></pre>
 
 hdf &lt;- as.data.frame(read_html(hurl) %&gt;% html_table(fill=TRUE))
 hdf</code></pre>
-<pre><code>##                       Name         Author Cover_color
-## 1             Hellow World     Hannah Fry       Green
+<pre><code>##                       Book         Author Cover_color
+## 1              Hello World     Hannah Fry       Green
 ## 2 The signal and the noise    Nate Silver      Yellow
 ## 3             Why we sleep Matthew Walker       Black</code></pre>
 <p>Are the three data frames identical?</p>

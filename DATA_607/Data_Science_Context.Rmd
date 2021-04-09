@@ -78,6 +78,7 @@ Make a request to the accounting department to get location data and replot
 
 ```{r, echo=FALSE}
 df$location <- c(rep(c('US'), 51), 'NK')
+df
 df %>% filter(scale < 2) %>% ggplot(aes(x=item, y=cost, fill=location)) + geom_col()
 ```
 

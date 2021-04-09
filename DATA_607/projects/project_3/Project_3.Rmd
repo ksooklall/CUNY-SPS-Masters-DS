@@ -1,0 +1,126 @@
+---
+title: "Project 3"
+author: "Kenan Sooklall"
+date: "3/23/2021"
+output: html_document
+---
+
+```{r, echo=FALSE, warning=FALSE, message=FALSE}
+library(tm)
+library(wordcloud)
+library(tidyverse)
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_3/'
+```
+
+Read in the job listings
+
+```{r}
+jdf <- read.csv(paste0(path, 'ds_job_listing_software.csv'))
+jdf <- jdf[1:37,]
+jdf <- jdf %>% select(c(Keyword, LinkedIn, Indeed, SimplyHired, Monster)) %>% rename('skill'='Keyword') 
+jdf[,2:5] <- lapply(jdf[,2:5],function(x){as.numeric(gsub(",", "", x))})
+jdf <- jdf %>% mutate(total = rowSums(across(where(is.numeric))))
+glimpse(jdf)
+```
+
+Create a stuff(i need a name for this column) feature based on the skills
+```{r}
+## Map skills and then plot
+frameworks <- c('TensorFlow', 'Scikit-learn', 'Pandas', 'Numpy', 'Keras', 'PyTorch', 'Caffe')
+languages <- c('Python', 'R', 'Java', 'C', 'Scala', 'C++', 'Matlab', 'C# ', 'Javascript', 'SPSS', 'Perl')
+database <- c('SQL', 'Hadoop', 'Spark', 'SAS', 'Tableau', 'Hive', 'AWS', 'NoSQL', 'Azure', 'Pig', 'Hbase', 'Cassandra', 'MySQL', 'MongoDB', 'D3')
+other <- c('SPSS', 'Excel', 'Linux', 'Docker', 'Git')
+
+jdf <- jdf %>% mutate(stuff=case_when(group=jdf$skill %in% frameworks ~ 'Framework', jdf$skill %in% languages ~ 'Languages', jdf$skill %in% database ~ 'Database', jdf$skill %in% other ~ 'Other'))
+glimpse(jdf)
+```
+
+How valuable are each stuff on different hiring websites?
+```{r}
+jdf %>% select(!c('skill', 'total')) %>% pivot_longer(!c(stuff), names_to='Hiring', values_to='count') %>% ggplot(aes(x=stuff, y=count, fill=Hiring)) + geom_col()
+```
+
+Having experience in a specific language and knowledge of databases is more important than knowing a specific frame work. This makes sense since frame works get updated a lot as things change.
+
+What languages are the most in demand?
+```{r}
+jdf %>% select(!c('total' ,'stuff')) %>%  pivot_longer(!c(skill), names_to='Hiring', values_to='value') %>% filter(skill %in% languages) %>% ggplot(aes(x=skill, y=value, fill=Hiring, group=Hiring)) + geom_bar(stat='identity', position='dodge')
+```
+
+It's very clear that knowledge of python and R are very important if one wants a successful carrier in data science.
+
+```{r}
+jdf %>% select(!c('total' ,'stuff')) %>%  pivot_longer(!c(skill), names_to='Hiring', values_to='value') %>% filter(skill %in% languages) %>% ggplot(aes(x=skill, y=value)) + geom_col() + facet_wrap(~Hiring) + theme(axis.text.x = element_text(angle = 30))
+```
+
+Looking at fulltime positions in NY
+
+```{r}
+ndf <- read.csv(paste0(path, 'fulltimeNY.csv'))
+
+ds <- c('Staff Data Scientist', 'Machine Learning Data Scientist', 'Junior Data Scientist', 'Data Scientist,Analytics', 'Data Scientist (NYC)', 'Clinical Data Scientist')
+sds <- c('Sr. Data Scientist', 'Sr Data Scientist', 'Senior Data Scientist', 'Senior Associate, Data Scientist')
+lds <- c('Lead Data Scientist')
+pds <- c('Principal Data Scientist')
+
+analyst <- ndf %>% filter(across(position, ~grepl('analyst', ignore.case=T, .))) %>% pull(position)
+machine_learning <- ndf %>% filter(across(position, ~grepl('machine learning', ignore.case=T, .))) %>% pull(position)
+manager <- ndf %>% filter(across(position, ~grepl('manager', ignore.case=T, .))) %>% pull(position)
+
+ndf <- ndf %>% mutate(emp=case_when(group=ndf$position %in% analyst ~ 'Analyst', ndf$position %in% machine_learning ~ 'Machine_learning', ndf$position %in% manager ~ 'Manager'))
+ndf$emp <- ndf$emp %>% replace_na('Data Scientist')
+glimpse(ndf)
+```
+
+Position and Company
+# Add box plots + stat_summary(fun=mean, color='blue', size=1.5)
+
+```{r}
+ndf %>% count(emp) %>% top_n(n=20) %>% ggplot(aes(x=emp, y=n)) + geom_col() + coord_flip()
+```
+
+Right now there is a lot of demand for Data Scientists vs Managers and Analyst; however there is a lot of overlap. One can assume a manager was once a data scientist that got promoted.
+
+```{r}
+ndf %>% filter(emp == 'Data Scientist') %>% count(company) %>% top_n(n=10) %>% ggplot(aes(x=company, y=n)) + geom_col() + coord_flip()
+```
+
+NYU Langone Health is hiring more than most tech and financial companies combined.
+
+Word cloud of description by position
+```{r, warning=FALSE, message=FALSE}
+ddf <- ndf %>% filter(emp == 'Data Scientist')
+
+docs <- Corpus(VectorSource(ddf$description))
+
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Remove your own stop word
+# specify your stopwords as a character vector
+docs <- tm_map(docs, removeWords, c("blabla1", "blabla2")) 
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 200,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+As one would expect data scientist need to have a very good understanding of data in every aspect. From analytics, statistics, management and everything in between. The word cloud also emphases the need for team work, machine learning and a lot of experience.

@@ -2,13 +2,13 @@
 title: "Chapter 5 - Foundations for Inference"
 author: "Kenan Sooklall"
 output:
+  html_document:
+    df_print: paged
   pdf_document:
     extra_dependencies:
     - geometry
     - multicol
     - multirow
-  html_document:
-    df_print: paged
 ---
 
 ```{r setup, include=FALSE}

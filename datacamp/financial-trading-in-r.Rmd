@@ -1,0 +1,255 @@
+---
+title: "Trading"
+author: "Kenan Sooklall"
+date: "4/2/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(quantstrat)
+library(quantmod)
+```
+
+```{r}
+getSymbols('SPY', 
+           from = '2000-01-01', 
+           to = '2016-06-30', 
+           src =  'yahoo', 
+           adjust = T)
+
+# Plot the closing price of SPY
+plot(Cl(SPY))
+```
+
+
+```{r}
+# Plot the closing prices of SPY
+plot(Cl(SPY))
+#plot(Ad(SPY))
+
+# Add a 200-day SMA using lines()
+lines(SMA(Cl(SPY), n = 200), col = 'red')
+
+# Create an RSI with a 3-day lookback period
+lines(RSI(Cl(SPY), n=14), col='blue')
+```
+
+
+```{r}
+
+# Create initdate, from, and to strings
+initdate <- '1999-01-01'
+from <- '2003-01-01'
+to <- '2015-12-31'
+
+# Set the timezone to UTC
+Sys.setenv(TZ='UTC')
+
+# Set the currency to USD 
+currency('USD')
+```
+
+```{r}
+# Use stock() to initialize SPY and set currency to USD
+stock('GDX', currency='USD')
+```
+
+```{r}
+# Add a 200-day SMA indicator to strategy.st
+add.indicator(strategy = strategy.st, 
+              
+              # Add the SMA function
+              name = 'SMA', 
+              
+              # Create a lookback period
+              arguments = list(x = quote(Cl(mktdata)), n=200), 
+              
+              # Label your indicator SMA200
+              label = 'SMA200')
+
+```
+
+```{r}
+# Add an RSI 3 indicator to strategy.st
+add.indicator(strategy = strategy.st, 
+              
+              # Add the RSI 3 function
+              name = 'RSI', 
+              
+              # Create a lookback period
+              arguments = list(x = quote(Cl(mktdata)), n=3), 
+              
+              # Label your indicator RSI_3
+              label = 'RSI_3')
+```
+
+```{r}
+# Write the calc_RSI_avg function
+calc_RSI_avg <- function(price, n1, n2) {
+  
+  # RSI 1 takes an input of the price and n1
+  RSI_1 <- RSI(price = price, n =n1)
+  
+  # RSI 2 takes an input of the price and n2
+  RSI_2 <- RSI(price = price, n = n2)
+  
+  # RSI_avg is the average of RSI_1 and RSI_2
+  RSI_avg <- (RSI_1 + RSI_2)/2
+  
+  # Your output of RSI_avg needs a column name of RSI_avg
+  colnames(RSI_avg) <- "RSI_avg"
+  return(RSI_avg)
+}
+
+# Add this function as RSI_3_4 to your strategy with n1 = 3 and n2 = 4
+add.indicator(strategy.st, name = RSI, arguments = list(price = quote(Cl(mktdata)), n1 = 3, n2 = 4), label = 'RSI_3_4')
+```
+
+```{r}
+# Declare the DVO function
+DVO <- function(HLC, navg = 2, percentlookback = 126) {
+  
+  # Compute the ratio between closing prices to the average of high and low
+  ratio <- Cl(HLC)/((Hi(HLC) + Lo(HLC))/2)
+  
+  # Smooth out the ratio outputs using a moving average
+  avgratio <- SMA(ratio, n = navg)
+  
+  # Convert ratio into a 0-100 value using runPercentRank()
+  out <- runPercentRank(avgratio, n = percentlookback, exact.multiplier = 1) * 100
+  colnames(out) <- "DVO"
+  return(out)
+}
+```
+
+
+```{r}
+# Add the DVO indicator to your strategy
+add.indicator(strategy = strategy.st, name = "DVO",
+              arguments = list(HLC = quote(HLC(mktdata)), navg = 2, percentlookback = 126),
+              label = "DVO_2_126")
+
+# Use applyIndicators to test out your indicators
+test <- applyIndicators(strategy = strategy.st, mktdata = OHLC(SPY))
+
+# Subset your data between Sep. 1 and Sep. 5 of 2013
+test_subset <- test["2013-09-01/2013-09-05"]
+```
+
+```{r}
+# Add a sigComparison which specifies that SMA50 must be greater than SMA200, call it longfilter
+add.signal(strategy.st, name = "sigComparison", 
+           
+           # We are interested in the relationship between the SMA50 and the SMA200
+           arguments = list(columns = c("SMA50", "SMA200"), 
+                            
+                            # Particularly, we are interested when the SMA50 is greater than the SMA200
+                            relationship = "gt"),
+           
+           # Label this signal longfilter
+           label = "longfilter")
+```
+
+```{r}
+# Implement a sigThreshold which specifies that DVO_2_126 must be less than 20, label it longthreshold
+add.signal(strategy.st, name = "sigThreshold", 
+           
+           # Use the DVO_2_126 column
+           arguments = list(column = "DVO_2_126", 
+                            
+                            # The threshold is 20
+                            threshold = 20, 
+                            
+                            # We want the oscillator to be under this value
+                            relationship = "lt", 
+                            
+                            # We're interested in every instance that the oscillator is less than 20
+                            cross = F), 
+           
+           # Label it longthreshold
+           label = "longthreshold")
+```
+
+
+```{r}
+# Create your dataset: test
+test_init <- applyIndicators(strategy.st, mktdata = OHLC(SPY))
+test <- applySignals(strategy = strategy.st, mktdata = test_init)
+```
+
+```{r}
+# Add a sigFormula signal to your code specifying that both longfilter and longthreshold must be TRUE, label it longentry
+add.signal(strategy.st, name = "sigFormula",
+           
+           # Specify that longfilter and longthreshold must be TRUE
+           arguments = list(formula = "longfilter & longthreshold", 
+                            
+                            # Specify that cross must be TRUE
+                            cross = T),
+           
+           # Label it longentry
+           label = "longentry")
+```
+
+Using add.rule() to implement an exit rule
+Welcome to the chapter on rules! While rules in quantstrat can become very complex, this chapter will fill in many of the details for you to help you develop an understanding of the actual mechanics of rules. Rules are the final mechanic in the trinity of quantstrat mechanics -- indicators, signals, and rules. Rules are a way for you to specify exactly how you will shape your transaction once you decide you wish to execute on a signal.
+
+Throughout this chapter, you will continue working the strategy developed in earlier chapters (strategy.st). Given that there are three rules to the strategy (two exit rules and one entry rule), there will be a handful of exercises to build up some intuition of the mechanics of rules.
+
+This exercise will introduce you to the add.rule() function, which allows you to add customized rules to your strategy. Your strategy from earlier chapters (strategy.st) is preloaded in your workspace.
+
+```{r}
+# Fill in the rule's type as exit
+add.rule(strategy.st, name = "ruleSignal", 
+         arguments = list(sigcol = "filterexit", sigval = TRUE, orderqty = "all", 
+                        ordertype = "market", orderside = "long", 
+                        replace = FALSE, prefer = "Open"), 
+         type = "exit")
+```
+
+
+Implementing a rule with an order sizing function
+In quantstrat, the amount of an asset transacted may not always be a fixed quantity in regards to the actual shares. The constructs that allow quantstrat to vary the amount of shares bought or sold are called order sizing functions. Due to the extensive additional syntax in creating a proper order sizing function, coding your own order sizing function from scratch is outside the scope of this course.
+
+However, using a pre-coded order sizing function is straightforward. The first thing to know is that when using an order sizing function, the orderqty argument is no longer relevant, as the order quantity is determined by the order sizing function. Calling an order sizing function with your add.rule() call is fairly straightforward. The inputs for the order sizing function are mixed in with the rest of the inputs inside the arguments that you have been working with throughout this chapter.
+
+In this exercise, you will use the osFUN argument to specify a function called osMaxDollar. This is not passed in as a string, but rather as an object. The only difference is that the name of the order sizing function is not encased in quotes.
+
+The additional arguments to this function are tradeSize and maxSize, both of which should take tradesize, which you defined several chapters earlier. This has been made available in your workspace.
+
+```{r}
+# Add a rule that uses an osFUN to size an entry position
+add.rule(strategy = strategy.st, name = "ruleSignal",
+         arguments = list(sigcol = "longentry", sigval = TRUE, ordertype = "market",
+                          orderside = "long", replace = FALSE, prefer = "Open",
+                          
+                          # Use the osFUN called osMaxDollar
+                          osFUN = osMaxDollar,
+                          
+                          # The tradeSize argument should be equal to tradesize (defined earlier)
+                          tradeSize = tradesize,
+                          
+                          # The maxSize argument should be equal to tradesize as well
+                          maxSize = tradesize),
+         type = "enter")
+```
+
+
+Running your strategy
+Congratulations on creating a strategy in quantstrat! To review, your strategy uses three separate indicators and five separate signals. The strategy requires both the threshold of the DVO_2_126 indicator to be under 20 and the SMA50 to be greater than the SMA200. The strategy sells when the DVO_2_126 crosses above 80, or the SMA50 crosses under the SMA200.
+
+For this strategy to work properly, you specified five separate signals:
+
+sigComparison for SMA50 being greater than SMA200;
+sigThreshold with cross set to FALSE for DVO_2_126 less than 20;
+sigFormula to tie them together and set cross to TRUE;
+sigCrossover with SMA50 less than SMA200; and
+sigThreshold with cross set to TRUE for DVO_2_126 greater than 80.
+The strategy invests $100,000 (your initeq) into each trade, and may have some small dollar cost averaging if the DVO_2_126 oscillates around 20 (though the effect is mostly negligible compared to the initial allocation).
+
+In this final chapter, you will learn how to view the actual results of your portfolio. But first, in order to generate the results, you need to run your strategy and fill in some more boilerplate code to make sure quantstrat records everything. The code in this exercise is code you will have to copy and paste in the future.
+
+```{r}
+
+```
+
