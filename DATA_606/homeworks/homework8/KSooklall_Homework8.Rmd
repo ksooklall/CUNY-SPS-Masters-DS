@@ -131,6 +131,7 @@ cor = 0.67
 
 (b) Interpret the slope and the intercept in this context.
 
+
 (c) Calculate $R^2$ of the regression line for predicting height from shoulder girth, and interpret it in the context of the application.
 
 (d) A randomly selected student from your class has a shoulder girth of 100 cm. Predict the height of this student using the model.

@@ -180,9 +180,14 @@ lmodel = lm(pf_score ~ pf_expression_control, data=hfi)
 data = summary(lmodel)
 hfi$yhat = data$coefficients[2] * hfi$pf_expression_control + data$coefficients[1]
 hfi$residual <- hfi$yhat - hfi$pf_score
+hfi %>% select(pf_expression_control,pf_score, yhat, residual) %>% filter(pf_expression_control > 6.6 & pf_expression_control < 6.8)
 ```
 
-A `pf_expression_control` corresponds to a pf_score of 7.91
+```{r}
+data$coefficients[2] * 6.7 + data$coefficients[1]
+```
+
+A `pf_expression_control` of 6.7 corresponds to a pf_score of between 7.19 and 8.77 in the data but the model would predict 7.91, which is within those values.
 
 ## Model diagnostics
 
@@ -203,6 +208,7 @@ Notice here that `m1` can also serve as a data set because stored within it are 
 ### Exercise 7
 7.  Is there any apparent pattern in the residuals plot? What does this indicate
     about the linearity of the relationship between the two variables?  
+
 
 </br>
 

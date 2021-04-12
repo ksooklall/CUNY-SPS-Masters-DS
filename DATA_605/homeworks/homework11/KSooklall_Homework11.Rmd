@@ -1,0 +1,34 @@
+---
+title: "KSooklall_Homework11"
+author: "Kenan Sooklall"
+date: "4/8/2021"
+output: html_document
+---
+
+Using the “cars” dataset in R, build a linear model for stopping distance as a function of speed and replicate the analysis of your textbook chapter 3 (visualization, quality evaluation of the model, and residual analysis.)
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+```
+
+```{r cars}
+summary(cars)
+```
+
+```{r}
+lmodel = lm(dist ~ speed, data=cars)
+summary(lmodel)
+```
+
+For every unit of speed (mph) that a car travels the distance the car will stop when the breaks is slammed is 4ft. The $r^2$ of 0.65 implies that 65% of the variance on the distance the car traveled is explained by the speed.
+
+```{r}
+cars %>% ggplot(aes(speed, dist)) + geom_point() + stat_smooth(method = "lm")
+```
+
+```{r}
+plot(fitted(lmodel),resid(lmodel))
+```
+
+The residuals are some what scattered above and below zero. Overall, this plot tells us that using the regression model is an ok predictor between speed and distance.

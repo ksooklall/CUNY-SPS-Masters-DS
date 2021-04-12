@@ -56,7 +56,7 @@ scrape_amazon <- function(ASIN, page_num){
 
 
 ```{r}
-ASIN <- "B00QQA0H3S" # Specify ASIN
+ASIN <- "B082TTFF87" # Specify ASIN
 page_range <- 1:50 # Let's say we want to scrape pages 1 to 10
 
 match_key <- tibble(n = page_range,

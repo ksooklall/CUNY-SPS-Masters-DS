@@ -1,0 +1,76 @@
+---
+title: "KSooklall_Homework9 DATA607"
+author: "Kenan Sooklall"
+date: "4/9/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, message=FALSE}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(ggplot2)
+```
+
+The api key would normally be in a hidden file and read here with readLine
+
+```{r}
+api_key = 'qdUXTcfRvGEgKiHVfrG8Oc3vwWW8YJZG'
+base_url <- "https://api.nytimes.com/svc/movies/v2/reviews/search.json?query=kong"
+url <- paste0(base_url, "&api-key=", api_key)
+response <- GET(url)
+```
+
+```{r}
+json <- fromJSON(content(response, as="text"))
+df <- data.frame(json$results)
+glimpse(df)
+```
+
+### EDA
+
+```{r}
+df %>% select(display_title, critics_pick) %>% ggplot(aes(x=display_title, y=critics_pick)) + geom_col() + coord_flip()
+```
+
+Tough critics, only Force Majeure was picked
+
+```{r, warning=FALSE, message=FALSE}
+library(wordcloud)
+library(tm)
+
+docs <- Corpus(VectorSource(df$summary_short))
+
+toSpace <- content_transformer(function (x , pattern ) gsub(pattern, " ", x))
+docs <- tm_map(docs, toSpace, "/")
+docs <- tm_map(docs, toSpace, "@")
+docs <- tm_map(docs, toSpace, "\\|")
+
+# Convert the text to lower case
+docs <- tm_map(docs, content_transformer(tolower))
+# Remove numbers
+docs <- tm_map(docs, removeNumbers)
+# Remove english common stopwords
+docs <- tm_map(docs, removeWords, stopwords("english"))
+# Remove your own stop word
+# specify your stopwords as a character vector
+docs <- tm_map(docs, removeWords, c("blabla1", "blabla2")) 
+# Remove punctuations
+docs <- tm_map(docs, removePunctuation)
+# Eliminate extra white spaces
+docs <- tm_map(docs, stripWhitespace)
+
+dtm <- TermDocumentMatrix(docs)
+m <- as.matrix(dtm)
+v <- sort(rowSums(m),decreasing=TRUE)
+d <- data.frame(word = names(v),freq=v)
+
+set.seed(1234)
+wordcloud(words = d$word, freq = d$freq, min.freq = 200,
+          max.words=200, random.order=FALSE, rot.per=0.35, 
+          colors=brewer.pal(8, "Dark2"))
+```
+
+A wordcloud of the summaries
