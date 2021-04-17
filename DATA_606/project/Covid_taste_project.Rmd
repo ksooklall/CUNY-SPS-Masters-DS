@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Data extraction"
 author: "Kenan Sooklall"
 date: "3/27/2021"
 output: html_document
@@ -40,11 +40,6 @@ scrape_amazon <- function(ASIN, page_num){
     html_nodes("[class='a-size-base a-color-secondary review-date']")  %>%
     html_text() -> review_date
   
-  #print(length(review_title))
-  #print(length(review_text))
-  #print(length(review_star))
-  #print(length(review_date[3:12]))
-
   # Return a tibble
   tibble(review_title,
          review_text,
@@ -56,7 +51,7 @@ scrape_amazon <- function(ASIN, page_num){
 
 
 ```{r}
-ASIN <- "B082TTFF87" # Specify ASIN
+ASIN <- "B00VZ0IoY8" # Specify ASIN
 page_range <- 1:50 # Let's say we want to scrape pages 1 to 10
 
 match_key <- tibble(n = page_range,

@@ -1,13 +1,13 @@
 ---
 title: "Introduction to linear regression"
-author: ""
+author: "Kenan Sooklall"
 output:
+  pdf_document: default
   html_document:
     includes:
     highlight: pygments
     theme: cerulean
     toc_float: true
-  pdf_document: default
 editor_options: 
   chunk_output_type: console
 ---
@@ -209,6 +209,7 @@ Notice here that `m1` can also serve as a data set because stored within it are 
 7.  Is there any apparent pattern in the residuals plot? What does this indicate
     about the linearity of the relationship between the two variables?  
 
+The residuals are very close the 0 line with fewer and you move away. That might indicate the residual plot is normally distributed.
 
 </br>
 
@@ -233,6 +234,8 @@ Note that the syntax for making a normal probability plot is a bit different tha
 8.  Based on the histogram and the normal probability plot, does the nearly 
     normal residuals condition appear to be met?
 
+The histogram is one rectangle, with smaller bins it does look normal. The qq plot is more convincing as it move to the top right of the graph.
+
 </br>
 
 **Constant variability**:
@@ -241,22 +244,49 @@ Note that the syntax for making a normal probability plot is a bit different tha
 9.  Based on the residuals vs. fitted plot, does the constant variability condition 
     appear to be met?
 
+Yes it does
 * * *
 
 ## More Practice
 <div class="oyo">
 
+### Exercise 10
 -   Choose another freedom variable and a variable you think would strongly
     correlate with it.. Produce a scatterplot of the two variables and fit a 
     linear model. At a glance, does there seem to be a linear relationship?
 
+```{r}
+ggplot(data = hfi, aes(x = ef_regulation_business, y = ef_score)) +
+  geom_point(na.rm = T) +
+  stat_smooth(method = "lm", se = FALSE, na.rm = T)
+```
+
+It definitely seem linear with a positive correlation
+
+### Exercise 11
 -   How does this relationship compare to the relationship between 
     `pf_expression_control` and `pf_score`? Use the $R^2$ values from the two 
     model summaries to compare. Does your independent variable seem to predict
     your dependent one better? Why or why not?
+    
+```{r}
+efm1 <- lm(ef_score ~ ef_regulation_business, data = hfi)
+summary(efm1)
+```
 
+The relationship between `pf_expression_control` and `pf_score` is stronger (0.63) than `ef_regulation_business` and `ef_score` (0.58), The independent variable ef_regulation_business is not a good predictor of ef_score
 
+### Exercise 12
 -   What's one freedom relationship you were most surprised about and why? Display
     the model diagnostics for the regression model analyzing this relationship.
     
+```{r}
+ggplot(data = efm1, aes(x = .fitted, y = .resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  xlab("Fitted values") +
+  ylab("Residuals")
+```
+    
+When looking at the fitted vs residuals the ef_score model is surprisingly bad when compared to the pf_score. There might be a better variable to use beside ef_regulation_business.
 * * *

@@ -7,8 +7,131 @@ output: html_document
 
 ```{r}
 library(tidyverse)
+library(ggplot2)
+library(wordcloud)
+library(tidytext)
+library(tm)
+```
+https://github.com/kateptrv/Candles/blob/main/Candles%20code%20examples.R
+
+
+B000QSNYGI - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Double Rich Chocolate, 5 Pound (Packaging May Vary)
+
+B00BEOHFKO - Whey Protein Powder | MuscleTech Phase8 Protein Powder | Whey & Casein Protein Powder Blend | Slow Release 8-Hour Protein Shakes | Muscle Builder for Men & Women | Chocolate, 4.6 lbs (50 Servings)
+
+B00NLR1PX0 - Vital Proteins Collagen Peptides Powder Supplement (Type I, III) for Skin Hair Nail Joint - Hydrolyzed Collagen - Non-GMO - Dairy and Gluten Free - 20g per Serving - Unflavored 10 oz Canister
+
+B00QQA0H3S - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Naturally Flavored Vanilla, 4.8 Pound (Packaging May Vary)
+
+B01NAEHLFO - Garden of Life Sport Certified Grass Fed Clean Whey Protein Isolate, Vanilla, 22.57 Ounce
+
+B06XX78LKR - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, 1.6 Pound, Chocolate Peanut Butter, 25.6 Ounce (Pack of 1)
+
+B00VZ0IoY8 - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, Brown, Cinnamon Bun, 5 lbs
+
+B07BL695D1 - Nutricost Whey Protein Isolate (Strawberry) 5LBS
+
+B07L91HBFG - Nutrition Chocolate Milkshake Protein Powder, High Protein, Low Carb, Gluten Free, Soy Free, 1.6 lbs (Pack of 1)
+
+B082TTFF87 - KOS Organic Plant Based Protein Powder, Chocolate Peanut Butter - Delicious Vegan Protein Powder - Keto Friendly, Gluten Free, Dairy Free & Soy Free - 1.3 Pounds, 15 Servings
+
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/'
+dfiles = c('B000QSNYGI.csv', 'B00BEOHFKO.csv', 'B00NLR1PX0.csv', 'B00QQA0H3S.csv', 'B01NAEHLFO.csv', 'B06XX78LKR.csv', 'B07BL695D1.csv', 'B07L91HBFG.csv', 'B082TTFF87.csv', 'B00VZ0IoY8.csv')
 ```
 
 ```{r}
-df <-  read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/raw_covid_fci_data.csv')
+fdf = data.frame()
+
+for (i in dfiles) {
+  df <-  read.csv(paste0(path, i))  
+  
+  titles = gather(df %>% select(starts_with('review_title')))$value
+  texts = gather(df %>% select(starts_with('review_text')))$value
+  stars = gather(df %>% select(starts_with('review_star')))$value
+  dates = gather(df %>% select(starts_with('review_date')))$value
+  pages = gather(df %>% select(starts_with('page')))$value
+
+  ndf <- data.frame(title=titles, text=texts, star=stars, date=dates, page=pages)
+  ndf$star <- str_extract(ndf$star, '\\d')
+  ndf$date <- str_extract(ndf$date, '\\d{4}')
+  ndf$title <- gsub("[\r\n]", "", ndf$title) %>% str_trim(side='both')
+  ndf$text <- gsub("[\r\n]", "", ndf$text) %>% str_trim(side='both')
+  ndf$protein = str_split(i, '.csv')[[1]][1]
+  
+  fdf <- bind_rows(fdf, ndf)
+}
+
+fdf$star <- as.numeric(fdf$star)
+fdf$date <- as.numeric(fdf$date)
+fdf$text <- str_to_lower(str_trim(gsub('[[:punct:] ]+',' ',fdf$text)))
+
+proteins <- c('B000QSNYGI', 'B00BEOHFKO','B00NLR1PX0','B01NAEHLFO','B00VZ0IoY8','B07BL695D1','B07L91HBFG','B082TTFF87')
+
+fdf <- fdf %>% filter(protein %in% proteins & date > 2016) %>% mutate(protein=recode(protein, 
+                        'B000QSNYGI'='Optimum Double Rich Chocolate',
+                        'B00BEOHFKO'= 'MuscleTech Phase8',
+                        'B00NLR1PX0'= 'Vital Proteins Collagen',
+                        'B01NAEHLFO'= 'Garden of Life',
+                        'B00VZ0IoY8'= 'Dymatize ISO',
+                        'B07BL695D1'='Nutricost Strawberry',
+                        'B07L91HBFG'= 'Nutrition Chocolate Milkshake',
+                        'B082TTFF87'='KOS Chocolate Peanut Butter'))
+```
+
+# Filter each description for words like
+```{r}
+bad_words = c('trash', 'disgusting', 'horrible', 'nasty', 'terrible', 'abomination', 'horrid', 'bad', 'tasteless', 'awful', 'flavor is awful',
+'gagging',
+'flavor is horrible',
+'terrible tasting ',
+'tasted too disgusting',
+'tastes disgusting',
+'taste horrible',
+'tasted horrible',
+'taste is horrible',
+'tastes bad',
+'taste is unbearable',
+'taste like cheap whey protein',
+'tastes nothing like',
+'taste isnt great',
+'has the worst after taste',
+'hate the taste',
+'worst tasting protein',
+'medicinal and artificial taste',
+'has no flavor',
+'Not a very good taste')
+
+bad_words = paste(bad_words, sep='|', collapse ='|')[1]
+```
+
+Before covid
+Vital Proteins Collagen meant to be tasteless
+```{r}
+fdf <- fdf %>% mutate(notaste = ifelse(str_detect(text, bad_words) & star < 4, 1, 0))
+
+bcvd <- fdf %>% filter(date < 2020)
+bm = mean(bcvd$notaste)
+bs = sd(bcvd$notaste)
+bn = nrow(bcvd)
+
+acvd <- fdf %>% filter(date >= 2020)
+am = mean(acvd$notaste)
+as = sd(acvd$notaste)
+an = nrow(acvd)
+
+se = sqrt(bs^2/sqrt(bn) + as^2/sqrt(an))
+pe = bm - am
+
+p = pt(pe / se, df=an + bn)
+```
+
+```{r}
+fdf %>% group_by(star) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=star, y=taste)) + geom_col()
+fdf %>% group_by(date) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=date, y=taste)) + geom_col()
+
+
+fdf %>% mutate(notaste = no_taste(text)) %>%
+    mutate(notaste = ifelse(notaste != 1, 0, 1)) %>% filter(notaste == 1) %>% ggplot(aes(x=shake)) + geom_bar() + coord_flip()
 ```

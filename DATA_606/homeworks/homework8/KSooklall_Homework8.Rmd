@@ -1,6 +1,6 @@
 ---
 title: "Chapter 8 - Introduction to Linear Regression"
-author: ''
+author: 'Kenan Sooklall'
 output:
   html_document:
     df_print: paged
@@ -72,7 +72,7 @@ The regression line shows if there is a positive or negative relationship, in th
 
 (d) Do these data meet the conditions required for fitting a least squares line?
 
-
+The relationship looks linear and the residuals are normally distributed
 
 
 
@@ -125,23 +125,48 @@ The relationship stays the same
 **Body measurements, Part III.** (8.24, p. 326) Exercise above introduces data on shoulder girth and height of a group of individuals. The mean shoulder girth is 107.20 cm with a standard deviation of 10.37 cm. The mean height is 171.14 cm with a standard deviation of 9.41 cm. The correlation between height and shoulder girth is 0.67.
 
 (a) Write the equation of the regression line for predicting height.
-mu = 107.2
-std = 10.37
+```{r}
+smu = 107.2
+ssd = 10.37
+
+hmu = 171.14
+hsd = 9.41
 cor = 0.67
+
+b1 = hsd / ssd * cor
+b0 = hmu - (smu * b1)
+```
+
+$height = 105.9651 + 0.60797 * girth$
 
 (b) Interpret the slope and the intercept in this context.
 
+The average height is 106cm. An increase in shoulder girth corresponds to about 0.61cm increase in height.
 
 (c) Calculate $R^2$ of the regression line for predicting height from shoulder girth, and interpret it in the context of the application.
 
+```{r}
+ml <- lm(sho_gi_in ~ hgt, data = bdims)
+summary(ml)
+```
+
+About 44% of the variability in height is explained by shoulder girth.
+
 (d) A randomly selected student from your class has a shoulder girth of 100 cm. Predict the height of this student using the model.
+
+```{r}
+height = 105.9651 + 0.60797 * 100
+```
+
+That student is ~167cm tall
 
 (e) The student from part (d) is 160 cm tall. Calculate the residual, and explain what this residual means.
 
+167 - 160 = 7cm residual, our model overestimated the student height
+
 (f) A one year old has a shoulder girth of 56 cm. Would it be appropriate to use this linear model to predict the height of this child?
 
-
-
+A shoulder girth of 56 is outside our data set and extrapolation with this model isn't appropriate.
 
 
 
@@ -191,12 +216,25 @@ box()
 \end{center}
 
 (a) Write out the linear model.
+
+$\hat{y} = -0.357 + 4.034 * bwt$
+
 (b) Interpret the intercept.
+
+The intercept in this context doesn't make sense since one cann't have a negative body weight
+
 (c) Interpret the slope.
+
+A unit increase in body weight corresponds to 4g in heart weight
+
 (d) Interpret $R^2$.
+
+About 64.7% of the variance in heart weight is captured in body weight
+
 (e) Calculate the correlation coefficient.
-
-
+```{r}
+sqrt(0.6466)
+```
 
 --------------------------------------------------------------------------------
 
@@ -240,8 +278,20 @@ box()
 \end{center}
 
 (a) Given that the average standardized beauty score is -0.0883 and average teaching evaluation score is 3.9983, calculate the slope. Alternatively, the slope may be computed using just the information provided in the model summary table.
+```{r}
+(4.01002-3.9983)/(0-(-0.0883))
+```
+
 (b) Do these data provide convincing evidence that the slope of the relationship between teaching evaluation and beauty is positive? Explain your reasoning.
+```{r}
+summary(m_eval_beauty)
+```
+The r^2 is very small (0.036) indicating there is no relationship here
+
 (c) List the conditions required for linear regression and check if each one is satisfied for this model based on the following diagnostic plots.
+
+The data does not look like there is a linear relationship so this condition fails; however
+the plot below looks normal which satisfies the residual condition. The QQ plot also indicates the distribution is normal.
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.show="hold", out.width="50%", fig.height=4}
 # residuals plot ----------------------------------------------------
