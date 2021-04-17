@@ -1,0 +1,18 @@
+---
+title: "KSooklall_Homework10 DATA 607"
+author: "Kenan Sooklall"
+date: "4/16/2021"
+output: html_document
+---
+
+Code taken from 
+Text Mining with R
+Chapter 2 - Sentiment analysis with tidy data
+
+```{r}
+library(tidytext)
+
+get_sentiments("afinn")
+get_sentiments("bing")
+get_sentiments("nrc")
+```

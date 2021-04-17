@@ -127,6 +127,7 @@ pe = bm - am
 p = pt(pe / se, df=an + bn)
 ```
 
+plot x=year y=taste count facet on protein
 ```{r}
 fdf %>% group_by(star) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=star, y=taste)) + geom_col()
 fdf %>% group_by(date) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=date, y=taste)) + geom_col()
