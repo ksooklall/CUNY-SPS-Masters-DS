@@ -2,7 +2,9 @@
 title: "KSooklall_Homework11"
 author: "Kenan Sooklall"
 date: "4/8/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 Using the “cars” dataset in R, build a linear model for stopping distance as a function of speed and replicate the analysis of your textbook chapter 3 (visualization, quality evaluation of the model, and residual analysis.)

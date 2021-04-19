@@ -2,17 +2,73 @@
 title: "KSooklall_Homework10 DATA 607"
 author: "Kenan Sooklall"
 date: "4/16/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
-Code taken from 
+The code in this report are taken from the textbook:
 Text Mining with R
 Chapter 2 - Sentiment analysis with tidy data
 
 ```{r}
 library(tidytext)
+library(tidyverse)
+library(ggplot2)
+library(wordcloud)
+```
 
+Load sentiment data sets
+
+```{r}
 get_sentiments("afinn")
 get_sentiments("bing")
 get_sentiments("nrc")
+```
+
+Read in the data and plot the ratio of good vs bad sentiment
+```{r}
+df = read.csv('https://raw.githubusercontent.com/ksooklall/CUNY-SPS-Masters-DS/main/DATA_607/homework/homework10/imbd_movie_reviews.data')
+df %>% ggplot(aes(x=sentiment)) + geom_bar()
+```
+
+Unnest the review column and remove stop_words.
+Stop_words are words that carry no sentiment like [i, the, a, able, about ...]
+```{r}
+text <- df %>% mutate(linenum = row_number()) %>% unnest_tokens(word, review) %>% anti_join(stop_words)
+```
+
+View the distribution of different sentiment words
+```{r}
+text %>% select(word) %>%
+    inner_join(get_sentiments("bing")) %>%
+    count(word, sort = TRUE) %>% top_n(n, n=10) %>% ggplot(aes(x=word, y=n)) + geom_col() + coord_flip()
+```
+
+```{r}
+text %>% select(word) %>%
+    inner_join(get_sentiments("nrc")) %>%
+    count(word, sort = TRUE) %>% top_n(n, n=10) %>% ggplot(aes(x=word, y=n)) + geom_col() + coord_flip()
+```
+
+```{r}
+text %>% select(word) %>%
+    inner_join(get_sentiments("afinn")) %>%
+    count(word, sort = TRUE) %>% top_n(n, n=10) %>% ggplot(aes(x=word, y=n)) + geom_col() + coord_flip()
+```
+
+
+Word clouds
+
+```{r}
+text %>% pull(word) %>% wordcloud(min.freq = 10, max.word=100)
+```
+
+
+```{r}
+library(reshape2)
+
+text %>% select(word) %>% inner_join(get_sentiments("afinn")) %>%inner_join(get_sentiments("nrc")) %>%inner_join(get_sentiments("bing")) %>% count(word, sentiment, sort=T) %>% acast(word ~ sentiment, value.var = "n", fill = 0) %>%
+  comparison.cloud(colors = c("red", "blue"),
+                   max.words = 100)
 ```
