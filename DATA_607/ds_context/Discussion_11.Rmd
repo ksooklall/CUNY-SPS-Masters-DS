@@ -1,0 +1,23 @@
+---
+title: "Recommender systems"
+author: "Kenan Sooklall"
+date: "4/21/2021"
+output: html_document
+---
+
+
+Recommender System - For this discussion I will be looking at netflix recommender system. Netflix is all about connecting people to the movies and shows that they love. To help customers find those content, they developed a recommendation system so we spend more time on the platform. 
+
+
+### Scenario Design: 
+
+Netflix's model is all about keeping users watching and expanding their customer base. Their recommender system is vital at keep us there since there is always something new to watch. Netflix also expands their customer base by getting us, the customers, to recommend their platform to our friends and family.
+
+### Recommender system:
+
+The recommender system job is to predict whether someone will enjoy a movie based on how much they liked or disliked other movies. Netflix uses those predictions to make personal movie recommendations based on each customer’s unique preference. These predictions are done through unsupervised approaches and clustering algorithms.
+
+### Improvements
+
+It's very difficult to recommend an improvement on a model that handles such a large volume without having it. I can say as a Netfil user it does a very good job and selecting movies and shows that I like. It's very rare that a movie has a low rating on my account and I actually enjoy it.
+

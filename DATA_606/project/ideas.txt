@@ -6,3 +6,4 @@ taste from protien powder before and after covid-19
     H_o no change mean = 2019 reviews
     H_a mean > dur to more negative review due to lack of taste, one-tailed
     quote Ellenberg
+high heel shoes sales vs floor repair, business repair
