@@ -1,0 +1,63 @@
+---
+title: "Homework 13"
+author: "Kenan Sooklall"
+date: "4/27/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, echo=F, waring=F, message=F}
+library(tidyverse)
+```
+
+#### Exercise 1
+Use integration by substitution to solve the integral below.
+
+$$\int 4e^{-7x} dx \\ \rightarrow u=-7x \hspace{1cm} du= -7dx \hspace{1cm} -du/7 = dx \\ \rightarrow  -4/7 \int e^u du = -4e^u/7 = -4e^{-7x}/7 + c$$
+
+#### Exercise 2
+Biologists are treating a pond contaminated with bacteria. The level of contamination is changing at a rate of $dN1/dt = -3150/t^4 - 220$ bacteria per cubic centimeter per day, where t is the number of days since treatment began. Find a N(t) to estimate the level of contamination if the level after 1 day was 6530 bacteria per cubic centimeter.
+
+$$N(t)= \int -3150 / t^4 - 220 \rightarrow -3150 / (-3t^3) - 220t + c \\N(1) = 6530 = -3150/(-3 t^3) - 220 + c \rightarrow c = 5700 \\N(t) = 1050/t^3  - 220t + 5700$$
+
+#### Exercise 3
+Find the total area of the red rectangles in the figure below, where the equation of the line is $f(x) = 2x - 9$.
+
+```{r}
+data.frame(x=seq(from=5, to=8)) %>% mutate(y=2 * x - 9) %>% pull(y) %>% sum
+```
+The base is always 1 so the sum of the rectangles will be the sum of their heights
+
+#### Exercise 4
+Find the area of the region bounded by the graphs of the given equations. $y = x^2-2x-2, y = x + 2$
+
+```{r}
+data.frame(x=seq(from=-10, to=10, by=1)) %>%  mutate(y1 = x^2 - 2*x - 2, y2 = x + 2)  %>% 
+                pivot_longer(!x)  %>% 
+                ggplot(aes(x=x, y=value)) + geom_line(aes(colour = name))
+```
+
+$$ x^2 - 2x - 2 = x + 2 \rightarrow x^2 - x - 4 = 0 \rightarrow x = 4, x=-1 \\ \int_{-1}^{4} x+2 - ( x^2-2x-2) =  \int_{-1}^{4} -x^2+3x+4 = -x^3/3 + 3x^2/2 + 4x \Biggr|_{-1}^{4} = 20.83$$
+
+#### Exercise 5
+A beauty supply store expects to sell 110 flat irons during the next year. It costs 3.75 to store one flat iron for one year. There is a fixed cost of $8.25 for each order. Find the lot size and the number of orders per year that will minimize inventory costs.
+
+x = number of iron
+n = lot size
+nx = 110
+
+$$ C = 8.25 x + 3.75 * (110/x)/2 =  8.25 x + 206.25/x \\dC/dx = 0 = 8.25 - 206.25/x^2 \rightarrow x=5 \\ nx = 110 = n * 5 \rightarrow n=22$$
+A lot size of 22 and 5 orders per year will minimize inventory costs
+
+#### Exercise 6
+Use integration by parts to solve the integral below.
+
+$$ \int ln(9x)x^6 dx \hspace{0.5cm} u=ln(9x), dv = x^6 \rightarrow du=1/x, v=x^7/7 \\ x^7ln(9x)/7 - \int x^7/7* (1/x) = x^7ln(9x)/7 - x^7/49 = x^7(7ln(9x) - 1)/49 $$
+
+#### Exercise 7
+Determine whether f(x)=1/(6x) is a probability density function on the interval 1, e 6 . If not, determine the value of the definite integral.
+
+$$ \int_{1}^{e^6} 1/6x = ln(x)/6\Biggr|_{1}^{e^6} = ln(e^6)/6 - ln(1)/6 = 1- 0 = 1$$
+
+Therefore f(x) is a probability density function

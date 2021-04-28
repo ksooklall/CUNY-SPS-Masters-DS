@@ -1,0 +1,213 @@
+```{r, echo=F, warning=F, include=F}
+library(tidyverse)
+library(tidytext)
+library(tidymodels)
+library(textrecipes)
+library(tm)
+library(vip)
+set.seed(45)
+```
+<center>
+
+![](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_4/Animal_Crossing_New_Horizons.png)
+
+</center>
+
+Animal Crossing is one of the most relaxing and friendly game series in the market today. Animal Crossing ignores many common video game aspects, such as competition and challenge, and let's you enjoy and interact with your environment and friends. The most recent version New Horizons has sold in 31.18 million copies as of Dec 2020, making it one of the best selling games on the switch. 
+
+
+
+In this report I will be analyzing reviews of Animal Crossing and build a logistic regression model to predict ratings based on those reviews
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_4/'
+df <- read.csv(paste0(path, 'animal_crossing_reviews.csv'))
+```
+
+To begin we should look at the distribution of the ratings.
+
+```{r}
+df %>% ggplot(aes(x=grade)) + geom_bar()
+```
+
+The plot shows how reviews can be polarizing. People who really love the game or really hate it post the most while those who are less aggressive won't give a review
+
+
+Another good plot to look at is how review change over time
+```{r}
+df %>% group_by(date) %>% 
+  summarise(rating=mean(grade)) %>% 
+  ggplot(aes(x=date, y=rating)) + geom_point() + theme(axis.text.x = element_text(angle = 60, hjust = 1))
+```
+
+From March to June the average reviews mostly range between 2 and 6.
+
+We can sample the reviews
+```{r}
+df %>% filter(grade == 10) %>% pull(text) %>% sample(3)
+```
+
+Good review comment on how the game looks great and how relaxing the sound track is.
+
+```{r}
+df %>% filter(grade == 0) %>% pull(text) %>% sample(3)
+```
+
+Bad reviews comment on how there is only one island per console, and how there is a lot of greed from Nintendo.
+
+#### Text preprocessing
+
+It seem like there was some issue with the scraping of the data as some reviews are repetitive. Those can be removed by filtering out the reviews with *Expand* at the end. Also a lot of the content in the reviews don't carry any sentiment so they will be removed as well.
+
+ * Remove punctuation
+ * Remove stop words
+ * Remove words that are one letter long
+ * Remove white spaces
+ 
+```{r}
+stop_word_list <- c(stopwords(), 'user', 'far', 'gets', 'ac', 'want', 'day', 'things', 'que', 'always', 'since', 'reviews', 'yet', 'side', 'wasn', 'run', 'said', 'de', 'los')
+df <- df %>% mutate(org_text = text,
+                    text = str_remove(text, 'Expand$'),
+                    text = str_to_lower(text) %>% 
+                           gsub(pattern = '\\W', replace=' ') %>%
+                           removeWords(stop_word_list) %>% 
+                           gsub(pattern='\\b[a-z]\\b{1}', replace=' ') %>%
+                           stripWhitespace(),
+                    len = sapply(strsplit(text, ' '), length))
+```
+
+Some of those reviews were long while others are short, lets look at a histogram of the distribution of reviews
+```{r}
+df %>% unnest_tokens(word, text) %>% 
+  count(user_name, name='word_count') %>% 
+  ggplot(aes(word_count)) + geom_histogram()
+```
+
+Creating the labels. Grades that are greater than 7 will be considered a positive review and those less than 7 negative.
+```{r}
+df <- df %>% mutate(rating = case_when(grade > 7 ~ 'positive', TRUE ~ 'negative'))
+df %>% select(rating, len) %>% ggplot(aes(x=rating, y=len)) + geom_boxplot()
+```
+
+```{r}
+df %>% ggplot(aes(rating)) + geom_bar(sstat='count') + stat_count(geom = "text", colour = "white", size = 3.5, aes(label = ..count..), position=position_stack(vjust=0.5))
+```
+
+As we saw from the first bar plot there are more negative reviews that positive ones; however the different isn't too larger for unbalance to be an issue.
+
+```{r}
+df %>% ggplot(aes(x=len, y=grade)) + geom_point() + geom_smooth(method='lm')
+
+lmodel <- lm(grade ~ len, data=df)
+summary(lmodel)
+```
+
+An R^2 of 0.0012 makes it very clear that there is virtually no relationship with review length and the grade one gives it. The scatter plot verified that conclusion. These results also imply linear regression might not be good for this problem.
+
+#### Model building
+
+The model will be trained on a 70% of the data and tested on the remaining 30%.
+
+```{r}
+df_split <- initial_split(df, strata=rating)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+```
+
+Before feeding the data into the model we need to quantify it for matrix operations. The process is:
+
+  * Tokenization for text
+  * Text filtering for text that are too frequent
+  * Term frequency-inverse document frequency
+  * Centering and scaling
+
+```{r}
+text_rec <- recipe(rating ~ text, data = df_train) %>%
+  step_tokenize(text) %>%
+  step_tokenfilter(text, max_tokens = 600) %>%
+  step_tfidf(text) %>%
+  step_normalize(all_predictors())
+```
+
+Build classification model with logistic regression
+mixture = 1 to train a lasso model
+
+Since our labels is categorical, logistic regression is be a good fit. The glmnet R package fits a generalized linear model via penalized maximum likelihood. This method of estimating the logistic regression slope parameters uses a penalty on the process so that less relevant predictors are driven towards a value of zero.
+
+$$\operatorname{Pr}(\text{rating} = positive \mid \text{x1, x2, x3 ...})\\
+ = \frac{\exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} + \dots +
+    \beta_{12} \text{excellent)} }{1 + \exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} + \dots + \beta_{12 }\text{excellent})} \label{eq:glm1}$$
+
+```{r}
+model <- logistic_reg(penalty = tune(), mixture = 1) %>% set_engine('glmnet')
+model_wf <- workflow() %>%
+  add_recipe(text_rec) %>% 
+  add_model(model)
+```
+
+#### Model tuning
+
+Before we fit this model, we need to set up a grid of penalty values to tune. Since we have only one hyperparameter to tune here, we can set the grid up using a one-column tibble with 30 values. Similarly we will bootstrap from the training set to tune the model.
+
+```{r}
+grid <- grid_regular(penalty(), levels=20)
+folds <- bootstraps(df_train, strata = rating)
+```
+
+As one would expect model tuning is a long process so we will employ parallelism to speed up the process
+```{r}
+doParallel::registerDoParallel()
+
+model_grid <- tune_grid(model_wf, resamples = folds, grid=grid, metrics=metric_set(roc_auc, precision, recall))
+```
+
+With the tuning process completed we can visualize the metrics
+```{r}
+model_grid %>% collect_metrics() %>% ggplot(aes(x=penalty, y=mean, color=.metric)) + geom_line() + facet_wrap(~.metric) + scale_x_log10()
+```
+
+Like all model training there is a general give and take with precision and recall. The best ROC_AUC will also give approximately the best precision at the cost of some recall; however, that is the best we can do right now.
+```{r}
+best_auc <- model_grid %>% select_best('roc_auc')
+final_model <- finalize_workflow(model_wf, best_auc)
+```
+
+Now that we have tuned the model we can fit it to the training data and visualize works that correspond more to positive and negative reviews
+Variable importance
+```{r}
+y_train_pred <- final_model %>% fit(df_train) %>% pull_workflow_fit() %>% vi(lambda = best_auc$penalty) 
+y_train_pred %>% 
+  mutate(Importance = abs(Importance)) %>% 
+  group_by(Sign) %>% 
+  top_n(20, wt = Importance) %>% 
+  ungroup() %>% 
+  mutate(Variable = fct_reorder(str_remove(Variable, 'tfidf_text_'), Importance)) %>% 
+  ggplot(aes(x=Variable, y=Importance, fill=Sign)) + geom_col(show.legend=F) + coord_flip() + facet_wrap(~Sign, scales='free_y') + labs(title='Training set sentiment')
+```
+
+```{r}
+y_test_pred <- final_model %>% fit(df_test) %>% pull_workflow_fit() %>% vi(lambda = best_auc$penalty) 
+y_test_pred %>% 
+  mutate(Importance = abs(Importance)) %>% 
+  group_by(Sign) %>% 
+  top_n(20, wt = Importance) %>% 
+  ungroup() %>% 
+  mutate(Variable = fct_reorder(str_remove(Variable, 'tfidf_text_'), Importance)) %>% 
+  ggplot(aes(x=Variable, y=Importance, fill=Sign)) + geom_col(show.legend=F) + coord_flip() + facet_wrap(~Sign, scales='free_y') + labs(title='Testing set sentiment')
+```
+
+From both the training and testing set we can users gave negative reviews based on the *$60* price tag, the fact that there was *money* and *greed* involved and a lack of *sharing* due to there being only one *island* per game. The positive reviews are about the gaming being the *best*, *amazing*, *perfect* and fun. Some of the positive reviews claim that the negative reviews are bias towards the game and are review *bombing*.
+
+Finally we can evaluate the model performance by evaluating on the testing data
+```{r}
+review_final <- last_fit(final_model, df_split) 
+
+review_final %>% collect_predictions() %>% conf_mat(rating, .pred_class) %>% autoplot(type='mosaic')
+review_final %>% collect_predictions() %>% conf_mat(rating, .pred_class)
+```
+
+From the mosaic plot we can see our model does well at predicting negative values, however it struggles a little more on predicting positing examples. The confusion matrix gives the granular details.
+
+#### Conclusion
+
+The analysis done here is a good start but more work can be done. The text preprocessing would be a good start to remove other words that aren't very helpful. Also increasing the number of words used for training will give the model for data to work with; however it will take longer to tune and train. Over all the current model performed well from such a simplistic approach. The steps taken for this analysis can be use on any dataset in need for sentiment analysis.

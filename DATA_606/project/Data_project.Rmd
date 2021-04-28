@@ -127,6 +127,14 @@ pe = bm - am
 p = pt(pe / se, df=an + bn)
 ```
 
+\begin{multline}
+  \operatorname{Pr}(\text{rating} = positive \mid \text{x1, x2, x3 ...})\\
+ = \frac{\exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} + \dots +
+    \beta_{12} \text{excellent)} }{1 + \exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} +
+\dots + \beta_{12 }\text{excellent})} \label{eq:glm1} 
+\end{multline}
+
+
 plot x=year y=taste count facet on protein
 https://www.youtube.com/watch?v=engYXDjfQ18&ab_channel=TechKnowHow
 ```{r}

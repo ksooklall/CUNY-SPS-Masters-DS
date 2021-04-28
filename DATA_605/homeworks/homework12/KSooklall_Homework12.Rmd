@@ -1,0 +1,103 @@
+---
+title: "KSooklall Homework 12 DATA 605"
+author: "Kenan Sooklall"
+date: "4/19/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(ggplot2)
+```
+
+who.csv dataset contains real-world data from 2008.
+
+Country: name of the country
+LifeExp: average life expectancy for the country in years
+InfantSurvival: proportion of those surviving to one year or more
+Under5Survival: proportion of those surviving to five years or more
+TBFree: proportion of the population without TB.
+PropMD: proportion of the population who are MDs
+PropRN: proportion of the population who are RNs
+PersExp: mean personal expenditures on healthcare in US dollars at average exchange rate
+GovtExp: mean government expenditures per capita on healthcare, US dollars at average exchange rate
+TotExp: sum of personal and government expenditures.
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/homeworks/homework12/'
+df = read.csv(paste0(path, 'who.csv'))
+```
+
+### Exercise 1 
+Provide a scatterplot of LifeExp~TotExp, and run simple linear regression. Do not transform the
+variables. Provide and interpret the F statistics, R^2, standard error,and p-values only. Discuss
+whether the assumptions of simple linear regression met.
+
+```{r}
+df %>% ggplot(aes(x=LifeExp, y=TotExp)) + geom_point() +   stat_smooth(method = "lm")
+
+model <- lm(LifeExp~TotExp, data=df)
+summary(model)
+```
+
+An $R^2$ of 0.2577 is very low and states there isn't a strong correlation between LifeExp and TotExp.
+The standard error is 7.795e-06 and the p value is very small 7.71e-14.
+F-statistic = 65.2  which is the ratio of two variances (SSR/SSE), the variance explained by the parameters in the model (sum of squares of regression, SSR) and the residual or unexplained variance (sum of squares of error, SSE).
+
+### Exercise 2
+Raise life expectancy to the 4.6 power (i.e., LifeExp^4.6). Raise total expenditures to the 0.06
+power (nearly a log transform, TotExp^.06). Plot LifeExp^4.6 as a function of TotExp^.06, and r
+re-run the simple regression model using the transformed variables. Provide and interpret the F
+statistics, R^2, standard error, and p-values. Which model is "better?"
+
+```{r}
+df$lifexp46 <- df$LifeExp ^ (4.6)
+df$totexp06 <- df$TotExp ^ (0.06)
+
+df %>% ggplot(aes(x=lifexp46, y=totexp06)) + geom_point() +   stat_smooth(method = "lm")
+
+model <- lm(lifexp46~totexp06, data=df)
+summary(model)
+```
+
+Very surprising results. The R^2 tripled making the relationship look more linear. The F-statistic and the std error also went up as well with the P-vaues about the same ~0. This model is "better" than the last.
+
+### Exercise 3
+Using the results from 3, forecast life expectancy when TotExp^.06 =1.5. Then forecast life
+expectancy when TotExp^.06=2.5.
+
+```{r}
+totalexp06 = c(1.5, 2.5)
+yhat1 = predict(model, data.frame(totexp06=totalexp06[1]))
+print(yhat1)
+
+yhat2 = predict(model, data.frame(totexp06=totalexp06[2]))
+print(yhat2)
+```
+
+### Exercise 4
+Build the following multiple regression model and interpret the F Statistics, R^2, standard error,
+and p-values. How good is the model?
+
+$LifeExp = b0+b1 x PropMd + b2 x TotExp +b3 x PropMD x TotExp$
+
+```{r}
+model = lm(LifeExp ~ PropMD + TotExp + (PropMD * TotExp), data=df)
+summary(model)
+```
+
+This model is more complex since there are more variables. The statistic values are better than the model from exercise 2 but worst than exercise 3.
+
+### Exercise 5
+Forecast LifeExp when PropMD=.03 and TotExp = 14. Does this forecast seem realistic? Why
+or why not?
+
+```{r}
+print(predict(model, data.frame(PropMD=0.03, TotExp=14)))
+
+df %>% ggplot(aes(LifeExp)) + geom_histogram()
+```
+
+The forecast is realistic, many have lived to 108 years old; however that is very far above the average in the real world and would be an extrapolation value in this data set.
