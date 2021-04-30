@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 ```{r, echo=F, warning=F, include=F}
 library(tidyverse)
 library(tidytext)
@@ -17,11 +22,10 @@ Animal Crossing is one of the most relaxing and friendly game series in the mark
 
 
 
-In this report I will be analyzing reviews of Animal Crossing and build a logistic regression model to predict ratings based on those reviews
+In this report I will be analyzing reviews of Animal Crossing and build a logistic regression model to predict ratings based on those reviews. The data is from tidytuesday dataset in the rfordatascience repo.
 
 ```{r}
-path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_607/projects/project_4/'
-df <- read.csv(paste0(path, 'animal_crossing_reviews.csv'))
+df <- read_tsv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-05-05/user_reviews.tsv')
 ```
 
 To begin we should look at the distribution of the ratings.
@@ -77,10 +81,26 @@ df <- df %>% mutate(org_text = text,
 ```
 
 Some of those reviews were long while others are short, lets look at a histogram of the distribution of reviews
+
 ```{r}
 df %>% unnest_tokens(word, text) %>% 
   count(user_name, name='word_count') %>% 
   ggplot(aes(word_count)) + geom_histogram()
+```
+
+We can also look at the difference in sentiment
+
+```{r}
+library(reshape2)
+library(wordcloud)
+
+words = df %>% unnest_tokens(word, text) %>% count(word, name='word_count')
+
+words %>% inner_join(get_sentiments('afinn')) %>%
+          inner_join(get_sentiments('nrc')) %>%
+          inner_join(get_sentiments('bing')) %>%
+          acast(word ~ sentiment, value.var='word_count', fill=0) %>% 
+  comparison.cloud(colors=c('red', 'blue'), max.words = 50)
 ```
 
 Creating the labels. Grades that are greater than 7 will be considered a positive review and those less than 7 negative.

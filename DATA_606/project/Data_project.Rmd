@@ -5,15 +5,43 @@ date: "2/17/2021"
 output: html_document
 ---
 
-```{r}
+```{r, echo=F, message=F, warning=F}
 library(tidyverse)
 library(ggplot2)
 library(wordcloud)
 library(tidytext)
 library(tm)
+library(reshape2)
 ```
 https://github.com/kateptrv/Candles/blob/main/Candles%20code%20examples.R
 
+## Abstract
+One sign of Covid-19 is often the loss of taste and smell, also known as anosmia, and even those without other symptoms have experienced a loss in those senses. After scraping reviews on protien powder from Amazon.com and looking at the proportion of tasteless or no taste comments before and after 2020
+
+
+Research question
+
+What are the cases, and how many are there?
+
+Describe the method of data collection.
+A web scraper was built in R to collect reviews on Amazon.com
+
+What type of study is this (observational/experiment)?
+This is an observational study
+
+Data Source: If you collected the data, state self-collected. If not, provide a citation/link.
+
+Response: What is the response variable, and what type is it (numerical/categorical)?
+The response variable is numeric
+Explanatory: What is the explanatory variable(s), and what type is it (numerical/categorival)?
+
+Relevant summary statistics
+
+
+
+## Introduction
+
+Harvard professor Kate Petrova has analyzed sense of smell thorough reviews in scented candles. This report will expand on Professor Petrova research by look at how sense of taste has changed since the first confirmed cased of Covid-19. The analysis will be done on Protien powder
 
 B000QSNYGI - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Double Rich Chocolate, 5 Pound (Packaging May Vary)
 
@@ -35,41 +63,107 @@ B07L91HBFG - Nutrition Chocolate Milkshake Protein Powder, High Protein, Low Car
 
 B082TTFF87 - KOS Organic Plant Based Protein Powder, Chocolate Peanut Butter - Delicious Vegan Protein Powder - Keto Friendly, Gluten Free, Dairy Free & Soy Free - 1.3 Pounds, 15 Servings
 
+Talk about alpha and power
 
 ```{r}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/'
 dfiles = c('B000QSNYGI.csv', 'B00BEOHFKO.csv', 'B00NLR1PX0.csv', 'B00QQA0H3S.csv', 'B01NAEHLFO.csv', 'B06XX78LKR.csv', 'B07BL695D1.csv', 'B07L91HBFG.csv', 'B082TTFF87.csv', 'B00VZ0IoY8.csv')
 ```
 
+
 ```{r}
-fdf = data.frame()
+df = data.frame()
 
 for (i in dfiles) {
-  df <-  read.csv(paste0(path, i))  
+  pdf <-  read.csv(paste0(path, i))  
   
-  titles = gather(df %>% select(starts_with('review_title')))$value
-  texts = gather(df %>% select(starts_with('review_text')))$value
-  stars = gather(df %>% select(starts_with('review_star')))$value
-  dates = gather(df %>% select(starts_with('review_date')))$value
-  pages = gather(df %>% select(starts_with('page')))$value
-
-  ndf <- data.frame(title=titles, text=texts, star=stars, date=dates, page=pages)
-  ndf$star <- str_extract(ndf$star, '\\d')
-  ndf$date <- str_extract(ndf$date, '\\d{4}')
-  ndf$title <- gsub("[\r\n]", "", ndf$title) %>% str_trim(side='both')
-  ndf$text <- gsub("[\r\n]", "", ndf$text) %>% str_trim(side='both')
-  ndf$protein = str_split(i, '.csv')[[1]][1]
+  titles = gather(pdf %>% select(starts_with('review_title')))$value
+  reviews = gather(pdf %>% select(starts_with('review_text')))$value
+  stars = gather(pdf %>% select(starts_with('review_star')))$value
+  dates = gather(pdf %>% select(starts_with('review_date')))$value
+  pages = gather(pdf %>% select(starts_with('page')))$value
   
-  fdf <- bind_rows(fdf, ndf)
+  ndf <- data.frame(titles=titles, reviews=reviews, stars=stars, dates=dates, pages=pages) %>%  
+          mutate(stars=as.numeric(str_extract(stars, '\\d')),
+                 date=str_remove_all(dates, 'Reviewed in the United States on ') %>% as.Date(format = "%b %d, %Y"),
+                 years=as.numeric(format(date, format='%Y')),
+                 month=as.numeric(format(date, format='%m')),
+                 days=as.numeric(format(date, format='%d')),
+                 titles=gsub("[\r\n]", "", titles) %>% str_trim(side='both'),
+                 protein=str_split(i, '.csv')[[1]][1],
+                 reviews=str_to_lower(reviews) %>% gsub(pattern='[[:punct:] ]+', replace=' ') %>% gsub(pattern="[\r\n]", replace=' ') %>% str_trim(side='both'))
+  
+  df <- bind_rows(df, ndf)
 }
+```
 
-fdf$star <- as.numeric(fdf$star)
-fdf$date <- as.numeric(fdf$date)
-fdf$text <- str_to_lower(str_trim(gsub('[[:punct:] ]+',' ',fdf$text)))
+plot x=year y=taste count facet on protein
+https://www.youtube.com/watch?v=engYXDjfQ18&ab_channel=TechKnowHow
 
-proteins <- c('B000QSNYGI', 'B00BEOHFKO','B00NLR1PX0','B01NAEHLFO','B00VZ0IoY8','B07BL695D1','B07L91HBFG','B082TTFF87')
+Sentiment analysis on best tasting
+Reviews clean up
 
-fdf <- fdf %>% filter(protein %in% proteins & date > 2016) %>% mutate(protein=recode(protein, 
+```{r}
+stop_word_list <- c(stopwords(), 'aarp', 'ab', 'azo', 'aug', 'asap', 'just', 'now', 'result', 'try', 'back', 'still', 'know', 'see', 'sure', 'didn', 'got', 'far', 'doesn', 'put', 'can', 'll', 've', 'don', 'much', 'go', 'take', 'use', 'since', 'get', 'always', 'has', 'aa', 'aas', 'will', 'get', 'also')
+
+frequent_words = c('protein', 'product')
+df <- df %>% filter(years > 2016 & years <= 2020) %>% 
+             mutate(reviews=gsub(pattern='\\b[a-z]\\b{1}', replace=' ', reviews) %>%
+                      gsub(pattern='[[:digit:]]+', replace='') %>%
+                      removeWords(stop_word_list))
+
+words = df %>% unnest_tokens(word, reviews) %>% count(word, name='word_count')
+
+words %>% filter(word_count > 500 & !(word %in% frequent_words)) %>% mutate(word=reorder(word, word_count)) %>% ggplot(aes(x=word, y=word_count)) + geom_col() + coord_flip()
+```
+
+
+```{r}
+words %>% inner_join(get_sentiments('afinn')) %>%
+          inner_join(get_sentiments('nrc')) %>%
+          inner_join(get_sentiments('bing')) %>%
+          acast(word ~ sentiment, value.var='word_count', fill=0) %>% 
+  comparison.cloud(colors=c('red', 'blue'), max.words = 50)
+```
+
+### Filter each description for words like
+
+```{r}
+taste_words = c('trash', 
+                'disgusting', 
+                'horrible', 
+                'nasty', 
+                'terrible', 
+                'abomination', 
+                'horrid', 
+                'bad', 
+                'tasteless', 
+                'awful', 
+                'flavor awful',
+                'gagging',
+                'flavor horrible',
+                'terrible tasting ',
+                'tasted too disgusting',
+                'tastes disgusting',
+                'taste horrible',
+                'tasted horrible',
+                'taste horrible',
+                'tastes bad',
+                'taste unbearable',
+                'taste like cheap whey protein',
+                'tastes nothing like',
+                'taste isnt great',
+                'worst after taste',
+                'hate taste',
+                'worst tasting protein',
+                'medicinal and artificial taste',
+                'no flavor',
+                'not very good taste')
+
+taste_words = paste(taste_words, sep='|', collapse ='|')[1]
+```
+
+protein=recode(protein, 
                         'B000QSNYGI'='Optimum Double Rich Chocolate',
                         'B00BEOHFKO'= 'MuscleTech Phase8',
                         'B00NLR1PX0'= 'Vital Proteins Collagen',
@@ -77,46 +171,74 @@ fdf <- fdf %>% filter(protein %in% proteins & date > 2016) %>% mutate(protein=re
                         'B00VZ0IoY8'= 'Dymatize ISO',
                         'B07BL695D1'='Nutricost Strawberry',
                         'B07L91HBFG'= 'Nutrition Chocolate Milkshake',
-                        'B082TTFF87'='KOS Chocolate Peanut Butter'))
+                        'B082TTFF87'='KOS Chocolate Peanut Butter'),
+                        
+```{r}
+proteins <- c('B000QSNYGI', 'B00BEOHFKO', 'B00NLR1PX0', 'B01NAEHLFO','B00VZ0IoY8','B07BL695D1','B07L91HBFG','B082TTFF87')
+
+df <- df %>% mutate(notaste = ifelse(str_detect(reviews, taste_words), 1, 0))
 ```
 
-# Filter each description for words like
-```{r}
-bad_words = c('trash', 'disgusting', 'horrible', 'nasty', 'terrible', 'abomination', 'horrid', 'bad', 'tasteless', 'awful', 'flavor is awful',
-'gagging',
-'flavor is horrible',
-'terrible tasting ',
-'tasted too disgusting',
-'tastes disgusting',
-'taste horrible',
-'tasted horrible',
-'taste is horrible',
-'tastes bad',
-'taste is unbearable',
-'taste like cheap whey protein',
-'tastes nothing like',
-'taste isnt great',
-'has the worst after taste',
-'hate the taste',
-'worst tasting protein',
-'medicinal and artificial taste',
-'has no flavor',
-'Not a very good taste')
 
-bad_words = paste(bad_words, sep='|', collapse ='|')[1]
+
+```{r}
+df  %>% filter(notaste == 1) %>% 
+  arrange(date) %>%
+  group_by(date) %>%
+  summarise(Rating = mean(stars)) %>% ggplot(aes(x = (as.Date(date)), y = Rating)) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-01-20")), colour = "red", linetype = "dashed")+
+  geom_smooth(method = "loess", size = 1.5, colour = "goldenrod3", fill = "goldenrod3") +
+  geom_point(alpha = 0.5, colour = "chocolate1") +
+  geom_text(x=as.Date("2020-05-10"), y=1.5, label='First confirmed\nCovid-19 case', color='red') +
+  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 501', color='black') +
+  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020")+
+  theme(plot.title = element_text(size=16)) + 
+  scale_x_date(date_labels = "%m-%Y")
 ```
 
-Before covid
-Vital Proteins Collagen meant to be tasteless
-```{r}
-fdf <- fdf %>% mutate(notaste = ifelse(str_detect(text, bad_words) & star < 4, 1, 0))
 
-bcvd <- fdf %>% filter(date < 2020)
+```{r}
+df  %>% filter(notaste == 0) %>% 
+  arrange(date) %>%
+  group_by(date) %>%
+  summarise(Rating = mean(stars)) %>% ggplot(aes(x = (as.Date(date)), y = Rating)) +
+  geom_vline(xintercept = as.numeric(as.Date("2020-01-20")), colour = "red", linetype = "dashed")+
+  geom_smooth(method = "loess", size = 1.5, colour = "blueviolet", fill = "blueviolet") +
+  geom_point(alpha = 0.5, colour = "chocolate1") +
+  geom_text(x=as.Date("2020-05-10"), y=1.5, label='First confirmed\nCovid-19 case', color='red') +
+  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 2464', color='black') +
+  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020")+
+  theme(plot.title = element_text(size=16)) + 
+  scale_x_date(date_labels = "%m-%Y")
+```
+
+
+```{r}
+df %>% group_by(stars) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=stars, y=taste)) + geom_col()
+```
+
+```{r}
+df %>% group_by(years) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=years, y=taste)) + geom_col()
+```
+
+```{r}
+df %>% ggplot(aes(x=protein)) + geom_bar() + coord_flip() + facet_wrap(~notaste)
+```
+
+ groupby month and count no taste
+```{r}
+df %>% filter(years == 2020) %>% group_by(month) %>% summarise(prop=sum(notaste/n())) %>% ggplot(aes(x=month, y=prop)) + geom_col() + theme(axis.text.x=element_text(angle=60, hjust=1))
+```
+
+### Hypothesis testing
+
+```{r}
+bcvd <- df %>% filter(years < 2020)
 bm = mean(bcvd$notaste)
 bs = sd(bcvd$notaste)
 bn = nrow(bcvd)
 
-acvd <- fdf %>% filter(date >= 2020)
+acvd <- df %>% filter(years >= 2020)
 am = mean(acvd$notaste)
 as = sd(acvd$notaste)
 an = nrow(acvd)
@@ -125,23 +247,5 @@ se = sqrt(bs^2/sqrt(bn) + as^2/sqrt(an))
 pe = bm - am
 
 p = pt(pe / se, df=an + bn)
-```
-
-\begin{multline}
-  \operatorname{Pr}(\text{rating} = positive \mid \text{x1, x2, x3 ...})\\
- = \frac{\exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} + \dots +
-    \beta_{12} \text{excellent)} }{1 + \exp(\beta_{0} + \beta_{1} \text{amazing} + \beta_{2} \text{greed} +
-\dots + \beta_{12 }\text{excellent})} \label{eq:glm1} 
-\end{multline}
-
-
-plot x=year y=taste count facet on protein
-https://www.youtube.com/watch?v=engYXDjfQ18&ab_channel=TechKnowHow
-```{r}
-fdf %>% group_by(star) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=star, y=taste)) + geom_col()
-fdf %>% group_by(date) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=date, y=taste)) + geom_col()
-
-
-fdf %>% mutate(notaste = no_taste(text)) %>%
-    mutate(notaste = ifelse(notaste != 1, 0, 1)) %>% filter(notaste == 1) %>% ggplot(aes(x=shake)) + geom_bar() + coord_flip()
+p
 ```
