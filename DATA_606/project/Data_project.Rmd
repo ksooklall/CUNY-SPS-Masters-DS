@@ -2,7 +2,11 @@
 title: "Data_Project"
 author: "Kenan Sooklall"
 date: "2/17/2021"
-output: html_document
+output:
+  html_document:
+    df_print: paged
+  rmdformats::readthedown:
+    highlight: kate
 ---
 
 ```{r, echo=F, message=F, warning=F}
@@ -16,7 +20,7 @@ library(reshape2)
 https://github.com/kateptrv/Candles/blob/main/Candles%20code%20examples.R
 
 ## Abstract
-One sign of Covid-19 is often the loss of taste and smell, also known as anosmia, and even those without other symptoms have experienced a loss in those senses. After scraping reviews on protien powder from Amazon.com and looking at the proportion of tasteless or no taste comments before and after 2020
+One sign of Covid-19 is often the loss of taste and smell, also known as anosmia, and even those without other symptoms have experienced a loss in those senses. After scraping reviews on protein powder from Amazon.com and looking at the proportion of tasteless or no taste comments before and after 2020.
 
 
 Research question
@@ -41,35 +45,36 @@ Relevant summary statistics
 
 ## Introduction
 
-Harvard professor Kate Petrova has analyzed sense of smell thorough reviews in scented candles. This report will expand on Professor Petrova research by look at how sense of taste has changed since the first confirmed cased of Covid-19. The analysis will be done on Protien powder
+Harvard professor Kate Petrova has analyzed sense of smell thorough reviews on scented candles. This report will expand on Professor Petrova research by look at how the sense of taste has changed since the first confirmed cased of Covid-19. The analysis will be done on the protein powders below
 
-B000QSNYGI - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Double Rich Chocolate, 5 Pound (Packaging May Vary)
+1. B000QSNYGI - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Double Rich Chocolate, 5 Pound (Packaging May Vary)
 
-B00BEOHFKO - Whey Protein Powder | MuscleTech Phase8 Protein Powder | Whey & Casein Protein Powder Blend | Slow Release 8-Hour Protein Shakes | Muscle Builder for Men & Women | Chocolate, 4.6 lbs (50 Servings)
+2. B00BEOHFKO - Whey Protein Powder | MuscleTech Phase8 Protein Powder | Whey & Casein Protein Powder Blend | Slow Release 8-Hour Protein Shakes | Muscle Builder for Men & Women | Chocolate, 4.6 lbs (50 Servings)
 
-B00NLR1PX0 - Vital Proteins Collagen Peptides Powder Supplement (Type I, III) for Skin Hair Nail Joint - Hydrolyzed Collagen - Non-GMO - Dairy and Gluten Free - 20g per Serving - Unflavored 10 oz Canister
+3. B00NLR1PX0 - Vital Proteins Collagen Peptides Powder Supplement (Type I, III) for Skin Hair Nail Joint - Hydrolyzed Collagen - Non-GMO - Dairy and Gluten Free - 20g per Serving - Unflavored 10 oz Canister
 
-B00QQA0H3S - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Naturally Flavored Vanilla, 4.8 Pound (Packaging May Vary)
+4. B00QQA0H3S - Optimum Nutrition Gold Standard 100% Whey Protein Powder, Naturally Flavored Vanilla, 4.8 Pound (Packaging May Vary)
 
-B01NAEHLFO - Garden of Life Sport Certified Grass Fed Clean Whey Protein Isolate, Vanilla, 22.57 Ounce
+5. B01NAEHLFO - Garden of Life Sport Certified Grass Fed Clean Whey Protein Isolate, Vanilla, 22.57 Ounce
 
-B06XX78LKR - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, 1.6 Pound, Chocolate Peanut Butter, 25.6 Ounce (Pack of 1)
+6. B06XX78LKR - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, 1.6 Pound, Chocolate Peanut Butter, 25.6 Ounce (Pack of 1)
 
-B00VZ0IoY8 - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, Brown, Cinnamon Bun, 5 lbs
+7. B00VZ0IoY8 - Dymatize ISO 100 Whey Protein Powder with 25g of Hydrolyzed 100% Whey Isolate, Gluten Free, Fast Digesting, Brown, Cinnamon Bun, 5 lbs
 
-B07BL695D1 - Nutricost Whey Protein Isolate (Strawberry) 5LBS
+8. B07BL695D1 - Nutricost Whey Protein Isolate (Strawberry) 5LBS
 
-B07L91HBFG - Nutrition Chocolate Milkshake Protein Powder, High Protein, Low Carb, Gluten Free, Soy Free, 1.6 lbs (Pack of 1)
+9. B07L91HBFG - Nutrition Chocolate Milkshake Protein Powder, High Protein, Low Carb, Gluten Free, Soy Free, 1.6 lbs (Pack of 1)
 
-B082TTFF87 - KOS Organic Plant Based Protein Powder, Chocolate Peanut Butter - Delicious Vegan Protein Powder - Keto Friendly, Gluten Free, Dairy Free & Soy Free - 1.3 Pounds, 15 Servings
+10. B082TTFF87 - KOS Organic Plant Based Protein Powder, Chocolate Peanut Butter - Delicious Vegan Protein Powder - Keto Friendly, Gluten Free, Dairy Free & Soy Free - 1.3 Pounds, 15 Servings
 
-Talk about alpha and power
+## Data Preprocessing
 
-```{r}
+```{r, echo=F}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/'
 dfiles = c('B000QSNYGI.csv', 'B00BEOHFKO.csv', 'B00NLR1PX0.csv', 'B00QQA0H3S.csv', 'B01NAEHLFO.csv', 'B06XX78LKR.csv', 'B07BL695D1.csv', 'B07L91HBFG.csv', 'B082TTFF87.csv', 'B00VZ0IoY8.csv')
 ```
 
+After pulling the html data dates, titles, reviews were all parsed.
 
 ```{r}
 df = data.frame()
@@ -97,11 +102,7 @@ for (i in dfiles) {
 }
 ```
 
-plot x=year y=taste count facet on protein
-https://www.youtube.com/watch?v=engYXDjfQ18&ab_channel=TechKnowHow
-
-Sentiment analysis on best tasting
-Reviews clean up
+Reviews required some extra cleaning by removing punctuation and stop words. An iterative process of reading reviews, then updating the stopword list, then rerun and reread was conducted to clean up the reviews.
 
 ```{r}
 stop_word_list <- c(stopwords(), 'aarp', 'ab', 'azo', 'aug', 'asap', 'just', 'now', 'result', 'try', 'back', 'still', 'know', 'see', 'sure', 'didn', 'got', 'far', 'doesn', 'put', 'can', 'll', 've', 'don', 'much', 'go', 'take', 'use', 'since', 'get', 'always', 'has', 'aa', 'aas', 'will', 'get', 'also')
@@ -110,13 +111,18 @@ frequent_words = c('protein', 'product')
 df <- df %>% filter(years > 2016 & years <= 2020) %>% 
              mutate(reviews=gsub(pattern='\\b[a-z]\\b{1}', replace=' ', reviews) %>%
                       gsub(pattern='[[:digit:]]+', replace='') %>%
-                      removeWords(stop_word_list))
+                      removeWords(stop_word_list) %>%
+                      str_trim())
+```
 
+
+```{r}
 words = df %>% unnest_tokens(word, reviews) %>% count(word, name='word_count')
 
 words %>% filter(word_count > 500 & !(word %in% frequent_words)) %>% mutate(word=reorder(word, word_count)) %>% ggplot(aes(x=word, y=word_count)) + geom_col() + coord_flip()
 ```
 
+Common words like taste and flavor are used the most as expected, unusual words like hair and collagen were also used. After reading some of the *hair* reviews, the users stated how the protein helped their hair.
 
 ```{r}
 words %>% inner_join(get_sentiments('afinn')) %>%
@@ -126,10 +132,13 @@ words %>% inner_join(get_sentiments('afinn')) %>%
   comparison.cloud(colors=c('red', 'blue'), max.words = 50)
 ```
 
-### Filter each description for words like
+A sentimental analysis was done on the reviews, we see nasty and bad in the negative set and good and perfect in the positive set.
+
+
+Finally to prepare the data set for analysis we need specific words/phrases that would correspond to the powder having a poor taste or similar. Reviews that contain the *tasteless_words* will be labels as 1 in the *notaste* column else they will be labeled as 0.
 
 ```{r}
-taste_words = c('trash', 
+tasteless_words = c('trash', 
                 'disgusting', 
                 'horrible', 
                 'nasty', 
@@ -160,7 +169,7 @@ taste_words = c('trash',
                 'no flavor',
                 'not very good taste')
 
-taste_words = paste(taste_words, sep='|', collapse ='|')[1]
+tasteless_words = paste(taste_words, sep='|', collapse ='|')[1]
 ```
 
 protein=recode(protein, 
@@ -174,12 +183,11 @@ protein=recode(protein,
                         'B082TTFF87'='KOS Chocolate Peanut Butter'),
                         
 ```{r}
-proteins <- c('B000QSNYGI', 'B00BEOHFKO', 'B00NLR1PX0', 'B01NAEHLFO','B00VZ0IoY8','B07BL695D1','B07L91HBFG','B082TTFF87')
-
-df <- df %>% mutate(notaste = ifelse(str_detect(reviews, taste_words), 1, 0))
+df <- df %>% mutate(notaste = ifelse(str_detect(reviews, tasteless_words), 1, 0),
+                    cyear = ifelse(years <2020, 1, 0))
 ```
 
-
+## Exploratory Data Analysis
 
 ```{r}
 df  %>% filter(notaste == 1) %>% 
@@ -187,14 +195,16 @@ df  %>% filter(notaste == 1) %>%
   group_by(date) %>%
   summarise(Rating = mean(stars)) %>% ggplot(aes(x = (as.Date(date)), y = Rating)) +
   geom_vline(xintercept = as.numeric(as.Date("2020-01-20")), colour = "red", linetype = "dashed")+
-  geom_smooth(method = "loess", size = 1.5, colour = "goldenrod3", fill = "goldenrod3") +
+  geom_smooth(method = "loess", size = 1.5, colour = "blueviolet", fill = "blueviolet") +
   geom_point(alpha = 0.5, colour = "chocolate1") +
-  geom_text(x=as.Date("2020-05-10"), y=1.5, label='First confirmed\nCovid-19 case', color='red') +
-  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 501', color='black') +
-  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020")+
+  geom_text(x=as.Date("2020-05-10"), y=1.5, label='First confirmed\nCovid-19 case', color='black') +
+  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 570', color='black') +
+  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020", subtitle = 'Reviews containing lack of taste')+
   theme(plot.title = element_text(size=16)) + 
   scale_x_date(date_labels = "%m-%Y")
 ```
+
+Before the first case of Covid-19 there is a the regression line is very normal; however after the first confirmed case the line strangely goes up. That motion states there are more positive reviews and those reviews contain a lot of comments on how the powder is lacking taste.
 
 
 ```{r}
@@ -206,12 +216,13 @@ df  %>% filter(notaste == 0) %>%
   geom_smooth(method = "loess", size = 1.5, colour = "blueviolet", fill = "blueviolet") +
   geom_point(alpha = 0.5, colour = "chocolate1") +
   geom_text(x=as.Date("2020-05-10"), y=1.5, label='First confirmed\nCovid-19 case', color='red') +
-  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 2464', color='black') +
-  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020")+
+  geom_text(x=as.Date("2017-05-10"), y=1.25, label='N = 2895', color='black') +
+  labs(x = "Date", y = "Average daily rating (1-5)", title = "Protein Powder Amazon reviews 2017-2020", subtitle = 'Reviews containing normal taste')+
   theme(plot.title = element_text(size=16)) + 
   scale_x_date(date_labels = "%m-%Y")
 ```
 
+The rating distribution for sample that have *notaste* is inline with what we would expect from normal reviews. Those who really like the powder and really hate it will give a review, while those in the middle (2,3,4) are less likely to review.
 
 ```{r}
 df %>% group_by(stars) %>% summarise(taste=sum(notaste)) %>% ggplot(aes(x=stars, y=taste)) + geom_col()
@@ -230,19 +241,35 @@ df %>% ggplot(aes(x=protein)) + geom_bar() + coord_flip() + facet_wrap(~notaste)
 df %>% filter(years == 2020) %>% group_by(month) %>% summarise(prop=sum(notaste/n())) %>% ggplot(aes(x=month, y=prop)) + geom_col() + theme(axis.text.x=element_text(angle=60, hjust=1))
 ```
 
+Use reviews to predict if there is taste or no taste
+
 ### Hypothesis testing
+
+$$ H_o: \mu_{tasteless-before-2020} = \mu_{tasteless-after-2020} \\ Ha: \mu_{tasteless-before-2020} \ne \mu_{tasteless-after-2020}$$
 
 ```{r}
 bcvd <- df %>% filter(years < 2020)
 bm = mean(bcvd$notaste)
 bs = sd(bcvd$notaste)
 bn = nrow(bcvd)
+```
 
+There are 1901 reviews before 2020, the statistical parameters for the proportion of protein powder that was *tasteless* 
+
+$\mu = 0.139 \\ \sigma=0.346$
+
+```{r}
 acvd <- df %>% filter(years >= 2020)
 am = mean(acvd$notaste)
 as = sd(acvd$notaste)
 an = nrow(acvd)
+```
 
+There are 1901 reviews before 2020, the statistical parameters for the proportion of protein powder that was *tasteless* 
+
+$\mu = 0.195 \\ \sigma=0.396$
+
+```{r}
 se = sqrt(bs^2/sqrt(bn) + as^2/sqrt(an))
 pe = bm - am
 

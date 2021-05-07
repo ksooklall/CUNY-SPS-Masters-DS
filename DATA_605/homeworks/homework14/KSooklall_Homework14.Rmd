@@ -1,0 +1,36 @@
+---
+title: "KSooklall_Homework14"
+author: "Kenan Sooklall"
+date: "5/3/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+Taylor Series
+
+$$f(x)\quad =\sum _{n=0}^{\infty}{\frac{f^{n}(c)}{n!}}(x-c)^n$$
+
+This week, we’ll work out some Taylor Series expansions of popular functions.
+
+```{r, echo=F, warning=F}
+library(knitr)
+df <- data.frame('x'=c('f(x)', 'f^1(x)', 'f^2(x)', 'f^3(x)', 'f^4(x)'), p1=c('1/(1-x)', '1/(1-x)^2', '2/(1-x)^3', '6/(1-x)^4', '24/(1-x)^5'), p2=c('e^x', 'e^x','e^x', 'e^x','e^x'), p3=c('ln(1+x)', '1/(1+x)','-1/(1+x)^2', '2/(1+x)^3', '-6/(1+x)^4'))
+
+kable(t(df), caption='Table of Derivatives')
+
+df <- data.frame('c'=c('f(0)', 'f^1(0)', 'f^2(0)', 'f^3(0)', 'f^4(0)'), 'p1^n(c)'=c(1,1,2,6,24), 'p2^n(c)'=c(1,1,1,1,1), 'p3^n(c)'=c(0, 1,-1,2,-6))
+kable(t(df), caption='Values at c=0')
+```
+
+
+Exercise 1
+
+$$\frac{1}{1-x}= 1+x+2*x^2/2!+6*x^3/3!+24*x^4/4!+ ... = 1+x+x^2!+x^3+x^4+ ... = \sum _{ n=0 }^{ \infty } x^n$$    
+Exercise 2
+
+$$e^x= 1 + x + x^2/2! + x^2/2! + x^2/2! + x^2/2! + ... = \sum _{ n=0 }^{ \infty } \frac{x^n}{n!}$$
+
+Exercise 3
+
+$$ln(1+x)=x - x^2/2! + 2 * x^3/3! - 6 * x^4/4! ... =x - x^2/2 + x^3/3 - x^4/4 ...= \sum _{ n=0 }^{ \infty }(-1)^{n-1} \frac{x^n}{n}$$

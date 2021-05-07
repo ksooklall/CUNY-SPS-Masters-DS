@@ -1,0 +1,308 @@
+---
+title: "The Office"
+author: "Kenan Sooklall"
+output: html_document
+---
+
+
+```{r, echo=F, warning=F, message=F}
+library(tidyverse)
+library(schrute)
+library(tidymodels)
+library(tidytext)
+library(vip)
+```
+
+The data used in this analysis came from two sources
+ - IMDB
+ - Schrute library
+ 
+Both data sources were parsed and combined into one data set TheOffice. IMDB calls the office "A mockumentary on a group of typical office workers, where the workday consists of ego clashes, inappropriate behavior, and tedium." 
+
+I have seen the office several times and still in 2021 it ranks among my top 5 favorite shows of all time.
+
+![](https://media.giphy.com/media/5wWf7GW1AzV6pF3MaVW/giphy.gif)
+
+## Introduction
+
+The office consists of 9 season and ~200 episodes and ran from March 2005 to May 2013
+
+```{r}
+fdf <- data.frame(theoffice)
+glimpse(fdf)
+```
+
+## Exploratory Data Analysis
+
+### Ratings analysis
+
+To begin we will look at how the IMDB ratings changed throughout the show.
+
+The boxplots show that season 4 was the best season on average and season 7 has the most variations. Season 9 has a few dedicated critics, giving scores in the high 9s.
+
+```{r}
+fdf %>% ggplot(aes(x=season, imdb_rating, fill=as.factor(season))) + geom_boxplot(show.legend = F) +   scale_x_continuous(breaks=1:9) +
+  labs(title='IMDB ratings per season', y='IMDB Ratings', x='Season')
+```
+
+The plot below shows how the average ratings peaked around season 4 and 5. The Stress Relief, Goodbye Michael and The Finale have the highest ratings with a lot of votes. The Banker and Gone Girl were the least favorite episodes.
+
+```{r}
+fdf %>% distinct(season, episode, episode_name, imdb_rating, total_votes) %>%
+  mutate(title= str_replace_all(string=episode_name, pattern=' ', replacement='\n') %>%
+                 str_replace_all(pattern='\n(Parts\n1&2)', replace=''),
+               title= fct_inorder(title),
+               rn = row_number()) %>%
+  ggplot(aes(x=rn, y=imdb_rating)) + 
+  geom_line() + 
+  geom_smooth(method = "loess", size = 1, colour = "blueviolet", fill = "blueviolet", alpha=0.3) +
+  geom_point(aes(color=factor(season), size=total_votes)) +
+  geom_text(aes(label=title), check_overlap = T, hjust=1) +
+  geom_vline(xintercept = 136 , color = "red", linetype = "dashed") +
+  #expand_limits(x=-3) +
+  theme(axis.text.x = element_blank(), legend.position = 'none') + 
+  labs(x = 'Episode Number', 
+       y='IMDB Rating', 
+       title='The office IMDB Ratings', 
+       subtitle = 'Color indicates seasons')
+```
+
+My favorite episode of the office is Stress Relief where Dwight starts a fire in the office. It looks like my favorite is number 3. Also among the top 10 favorite episodes seasons 1 and 8 didn't make the cut
+
+![](https://media.giphy.com/media/zaxSiNlNNdvQEAGiit/giphy.gif)
+
+```{r}
+fdf %>%
+  distinct(season, episode, episode_name, imdb_rating) %>%
+  arrange(desc(imdb_rating)) %>%
+  mutate(title=paste0('S',season, 'E', episode,'-', episode_name),
+         title=fct_reorder(title, imdb_rating)) %>%
+  top_n(10, wt=imdb_rating) %>%
+  ggplot(aes(x=title, y=imdb_rating)) + 
+  geom_point(aes(color=factor(season))) + 
+  geom_text(label='My favorite', y=9.55, x='S5E14-Stress Relief (Parts 1&2)', color='darkgray') +
+  coord_flip() +
+  labs(color='Seasons',
+       title='Top 20 most popular episodes',
+       y='IMDB Ratings')
+```
+
+
+### Transcript analysis
+
+Now we will move to the transcripts. The data set contains all of the lines in the show so we can see how unique each character are.
+
+I want to look at the most common words said by a specific characters. The steps are:
+
+ - Remove words that are not very interesting.
+ - Filter by characters we are interested in
+ - Calculate term frequency and inverse document frequency
+
+```{r}
+st_words <- rbind(stop_words, data.frame(word=c('yeah', 'hey', 'huh', 'gonna', 'em', 'um', 'uh'), lexicon='office_words'))
+
+interesting_characters = c('Dwight', 'Michael', 'Jim', 'Pam', 'Angela', 'Andy')
+
+fdf %>%
+  unnest_tokens(word, text) %>% 
+  anti_join(st_words, by='word') %>% 
+  add_count(word) %>%
+  filter(n > 20) %>%
+  count(word, character) %>%
+  bind_tf_idf(word, character, n) %>% 
+  filter(character %in% interesting_characters) %>%
+  group_by(character) %>%
+  top_n(20, tf_idf) %>% 
+  ungroup() %>%
+  mutate(word = reorder_within(word, tf_idf, character)) %>%
+  ggplot(aes(word, tf_idf)) + 
+  geom_col() + 
+  coord_flip() +
+  scale_x_reordered() +
+  facet_wrap(~character, scales='free') + 
+  labs(y = 'Term Frequency and Inverse Document Frequency',
+       x = '')
+```
+
+It should be noted that these are not the most common words said but are the most unique words to these characters. It just so happens that sometimes the most unique words are the most frequent words.
+
+To fully appreciate this plot you need to have watched the office. Dwight talks to Jim and Michael a lot and likes to refer to himself by his last name, hence the top 3 words for Dwight. Andy calls Jim tuna a lot and says whoa a lot. Michael, Jim and Angela refer to Dwight a lot. Pam reported to Michael so she often refers to him. A lot more can be said about these 6 plots. 
+
+Although set of character worth look at are those that played a small role. Even though I have watched The office multiple times I have no idea who these people are. Most of their names don't ring a bell. I guess I have to watch the series again.
+
+```{r}
+no_name_character <- c('Woman', 'Pizza guy', 'Nurse', 'Host', 'Bar Manager')
+
+fdf %>% 
+  add_count(character, name='lines') %>% 
+  distinct(character, season, episode_name, lines) %>% 
+  filter(lines > 20, !(character %in% no_name_character)) %>% 
+  arrange(desc(lines)) %>% 
+  tail(20) %>% 
+  ggplot(aes(x=reorder(character, lines), y=lines)) + 
+  geom_point(aes(color=factor(season))) + 
+  geom_text(aes(label=episode_name), check_overlap = T, hjust=1.15) +
+  coord_flip() + 
+  expand_limits(y=19.5) +
+  labs(x='Characters',
+       y='Number of lines',
+       color='Seasons',
+       title= 'Forgotten Characters',
+       subtitle = 'Episode Name (season)')
+```
+
+
+### Unsupervised learning - Principal Component Analysis
+
+Principal Component Analysis (PCA) is a statistical procedure that converts a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components.
+
+For every episode we will count the number of times each character speaks. To prevent this data set from getting too big I will filter out character who have less than 1000 lines overall. For example in the Pilot Andy and Ering have no lines because he wasn't there while Michael and Dwight are speaking the most.
+
+```{r, echo=F, message=F}
+df <- fdf %>% count(episode_name, character) %>% 
+  add_count(character, wt=n, name='character_count') %>% 
+  filter(character_count > 1000)  %>% 
+  select(-character_count) %>% 
+  pivot_wider(names_from = character,
+              values_from = n,
+              values_fill = list(n=0)) %>% 
+  inner_join(fdf %>% distinct(season, episode, episode_name, imdb_rating))
+
+df %>% filter(episode_name == 'Pilot') %>% glimpse()
+```
+
+
+```{r}
+rdf <- df %>% select(-c('imdb_rating', 'episode_name'))
+  
+pca_rec <- recipe(~., data=rdf) %>% 
+  update_role(season, episode, new_role = 's-e') %>%
+  step_normalize(all_predictors()) %>%
+  step_pca(all_predictors())
+
+pca_prep <- prep(pca_rec)
+df_prep <- tidy(pca_prep, 2)
+```
+
+
+```{r}
+df_prep %>%
+  group_by(component) %>%
+  top_n(5, abs(value)) %>%
+  ungroup() %>%
+  mutate(terms=reorder_within(terms, abs(value), component),
+         component=fct_inorder(component)) %>%
+  ggplot(aes(x=abs(value), y=terms, fill=value < 0)) + 
+  geom_col(show.legend=F) + 
+  facet_wrap(~component, scales='free_y') + 
+  scale_y_reordered() +
+  labs(y=NULL, 
+       x=NULL,
+       title='Principal Components')
+```
+
+
+```{r}
+sdev <- pca_prep$steps[[2]]$res$sdev
+pct_var <- sdev^2/sum(sdev^2)
+ncomp <- df_prep %>% count(component) %>% pull(n) %>% unique()
+
+data.frame(component = paste0('PC', 1:ncomp), percent_var=pct_var) %>%
+  mutate(component = fct_inorder(component)) %>%
+  ggplot(aes(x=component, y=percent_var)) + 
+  geom_line(aes(x=component, y=cumsum(pct_var)), group=1, size=1.5) +
+  geom_point(aes(x=component, y=cumsum(pct_var))) + 
+  geom_col()
+```
+
+![](https://media.giphy.com/media/IwAZ6dvvvaTtdI8SD5/giphy.gif)
+
+### Supervised learning - Ridge Regression
+
+Ridge Regression is a linear least squares model with l2 regularization.
+
+To begin we split the data into training and testing sets. Training will be used to tune the model and testing will be used to validate the model.
+
+```{r}
+df_split <- initial_split(df, strata=season)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+```
+
+Create a recipe that will use all of the data to predict the imdb_rating
+
+```{r}
+df_rec <- recipe(imdb_rating ~., data=df_train) %>%
+  update_role(episode_name, season, episode, new_role='ense') %>% 
+  #step_normalize(all_numeric(), -all_outcomes())
+  step_normalize(all_predictors())
+
+df_prep <- df_rec %>% prep(strings_as_factors=F)
+```
+
+
+```{r}
+model <- linear_reg(penalty = tune(), mixture = 0) %>% 
+  set_engine('glmnet')
+
+model_wf <- workflow() %>%
+  add_recipe(df_rec) %>% 
+  add_model(model)
+```
+
+```{r}
+grid <- grid_regular(penalty(), levels=20)
+folds <- bootstraps(df_train, strata = season)
+```
+
+As one would expect model tuning is a long process so we will employ parallelism to speed up the process
+
+```{r}
+doParallel::registerDoParallel()
+
+model_grid <- tune_grid(model_wf, resamples=folds, grid=grid)
+```
+
+With the tuning process completed we can visualize the metrics
+
+```{r}
+model_grid %>% collect_metrics() %>% 
+  ggplot(aes(x=penalty, y=mean, color=.metric)) + 
+  geom_errorbar(aes(ymin=mean - std_err, 
+                    ymax=mean + std_err, alpha=0.5)) +
+  geom_line() + 
+  facet_wrap(~.metric, scales='free', nrow=2) + 
+  scale_x_log10() +
+  theme(legend.position = 'none')
+```
+
+
+```{r}
+best_rmse <- model_grid %>% select_best('rmse')
+final_model <- finalize_workflow(model_wf, best_rmse)
+```
+
+
+```{r}
+final_model %>% 
+  fit(df_train) %>% 
+  pull_workflow_fit() %>% 
+  vi(lambda = best_rmse$penalty) %>%
+  mutate(Importance=abs(Importance),
+         Variable=fct_reorder(Variable, Importance)) %>% 
+  #top_n(20, Importance) %>%
+  ggplot(aes(x=Importance, y=Variable, fill=Sign)) + 
+  geom_col() +
+  scale_x_continuous() + 
+  labs(y=NULL)
+```
+
+
+![](https://media.giphy.com/media/DhstvI3zZ598Nb1rFf/giphy.gif)
+
+
+
+
+
+
+
