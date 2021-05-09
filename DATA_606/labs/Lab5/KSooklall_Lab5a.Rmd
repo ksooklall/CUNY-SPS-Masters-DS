@@ -2,12 +2,12 @@
 title: "Foundations for statistical inference - Sampling distributions"
 author: "Kenan Sooklall"
 output:
-  pdf_document: default
   html_document:
     includes:
     highlight: pygments
     theme: cerulean
     toc_float: true
+  pdf_document: default
 editor_options: 
   chunk_output_type: console
 ---

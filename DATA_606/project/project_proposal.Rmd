@@ -1,7 +1,10 @@
 ---
 title: "DATA 606 Data Project Proposal"
 author: "Kenan Sooklall"
-output: pdf_document
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 
 ### Data Preparation
@@ -67,4 +70,10 @@ $H_o = \mu_{protien-badtaste-2020} = \mu_{protien-badtaste-2019before} \\$
 
 $H_a = \mu_{protien-badtaste-2020} \neq \mu_{protien-badtaste-2019before}$
 
-I can't provide any visualization at the moment since I haven't scrapped the data yet
+Below are 3 plots that look at how the proportions of comment that mention tastlessness change due to Covid-19
+
+![Taste](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/taste_reviews.png)
+
+![No taste](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/no_taste_reviews.png)
+
+![analysis](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/project/2020_analysis.png)

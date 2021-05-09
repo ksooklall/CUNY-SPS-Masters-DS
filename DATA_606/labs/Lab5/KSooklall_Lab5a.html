@@ -477,7 +477,7 @@ pre code {
 <span id="cb4-3"><a href="#cb4-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">p =</span> n <span class="op">/</span><span class="kw">sum</span>(n))</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 3
 ##   scientist_work      n     p
-## * &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
+##   &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
 ## 1 Benefits        80000   0.8
 ## 2 Doesn&#39;t benefit 20000   0.2</code></pre>
 </div>
@@ -493,7 +493,7 @@ pre code {
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1"></a>global_monitor <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">sample_n</span>(<span class="dv">50</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">count</span>(scientist_work) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">mutate</span>(<span class="dt">p=</span>n<span class="op">/</span><span class="kw">sum</span>(n))</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 3
 ##   scientist_work      n     p
-## * &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
+##   &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
 ## 1 Benefits           39  0.78
 ## 2 Doesn&#39;t benefit    11  0.22</code></pre>
 <div id="exercise-1" class="section level4">
@@ -506,7 +506,7 @@ pre code {
 <span id="cb9-3"><a href="#cb9-3"></a><span class="st">  </span><span class="kw">mutate</span>(<span class="dt">p_hat =</span> n <span class="op">/</span><span class="kw">sum</span>(n))</span></code></pre></div>
 <pre><code>## # A tibble: 2 x 3
 ##   scientist_work      n p_hat
-## * &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
+##   &lt;chr&gt;           &lt;int&gt; &lt;dbl&gt;
 ## 1 Benefits           44  0.88
 ## 2 Doesn&#39;t benefit     6  0.12</code></pre>
 <p>Depending on which 50 people you selected, your estimate could be a bit above or a bit below the true population proportion of 0.12. In general, though, the sample proportion turns out to be a pretty good estimate of the true population proportion, and you were able to get it by sampling less than 1% of the population.</p>

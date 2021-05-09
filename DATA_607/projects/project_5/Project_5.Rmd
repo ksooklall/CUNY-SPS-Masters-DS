@@ -1,6 +1,6 @@
 ---
 title: "The Office"
-author: "Kenan Sooklall"
+author: "by: Kenan Sooklall"
 output: html_document
 ---
 
@@ -19,9 +19,9 @@ The data used in this analysis came from two sources
  
 Both data sources were parsed and combined into one data set TheOffice. IMDB calls the office "A mockumentary on a group of typical office workers, where the workday consists of ego clashes, inappropriate behavior, and tedium." 
 
-I have seen the office several times and still in 2021 it ranks among my top 5 favorite shows of all time.
+I have seen the office several times and still in 2021 it ranks among my top 5 favorite shows of all time. Let's begin, high five!
 
-![](https://media.giphy.com/media/5wWf7GW1AzV6pF3MaVW/giphy.gif)
+<img src="https://media.giphy.com/media/5wWf7GW1AzV6pF3MaVW/giphy.gif" width="480" height="277" />
 
 ## Introduction
 
@@ -59,7 +59,7 @@ fdf %>% distinct(season, episode, episode_name, imdb_rating, total_votes) %>%
   geom_point(aes(color=factor(season), size=total_votes)) +
   geom_text(aes(label=title), check_overlap = T, hjust=1) +
   geom_vline(xintercept = 136 , color = "red", linetype = "dashed") +
-  #expand_limits(x=-3) +
+  expand_limits(x=-10, y=10.01) +
   theme(axis.text.x = element_blank(), legend.position = 'none') + 
   labs(x = 'Episode Number', 
        y='IMDB Rating', 
@@ -68,8 +68,6 @@ fdf %>% distinct(season, episode, episode_name, imdb_rating, total_votes) %>%
 ```
 
 My favorite episode of the office is Stress Relief where Dwight starts a fire in the office. It looks like my favorite is number 3. Also among the top 10 favorite episodes seasons 1 and 8 didn't make the cut
-
-![](https://media.giphy.com/media/zaxSiNlNNdvQEAGiit/giphy.gif)
 
 ```{r}
 fdf %>%
@@ -83,12 +81,13 @@ fdf %>%
   geom_text(label='My favorite', y=9.55, x='S5E14-Stress Relief (Parts 1&2)', color='darkgray') +
   coord_flip() +
   labs(color='Seasons',
-       title='Top 20 most popular episodes',
+       title='Top 10 most popular episodes',
        y='IMDB Ratings')
 ```
 
-
 ### Transcript analysis
+
+<img src="https://media.giphy.com/media/zaxSiNlNNdvQEAGiit/giphy.gif" width="480" height="277" />
 
 Now we will move to the transcripts. The data set contains all of the lines in the show so we can see how unique each character are.
 
@@ -143,7 +142,7 @@ fdf %>%
   geom_point(aes(color=factor(season))) + 
   geom_text(aes(label=episode_name), check_overlap = T, hjust=1.15) +
   coord_flip() + 
-  expand_limits(y=19.5) +
+  expand_limits(y=17.5) +
   labs(x='Characters',
        y='Number of lines',
        color='Seasons',
@@ -154,14 +153,16 @@ fdf %>%
 
 ### Unsupervised learning - Principal Component Analysis
 
+<img src="https://media.giphy.com/media/IwAZ6dvvvaTtdI8SD5/giphy.gif" width="480" height="277" />
+
 Principal Component Analysis (PCA) is a statistical procedure that converts a set of observations of possibly correlated variables into a set of values of linearly uncorrelated variables called principal components.
 
-For every episode we will count the number of times each character speaks. To prevent this data set from getting too big I will filter out character who have less than 1000 lines overall. For example in the Pilot Andy and Ering have no lines because he wasn't there while Michael and Dwight are speaking the most.
+For every episode we will count the number of times each character speaks. To prevent this data set from getting too big I will filter out character who have less than 600 lines overall. For example in the Pilot Andy and Ering have no lines because he wasn't there while Michael and Dwight are speaking the most.
 
 ```{r, echo=F, message=F}
 df <- fdf %>% count(episode_name, character) %>% 
   add_count(character, wt=n, name='character_count') %>% 
-  filter(character_count > 1000)  %>% 
+  filter(character_count > 600)  %>% 
   select(-character_count) %>% 
   pivot_wider(names_from = character,
               values_from = n,
@@ -185,6 +186,12 @@ df_prep <- tidy(pca_prep, 2)
 ```
 
 
+The principal components are a bit difficult to understand here. Looking at the first 2 which contribute the most.
+
+PC1 - Has characters that never had a strong relationship with others in the show except for Angela. 
+PC2 -  Michael, Pam, Jim and Dwight are like the couples of the show so their grouping makes sense. Erin is also in this group but her vector is in the opposite direction. 
+
+
 ```{r}
 df_prep %>%
   group_by(component) %>%
@@ -192,15 +199,17 @@ df_prep %>%
   ungroup() %>%
   mutate(terms=reorder_within(terms, abs(value), component),
          component=fct_inorder(component)) %>%
-  ggplot(aes(x=abs(value), y=terms, fill=value < 0)) + 
-  geom_col(show.legend=F) + 
+  ggplot(aes(x=abs(value), y=terms, fill=value > 0)) + 
+  geom_col() + 
   facet_wrap(~component, scales='free_y') + 
   scale_y_reordered() +
   labs(y=NULL, 
        x=NULL,
+       fill='Positive?',
        title='Principal Components')
 ```
 
+PC1 to PC3 captures 43% of the variance in the show by number of lines spoken. Said differently Kevin, Andy, Oscar, Erin, Angela, Michael, Pam, Jim, Dwight, Kelly and Ryan make up most of the show. Any Office fan can agree with that.
 
 ```{r}
 sdev <- pca_prep$steps[[2]]$res$sdev
@@ -215,31 +224,32 @@ data.frame(component = paste0('PC', 1:ncomp), percent_var=pct_var) %>%
   geom_col()
 ```
 
-![](https://media.giphy.com/media/IwAZ6dvvvaTtdI8SD5/giphy.gif)
-
 ### Supervised learning - Ridge Regression
 
-Ridge Regression is a linear least squares model with l2 regularization.
+<iframe src="https://giphy.com/embed/16AnYIM3yiLte" width="480" height="271" />
+
+In this section we will try to predict IMDB ratings using the same data set, the number of lines spoken by each character. Ridge Regression will be used, which is a linear least squares model with l2 regularization.
 
 To begin we split the data into training and testing sets. Training will be used to tune the model and testing will be used to validate the model.
 
 ```{r}
+set.seed(72)
 df_split <- initial_split(df, strata=season)
 df_train <- training(df_split)
 df_test <- testing(df_split)
 ```
 
-Create a recipe that will use all of the data to predict the imdb_rating
+Create a recipe with the numeric data, and normalize all values.
 
 ```{r}
 df_rec <- recipe(imdb_rating ~., data=df_train) %>%
   update_role(episode_name, season, episode, new_role='ense') %>% 
-  #step_normalize(all_numeric(), -all_outcomes())
   step_normalize(all_predictors())
 
 df_prep <- df_rec %>% prep(strings_as_factors=F)
 ```
 
+Build the model and set up the workflow
 
 ```{r}
 model <- linear_reg(penalty = tune(), mixture = 0) %>% 
@@ -250,8 +260,12 @@ model_wf <- workflow() %>%
   add_model(model)
 ```
 
+We will take multiple samples of the data set through bootstraping. Those sample will be used to tune the model.
+
 ```{r}
-grid <- grid_regular(penalty(), levels=20)
+set.seed(42)
+
+grid <- grid_regular(penalty(), levels=30)
 folds <- bootstraps(df_train, strata = season)
 ```
 
@@ -259,17 +273,15 @@ As one would expect model tuning is a long process so we will employ parallelism
 
 ```{r}
 doParallel::registerDoParallel()
-
+set.seed(42)
 model_grid <- tune_grid(model_wf, resamples=folds, grid=grid)
 ```
 
-With the tuning process completed we can visualize the metrics
+With the tuning process completed we can visualize the metrics. We want the lowest Root Mean Square Error (rmse) and highest $R^2$
 
 ```{r}
 model_grid %>% collect_metrics() %>% 
   ggplot(aes(x=penalty, y=mean, color=.metric)) + 
-  geom_errorbar(aes(ymin=mean - std_err, 
-                    ymax=mean + std_err, alpha=0.5)) +
   geom_line() + 
   facet_wrap(~.metric, scales='free', nrow=2) + 
   scale_x_log10() +
@@ -277,32 +289,30 @@ model_grid %>% collect_metrics() %>%
 ```
 
 
-```{r}
-best_rmse <- model_grid %>% select_best('rmse')
-final_model <- finalize_workflow(model_wf, best_rmse)
+```{r, echo=F}
+best_param <- model_grid %>% select_best('rmse')
+final_model <- finalize_workflow(model_wf, best_param)
 ```
 
+It looks like the critics really like Michael a lot followed by Jan, Dwight and Jim as they contribute to the higher IMDB ratings. Erin was not liked a lot along with Andy, Darryl and Ryan who contributed to negative ratings. I agree with the positives as Dwight was my favorite character, but I don't think the negatives are so harsh.
 
 ```{r}
 final_model %>% 
   fit(df_train) %>% 
   pull_workflow_fit() %>% 
-  vi(lambda = best_rmse$penalty) %>%
+  vi(lambda = best_param$penalty) %>%
   mutate(Importance=abs(Importance),
          Variable=fct_reorder(Variable, Importance)) %>% 
-  #top_n(20, Importance) %>%
   ggplot(aes(x=Importance, y=Variable, fill=Sign)) + 
   geom_col() +
   scale_x_continuous() + 
   labs(y=NULL)
 ```
 
+However these results shouldn't be taken too seriously as we can see from the RMSE and $R^2$ plot the model still has a lot to learn. I would say a linear model isn't enough to capture the complexities of this show.
 
-![](https://media.giphy.com/media/DhstvI3zZ598Nb1rFf/giphy.gif)
-
-
-
-
-
-
+```{r}
+last_fit(final_model, df_split) %>%
+  collect_metrics()
+```
 

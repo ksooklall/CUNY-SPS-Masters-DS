@@ -269,8 +269,6 @@ mdf <- data.frame(cbind(n,p,m))
 ggplot(data = mdf, aes(x = n, y = m)) + 
   geom_line() +
   labs(x = "Population Sample", y = "Margin of Error")
-
-scatterplot3d(mdf, grid=T)
 ``` 
 
 From the plot it looks like an n of almost 1000 would be needed to keep the margin of error bounded by 1%.
