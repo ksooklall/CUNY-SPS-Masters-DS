@@ -93,7 +93,371 @@ For both Fisher’s Exact Test and the Chi Square Test the p-value = 0.4189 whic
 
 ### Exercise 2
 
-5 points.  Descriptive and Inferential Statistics. Provide univariate descriptive statistics and appropriate plots for the training data set.  Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. Derive a correlation matrix for any three quantitative variables in the dataset.  Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval.  Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?
-5 points. Linear Algebra and Correlation.  Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.  
-5 points.  Calculus-Based Probability & Statistics.  Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.  Then load the MASS package and run fitdistr to fit an exponential probability density function.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).  Find the optimal value of  for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, )).  Plot a histogram and compare it with a histogram of your original variable.   Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).   Also generate a 95% confidence interval from the empirical data, assuming normality.  Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.
-10 points.  Modeling.  Build some type of multiple regression  model and submit your model to the competition board.  Provide your complete model summary and results with analysis.  Report your Kaggle.com user name and score.
+```{r, echo=F, message=F, warning=F}
+library(corrplot)
+library(matlib)
+library(Matrix)
+library(tidymodels)
+```
+
+The data set was taken from kaggle
+
+```{r}
+path <- '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/final_exam/'
+df <- read.csv(paste0(path, 'train.csv'))
+sdf <- read.csv(paste0(path, 'sample_submission.csv'))
+tdf <- read.csv(paste0(path, 'test.csv'))
+```
+
+Data Descriptions
+ 
+ - SalePrice - Sale price in dollars. This is the target variable that you're trying to predict.
+ - MSSubClass: The building class
+ - MSZoning: The general zoning classification
+ - LotFrontage: Linear feet of street connected to property
+ - LotArea: Lot size in square feet
+ - Street: Type of road access
+ - Alley: Type of alley access
+ - LotShape: General shape of property
+ - LandContour: Flatness of the property
+ - Utilities: Type of utilities available
+ - LotConfig: Lot configuration
+ - LandSlope: Slope of property
+ - Neighborhood: Physical locations within Ames city limits
+ - Condition1: Proximity to main road or railroad
+ - Condition2: Proximity to main road or railroad (if a second is present)
+ - BldgType: Type of dwelling
+ - HouseStyle: Style of dwelling
+ - OverallQual: Overall material and finish quality
+ - OverallCond: Overall condition rating
+ - YearBuilt: Original construction date
+ - YearRemodAdd: Remodel date
+ - RoofStyle: Type of roof
+ - RoofMatl: Roof material
+ - Exterior1st: Exterior covering on house
+ - Exterior2nd: Exterior covering on house (if more than one material)
+ - MasVnrType: Masonry veneer type
+ - MasVnrArea: Masonry veneer area in square feet
+ - ExterQual: Exterior material quality
+ - ExterCond: Present condition of the material on the exterior
+ - Foundation: Type of foundation
+ - BsmtQual: Height of the basement
+ - BsmtCond: General condition of the basement
+ - BsmtExposure: Walkout or garden level basement walls
+ - BsmtFinType1: Quality of basement finished area
+ - BsmtFinSF1: Type 1 finished square feet
+ - BsmtFinType2: Quality of second finished area (if present)
+ - BsmtFinSF2: Type 2 finished square feet
+ - BsmtUnfSF: Unfinished square feet of basement area
+ - TotalBsmtSF: Total square feet of basement area
+ - Heating: Type of heating
+ - HeatingQC: Heating quality and condition
+ - CentralAir: Central air conditioning
+ - Electrical: Electrical system
+ - 1stFlrSF: First Floor square feet
+ - 2ndFlrSF: Second floor square feet
+ - LowQualFinSF: Low quality finished square feet (all floors)
+ - GrLivArea: Above grade (ground) living area square feet
+ - BsmtFullBath: Basement full bathrooms
+ - BsmtHalfBath: Basement half bathrooms
+ - FullBath: Full bathrooms above grade
+ - HalfBath: Half baths above grade
+ - Bedroom: Number of bedrooms above basement level
+ - Kitchen: Number of kitchens
+ - KitchenQual: Kitchen quality
+ - TotRmsAbvGrd: Total rooms above grade (does not include bathrooms)
+ - Functional: Home functionality rating
+ - Fireplaces: Number of fireplaces
+ - FireplaceQu: Fireplace quality
+ - GarageType: Garage location
+ - GarageYrBlt: Year garage was built
+ - GarageFinish: Interior finish of the garage
+ - GarageCars: Size of garage in car capacity
+ - GarageArea: Size of garage in square feet
+ - GarageQual: Garage quality
+ - GarageCond: Garage condition
+ - PavedDrive: Paved driveway
+ - WoodDeckSF: Wood deck area in square feet
+ - OpenPorchSF: Open porch area in square feet
+ - EnclosedPorch: Enclosed porch area in square feet
+ - 3SsnPorch: Three season porch area in square feet
+ - ScreenPorch: Screen porch area in square feet
+ - PoolArea: Pool area in square feet
+ - PoolQC: Pool quality
+ - Fence: Fence quality
+ - MiscFeature: Miscellaneous feature not covered in other categories
+ - MiscVal: $Value of miscellaneous feature
+ - MoSold: Month Sold
+ - YrSold: Year Sold
+ - SaleType: Type of sale
+ - SaleCondition: Condition of sale
+
+#### Descriptive and Inferential Statistics. 
+Provide univariate descriptive statistics and appropriate plots for the training data set.  Provide a scatterplot matrix for at least two of the independent variables and the dependent variable. 
+
+As the above ground living area increases more space for a full batch.
+
+```{r}
+df %>% ggplot(aes(x=GrLivArea, y=FullBath)) + 
+  geom_point() + 
+  geom_smooth()
+```
+
+I would think the linear feet of street connected to property would correlate to the lot area; however, it looks like they do.
+
+```{r}
+df %>% ggplot(aes(x=LotFrontage, y=LotArea)) + 
+  geom_point() + 
+  geom_smooth() + 
+  scale_y_log10()
+```
+
+Higher scale price correspond to houses that have more rooms above grade
+
+```{r}
+df %>% ggplot(aes(x=factor(TotRmsAbvGrd), y=SalePrice)) +
+  geom_boxplot() +
+  scale_y_log10()
+```
+
+Distribution of the SalePrice. Most of the house prices are within 200k
+
+```{r}
+df %>% select(SalePrice) %>% summary()
+
+df %>% ggplot(aes(x=SalePrice)) +
+  geom_histogram()
+```
+
+Even among the expensive house (3rd Qu), there are a lot of outliars
+
+```{r}
+df %>% filter(SalePrice > 214000) %>% ggplot(aes(x=SalePrice)) +
+  geom_boxplot()
+```
+
+2010 wasn't good for the housing market, a lot less sales
+
+```{r}
+df %>% ggplot(aes(x=YrSold, y=SalePrice)) +
+  geom_col()
+```
+
+Fill in some missing values
+LotFrontage - Fill by median
+
+```{r}
+corr_df <- df %>% 
+  mutate(LotFrontage=ifelse(is.na(LotFrontage), median(LotFrontage, na.rm=T), LotFrontage)) %>%
+  select(where(is.numeric)) %>%
+  select(-c('Id', 'YearRemodAdd', 'GarageYrBlt', 'MasVnrArea', 'MSSubClass', 'BsmtFinSF2', 'X3SsnPorch', 'YrSold', 'MoSold', 'MiscVal', 'BsmtHalfBath', 'LowQualFinSF')) 
+
+corr_df %>%
+  cor() %>%
+  corrplot()
+```
+
+```{r}
+lmodel <- lm(SalePrice ~., data=corr_df)
+summary(lmodel)
+```
+
+Derive a correlation matrix for any three quantitative variables in the dataset.
+
+```{r}
+quantitative_variables <- c('OverallQual', 'GrLivArea', 'TotalBsmtSF')
+corr_matrix <- df %>% 
+  select(all_of(quantitative_variables)) %>% 
+  cor()
+```
+
+Test the hypotheses that the correlations between each pairwise set of variables is 0 and provide an 80% confidence interval. Discuss the meaning of your analysis.  Would you be worried about familywise error? Why or why not?
+
+```{r}
+cor.test(df$OverallQual, df$SalePrice, method = 'pearson', conf.level = 0.80)
+cor.test(df$GrLivArea, df$SalePrice, method = 'pearson', conf.level = 0.80)
+cor.test(df$TotalBsmtSF, df$SalePrice, method = 'pearson', conf.level = 0.80)
+```
+
+All p-values are less than the significance 0.05 thus conclude that the pairwise variables are correlated. There is concern that we might commit a type 1 error, rejecting the null hypothesis when H_o is actually true.
+
+#### Linear Algebra and Correlation.  
+Invert your correlation matrix from above. (This is known as the precision matrix and contains variance inflation factors on the diagonal.) Multiply the correlation matrix by the precision matrix, and then multiply the precision matrix by the correlation matrix. Conduct LU decomposition on the matrix.  
+
+```{r}
+precision_matrix = inv(corr_matrix)
+
+cp_matrix = corr_matrix %*% precision_matrix
+pc_matrix = precision_matrix %*% corr_matrix
+
+lu_corr = expand(lu(corr_matrix))
+
+print(lu_corr$L)
+print(lu_corr$U)
+```
+
+#### Calculus-Based Probability & Statistics.  
+Many times, it makes sense to fit a closed form distribution to data.  Select a variable in the Kaggle.com training dataset that is skewed to the right, shift it so that the minimum value is absolutely above zero if necessary.  Then load the MASS package and run fitdistr to fit an exponential probability density function.  (See  https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/fitdistr.html ).  
+
+```{r}
+df %>% ggplot(aes(x=TotalBsmtSF)) + geom_histogram()
+
+df %>% 
+  mutate(TotalBsmtSFScaled=(TotalBsmtSF - mean(TotalBsmtSF)) / sd(TotalBsmtSF)) %>%
+  ggplot(aes(x=TotalBsmtSFScaled)) +
+  geom_histogram()
+```
+
+```{r}
+library(MASS)
+
+lambda <- df$TotalBsmtSF %>% fitdistr(densfun='exponential')
+rate = lambda$estimate
+```
+
+Find the optimal value of $\lambda$ for this distribution, and then take 1000 samples from this exponential distribution using this value (e.g., rexp(1000, $\lambda$)).  Plot a histogram and compare it with a histogram of your original variable.   
+
+```{r}
+exp_sample <- data.frame(source=c('samp'), data=rexp(1000, rate=rate))
+exp_df <- rbind(exp_sample, data.frame(source=c('org'), data=df$TotalBsmtSF))
+exp_df %>% ggplot(aes(x=data, fill=source)) +
+  geom_histogram()
+```
+
+The original data has higher counts than the exp sample.
+
+Using the exponential pdf, find the 5th and 95th percentiles using the cumulative distribution function (CDF).  
+
+```{r}
+quantile(exp_sample$data, probs = c(0.05, 0.95))
+```
+
+Also generate a 95% confidence interval from the empirical data, assuming normality.  Finally, provide the empirical 5th percentile and 95th percentile of the data.  Discuss.
+
+```{r}
+quantile(df$TotalBsmtSF, probs = c(0.05, 0.95))
+```
+
+```{r}
+pe <- mean(df$TotalBsmtSF)
+stdev <- sd(df$TotalBsmtSF)
+n = length(df$TotalBsmtSF)
+
+se = stdev /sqrt(n)
+
+print(c(pe - 1.96 * se, pe + 1.96 * se))
+```
+
+
+#### Modeling.  
+Build some type of multiple regression  model and submit your model to the competition board.  Provide your complete model summary and results with analysis.  Report your Kaggle.com user name and score.
+
+
+```{r}
+df <- df %>%
+  dplyr::select(where(is.numeric)) %>%
+  dplyr::select(-c('Id', 'YearRemodAdd', 'GarageYrBlt', 'MasVnrArea', 'MSSubClass', 'BsmtFinSF2', 'X3SsnPorch', 'YrSold', 'MoSold', 'MiscVal', 'BsmtHalfBath', 'LowQualFinSF'))
+
+model_features = colnames(df)[1:25]
+```
+
+Split the data into training and testing sets. Using the training set bootstrap folds that will be used for tuning.
+
+```{r}
+df_split <- initial_split(df, strata=SalePrice)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+df_folds <- bootstraps(df_train, starta=SalePrice)
+```
+
+Create a recipe that will fill all missing values using knnimpute. 
+Build the specifications for a random forest model, set the mtry and min_n as tuneable parameters
+Finally create the workflow for the recipe to the model spec
+
+```{r}
+model_rec <- recipe(SalePrice ~., data=df_train) %>%
+  step_knnimpute(all_numeric())
+
+model_spec <- rand_forest(mtry = tune(), min_n=tune(), trees = 1000) %>%
+  set_mode('regression') %>%
+  set_engine('ranger')
+  
+model_workflow <- workflow() %>%
+  add_recipe(model_rec) %>%
+  add_model(model_spec)
+```
+
+Using multiple cores train all the trees for the best root-mean squared error and $r^2$
+
+```{r} 
+set.seed(42)
+doParallel::registerDoParallel()
+model_tune <- tune_grid(model_workflow, resample=df_folds, grid=10)
+```
+
+The error metric for this competition is rmse, so the best params corresponding to the lowest rmse will be chosen.
+
+```{r}
+show_best(model_tune, metric='rmse')
+autoplot(model_tune)
+```
+
+Using the best params fit the model and evaluate it on the the test set
+
+```{r}
+model_final <- model_workflow %>% finalize_workflow(select_best(model_tune, 'rmse'))
+model_fit <- last_fit(model_final, df_split)
+```
+
+
+```{r}
+collect_predictions(model_fit) %>%
+  ggplot(aes(x=SalePrice, y=.pred)) + 
+  geom_abline(lty=2) +
+  geom_point()
+```
+
+```{r, echo=F, warning=F, message=F}
+library(vip)
+```
+
+The importance plot shows that OverallQual, GrLivArea and YearBuilt contribute the most to the SalePrice
+
+```{r}
+sale_spec <- model_spec %>%
+  finalize_model(select_best(model_tune, 'rmse')) %>%
+  set_engine('ranger', importance='permutation')
+
+workflow() %>% 
+  add_recipe(model_rec) %>%
+  add_model(sale_spec) %>%
+  fit(df_train) %>%
+  pull_workflow_fit() %>%
+  vip()
+```
+
+Finally with the final model making predictions and submit results to kaggle.
+
+```{r}
+model <- model_fit$.workflow[[1]]
+testing_df <- tdf %>% 
+  dplyr::select(all_of(model_features)) %>%
+  mutate(LotFrontage=ifelse(is.na(LotFrontage), median(LotFrontage, na.rm=T), LotFrontage)) %>%
+  mutate(BsmtFinSF1=ifelse(is.na(BsmtFinSF1), median(BsmtFinSF1, na.rm=T), BsmtFinSF1)) %>%
+  mutate(BsmtUnfSF=ifelse(is.na(BsmtUnfSF), median(BsmtUnfSF, na.rm=T), BsmtUnfSF)) %>%
+  mutate(TotalBsmtSF=ifelse(is.na(TotalBsmtSF), median(TotalBsmtSF, na.rm=T), TotalBsmtSF)) %>%
+  mutate(BsmtFullBath=ifelse(is.na(BsmtFullBath), median(BsmtFullBath, na.rm=T), BsmtFullBath)) %>%
+  mutate(GarageCars=ifelse(is.na(GarageCars), median(GarageCars, na.rm=T), GarageCars)) %>%
+  mutate(GarageArea=ifelse(is.na(GarageArea), median(GarageArea, na.rm=T), GarageArea)) %>%
+  mutate_all(as.integer)
+
+final_df <- sdf %>%
+  mutate(SalePrice=predict(model, testing_df)$.pred)
+
+write.csv(final_df, file=paste0(path, 'sample_submission_df_v1.csv'), row.names=F)
+```
+
+Submitting the above model to kaggle gave a score of 0.19037, ranking at 8130
+
+![](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/final_exam/data_605_final.png)
+

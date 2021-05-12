@@ -9,6 +9,7 @@ output:
     highlight: kate
 ---
 
+
 ```{r, echo=F, message=F, warning=F}
 library(tidyverse)
 library(infer)

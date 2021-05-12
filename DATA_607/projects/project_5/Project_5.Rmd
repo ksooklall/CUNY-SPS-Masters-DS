@@ -312,7 +312,14 @@ final_model %>%
 However these results shouldn't be taken too seriously as we can see from the RMSE and $R^2$ plot the model still has a lot to learn. I would say a linear model isn't enough to capture the complexities of this show.
 
 ```{r}
-last_fit(final_model, df_split) %>%
-  collect_metrics()
+model_fit <- last_fit(final_model, df_split) 
+model_fit %>% collect_metrics()
+```
+
+```{r}
+collect_predictions(model_fit) %>%
+  ggplot(aes(x=imdb_rating, y=.pred)) + 
+  geom_abline(lty=2) +
+  geom_point()
 ```
 
