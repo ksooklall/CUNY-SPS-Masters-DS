@@ -1,0 +1,29 @@
+---
+title: "Problem 8.26 Presentation DATA 606"
+author: "Kenan Sooklall"
+date: "4/21/2021"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+![](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_606/problem_presentation/cats.png)
+
+Linear model:
+$$ HeartWeight = -0.357 + 4.034 * BodyWeight $$
+
+Intercept:
+
+If body weight is 0kg then the heart weight is -0.357. Neither of those values are meaningful value, they just serve to adjust the height of the regression line
+
+Slope:
+
+For every unit increase in body weight there is 4g increase in the heart weight
+
+R^2:
+
+64.41% of the heart weight is explained by the body weight
+
+Correlation coefficient:
+
+$$ R = sqrt(R^2) = sqrt(0.6441) = 0.802 $$
