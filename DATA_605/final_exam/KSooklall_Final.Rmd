@@ -2,7 +2,9 @@
 title: "KSooklall_Final_Project"
 author: "Kenan Sooklall"
 date: "5/8/2021"
-output: html_document
+output:
+  pdf_document: default
+  html_document: default
 ---
 
 ```{r, echo=F, message=F, warning=F}
@@ -457,7 +459,8 @@ final_df <- sdf %>%
 write.csv(final_df, file=paste0(path, 'sample_submission_df_v1.csv'), row.names=F)
 ```
 
-Submitting the above model to kaggle gave a score of 0.19037, ranking at 8130
+Submitting the above model to kaggle gave a score of 0.15141, ranking at 6745
+username: Sonetta
 
 ![](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_605/final_exam/data_605_final.png)
 
