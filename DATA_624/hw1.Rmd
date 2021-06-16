@@ -1,0 +1,142 @@
+---
+title: "Homework 1-DATA 624"
+date: '2021-05-02'
+---
+
+
+```{r setup, echo=FALSE, cache=FALSE, message=FALSE}
+library(tidyverse)
+library(fpp2)
+library(readxl)
+library(gridExtra)
+library(seasonal)
+```
+
+### Exercise 2.1 
+
+Use the help function to explore what the series gold, woolyrnq and gas represent.
+
+a. Use autoplot() to plot each of these in separate plots.
+
+```{r}
+autoplot(gold)
+autoplot(woolyrnq)
+autoplot(gas)
+```
+
+Gold - Timeseries plot of the price of gold
+Woolyrng - The quarterly production of woolen yarn in Australia in tons from March 1965 to September 1994
+Gas - The monthly gas production in Australia from 1956-1995
+
+b. What is the frequency of each series? Hint: apply the frequency() function.
+
+```{r}
+frequency(gold)
+frequency(woolyrnq)
+frequency(gas)
+```
+
+The frequency is in years
+
+ - Gold - yearly
+ - Woolyrnq - quarterly
+ - Gas - monthly
+
+c. Use which.max() to spot the outlier in the gold series. Which observation was it?
+
+```{r}
+summary(gold)
+which.max(gold)
+```
+
+observation 770 is the outlier with value 593.7
+
+```{r}
+autoplot(gold) + geom_line() + geom_vline(xintercept = 770, colour='red', linetype='dashed') +   geom_text(x=800, y=350, label='Max', color='black')
+```
+
+### Exercise 2.3
+
+Download some monthly Australian retail data from the book website. These represent retail sales in various categories for different Australian states, and are stored in a MS-Excel file.
+
+a. You can read the data into R with the following script:
+
+```{r}
+path <- '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_624/'
+rdf <- read_excel(paste0(path, 'retail.xlsx'), skip=1)
+```
+
+The second argument (skip=1) is required because the Excel sheet has two header rows.
+
+b. Select one of the time series as follows (but replace the column name with your own chosen column):
+
+```{r}
+myts <- ts(rdf %>% select('A3349398A'), frequency=12, start=c(1982,4))
+```
+
+c. Explore your chosen retail time series using the following functions:
+
+`autoplot()`, `ggseasonplot()`, `ggsubseriesplot()`, `gglagplot()`, `ggAcf()`
+
+```{r}
+autoplot(myts)
+ggseasonplot(myts)
+ggsubseriesplot(myts)
+gglagplot(myts)
+ggAcf(myts)
+```
+
+Can you spot any seasonality, cyclicity and trend? What do you learn about the series?
+
+The end of the year has the highest sales implying seasonality, most likey sales due to the holidays. 
+
+
+### Exercise 6.2
+
+The plastics data set consists of the monthly sales (in thousands) of product A for a plastics manufacturer for five years.
+
+a. Plot the time series of sales of product A. Can you identify seasonal fluctuations and/or a trend cycle?
+
+```{r}
+autoplot(plastics) + labs(title="Monthly Sales - Product A", x="Time", y="Sales")
+```
+
+Sales of plastic product increase at the start of the year and peak around Q3 then falls. The peaks of each year has been increasing for the last 6 years.
+
+b. Use a classical multiplicative decomposition to calculate the trend-cycle and seasonal indices.
+
+```{r}
+plastics %>% decompose(type="multiplicative") %>% autoplot()
+```
+
+c. Do the results support the graphical interpretation from part a
+
+The plot from part a shows an overall positive trend with seasonal fluctuations and the trend in the decompose plot verifies that.
+
+d. Compute and plot the seasonally adjusted data.
+
+```{r}
+seasonally_adj <- plastics / (plastics %>% decompose(type='multiplicative'))$seasonal 
+autoplot(seasonally_adj, series="Data")
+```
+
+e. Change one observation to be an outlier (e.g., add 500 to one observation), and recompute the seasonally adjusted data. What is the effect of the outlier?
+
+```{r}
+tmp <- plastics[50]
+plastics[50] <- plastics[50] + 9999
+seasonally_adj <- plastics / (plastics %>% decompose(type='multiplicative'))$seasonal 
+autoplot(seasonally_adj, series="Data")
+```
+
+f . Does it make any difference if the outlier is near the end rather than in the middle of the time series?
+
+```{r}
+plastics[50] <- tmp
+plastics[2] <- plastics[2] + 9999
+seasonally_adj <- plastics / (plastics %>% decompose(type='multiplicative'))$seasonal 
+autoplot(seasonally_adj, series="Data")
+```
+
+The outlier location makes a difference on where the spike is located. An outlier at the beginning almost completely destroyes the seasonal fluctuations.
+

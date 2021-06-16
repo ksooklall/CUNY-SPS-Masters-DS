@@ -1,0 +1,136 @@
+---
+title: "Homework 2-DATA 624"
+author: "Kenan Sooklall"
+date: "6/8/2021"
+output: html_document
+---
+
+#### Exercise 3.1
+
+The UC Irvine Machine Learning Repository contains a data set related to glass identification. The data consist of 214 glass samples labeled as one of seven class categories. There are nine predictors ,including the refractive index and percentages of eight elements: Na, Mg, Al, Si, K, Ca, Ba, and Fe. The data can be accessed via
+
+```{r, echo=F, warning=F, message=F}
+library(mlbench)
+library(fpp2)
+library(tidyverse)
+```
+
+```{r}
+data(Glass)
+str(Glass)
+```
+
+ - a. Using visualizations, explore the predictor variables to understand their distributions as well as the relationships a between predictors.
+
+```{r}
+correlation <- cor(Glass %>% select(-c('Type')))
+corrplot::corrplot(correlation)
+```
+
+Ca(Calcium) has a strong correlation with many of the other predictors
+
+```{r}
+Glass %>% select(-c(Type)) %>% gather(element, pct) %>% ggplot(aes(x=pct)) + geom_histogram(bins=30, binwidth=1) + facet_wrap(~element)
+```
+
+Almost all of the predictors seem to having strong skewness. Na(Sodium) and Ca(Calcium) are the only elements that have a near normal distribution
+
+```{r}
+Glass %>% pivot_longer(cols=-c(Type)) %>% ggplot(aes(x=name, y=value)) + geom_col() + facet_wrap(~Type)
+```
+
+Si(Silicon) is the dominant element in all of the glass types
+
+```{r}
+Glass %>% count(Type) %>% ggplot(aes(x=Type, y=n)) + geom_col()
+```
+
+Elements 1 2 and 7 are more frequent in this data set with 3, 5 and 6 having few representation
+
+- b. Does there appear to be any outliers in the data? Are any predictors skewed?
+
+For all glass types the presence of Si(Silicon) is the dominant element. Elements like K(Potassium) and Fe(Iron) having the least contribution. Those would be the outliers in the data.
+
+- c. Are there any relevant transformations of one or more predictors that might improve the classification model?
+
+I would definitely scale all of the predictors to have a mean of 0 and std of 1.
+
+
+#### Exercise 3.2
+
+The soybean data can also be found at the UC Irvine Machine Learning Repository. Data were collected to predict disease in 683 soybeans. The 35 predictors are mostly categorical and include information on the environmental conditions and plant conditions. The outcome labels consist of 19 distinct classes.
+
+The data can be loaded via:
+
+```{r}
+data(Soybean)
+```
+
+ - a Investigate the frequency distributions for the categorical predictors. Are any of the distributions degenerate in the ways discussed earlier in this chapter?
+ 
+```{r}
+Soybean %>% select(-c('Class', 'date'))  %>%
+gather(var, val) %>%
+  ggplot(aes(x = val)) +
+  geom_bar() + 
+  facet_wrap(~var, scales = 'free')
+```
+ 
+ Some predictors take 4 sequential values like `area.dam` while other take almost only one value (exluding NA) like `mycelium`, `roots` and `leaf.mild`
+ 
+ - b Roughly 18% of the data are missing. Are there particular predictors that are more likely to be missing? Is the pattern of missing  data related to the classes?
+
+```{r}
+Soybean %>% select(everything()) %>% summarise_all(~sum(is.na(.)))
+```
+ 
+ It looks like `sever`, `seed.tmt` and `lodging` have the most missing data.
+ 
+```{r}
+Soybean %>% group_by(Class) %>% summarise_all(~sum(is.na(.))) %>% transmute(Class, sumNA = rowSums(.[-1])) %>% filter(sumNA != 0) %>% mutate(pct = sumNA / sum(sumNA)) %>% arrange(sumNA)
+```
+ 
+ Most of the missing data is for the class `phytophthora-rot` followed by `2-4-d-injury`
+ 
+ - c Develop a strategy for handling missing data, either by eliminating predictors or imputation.
+
+I wold eliminate the `phytophthora-rot` from any model since there is too much missing data. For the missing predictors I would fill with the most common variable. For example `mycelium` has the value zero number for most classes so fill missing with the same value.
+
+#### Exercise 7.1
+
+Consider the `pigs` series — the number of pigs slaughtered in Victoria each month.
+
+ - a Use the `ses()` function in R to find the optimal values of $\alpha$ and $l_0$, and generate forecasts for the next four months.
+
+```{r}
+fc <- ses(pigs, h=4)
+fc$model
+```
+
+The optimal values are $\alpha=0.297$ and $l_0=77260.056$
+
+ - b Compute a 95% prediction interval for the first forecast using $\hat{y} \pm 1.96s$ where $s$ is the standard deviation of the residuals. Compare your interval with the interval produced by R.
+
+Compute 95%
+
+```{r}
+c(fc$mean[1] - 1.96*sd(fc$residuals), fc$mean[1] + 1.96*sd(fc$residuals))
+```
+
+Produced by R
+
+```{r}
+c(fc$lower[1, '95%'], fc$upper[1, '95%'])
+```
+
+#### Exercise 7.3
+
+Modify your function from the previous exercise to return the sum of squared errors rather than the forecast of the next observation. Then use the `optim()` function to find the optimal values of $\alpha$ and $l_0$. Do you get the same values as the `ses()` function?
+
+```{r}
+myses <- function(y, alpha, level) {
+  ft = alpha + (1 - alpha) * y
+  return(ft)
+}
+```
+
