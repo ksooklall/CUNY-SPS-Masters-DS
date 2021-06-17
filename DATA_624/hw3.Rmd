@@ -1,0 +1,182 @@
+---
+title: "Homework 3-DATA 624"
+author: "Kenan Sooklall"
+date: "6/13/2021"
+output: html_document
+---
+
+```{r, echo=F, warning=F, message=F}
+library(mlbench)
+library(fpp2)
+library(tidyverse)
+```
+
+
+ARIMA - AutoRegressive Integrated Moving Average
+p= 	order of the autoregressive part
+d= 	degree of first differencing involved
+q= 	order of the moving average part
+
+#### Exercise 8.1
+Figure 8.31 shows the ACFs for 36 random numbers, 360 random numbers and 1,000 random numbers.
+
+Left: ACF for a white noise series of 36 numbers. Middle: ACF for a white noise series of 360 numbers. Right: ACF for a white noise series of 1,000 numbers.
+Figure 8.31: Left: ACF for a white noise series of 36 numbers. Middle: ACF for a white noise series of 360 numbers. Right: ACF for a white noise series of 1,000 numbers.
+
+ - a. Explain the differences among these figures. Do they all indicate that the data are white noise?
+
+Going from left to right the sample size increases thus the autocorrelation becomes more narrow. Given how all 3 plots have values close to 0 I assume they are white noise.
+
+- b. Why are the critical values at different distances from the mean of zero? Why are the autocorrelations different in each figure when they each refer to white noise?
+
+From the equation for critical values $\pm 1.96/sqrt(T)$ we see that as T (length of the time series) get's larger the critical value becomes smaller. So with a smaller sample size, the ACF can capture the autocorrelation clearer. 
+
+
+#### Exercise 8.2
+A classic example of a non-stationary series is the daily closing IBM stock price series (data set ibmclose). Use R to plot the daily closing prices for IBM stock and the ACF and PACF. Explain how each plot shows that the series is non-stationary and should be differenced.
+
+```{r}
+ggtsdisplay(ibmclose, main = "Daily Closing IBM Stock Price", ylab = "Sales", xlab = "Time in Days")
+```
+
+The timeseries plot shows no clear trend like what we would expected from seasonal data thus making the series non-stationary. The ACF plot shows a a constant but slow decrease. The PACF plot spikes at the first T and then all other values are within the critical values. All together we can conclude that IBM stock price is non-stationary.
+
+#### Exercise 8.6
+
+Use R to simulate and plot some data from simple ARIMA models.
+
+- a. Use the following R code to generate data from an AR(1) model with  
+$\phi_1=0.6$ and   $\sigma^2=1$. The process starts with  $y_1=0$
+
+```{r}
+ar1 <- function(phi) {
+  y <- ts(numeric(100))
+  e <- rnorm(100)
+  for(i in 2:100) {
+    y[i] <- phi*y[i-1] + e[i]
+  }
+  return (y)
+}
+```
+
+- b. Produce a time plot for the series. How does the plot change as you change $\phi_1$?
+
+```{r}
+df <- data.frame(phin1=ar1(-1), phin0.5=ar1(-0.5), phi0=ar1(0), phi0.6=ar1(0.6), phi1=ar1(1)) %>% mutate(t=row_number())
+
+df %>% pivot_longer(cols = -c('t')) %>% ggplot(aes(x=t, y=value, color=name)) + geom_line() + geom_point() + facet_wrap(~name, scales='fixed')
+```
+
+As phi gets further away from 0 points on the plot spread out more in the y axis.
+ 
+- c. Write your own code to generate data from an MA(1) model with $\theta_1=0.6$ and $\sigma^2=1$. 
+
+```{r}
+ma1 <- function(phi) {
+  y <- ts(numeric(100))
+  e <- rnorm(100)
+  for(i in 2:100) {
+    y[i] <- phi*e[i-1] + e[i]
+  }
+  return (y)
+}
+```
+
+- d. Produce a time plot for the series. How does the plot change as you change $\theta_1$?
+
+```{r}
+df <- data.frame(phin1=ma1(-1), phin0.5=ma1(-0.5), phi0=ma1(0), phi0.6=ma1(0.6), phi1=ma1(1)) %>% mutate(t=row_number())
+
+df %>% pivot_longer(cols = -c('t')) %>% ggplot(aes(x=t, y=value, color=name)) + geom_line() + geom_point() + facet_wrap(~name, scales = 'fixed')
+```
+
+- e. Generate data from an ARMA(1,1) model with $\phi_1=0.6$, $\theta_1=0.6$ and $\sigma^2=1$.
+
+```{r}
+ma_ar11 <- function(phi, theta) {
+  y <- ts(numeric(100))
+  e <- rnorm(100)
+  for(i in 2:100) {
+    y[i] = phi*y[i-1] + theta*e[i-1] + e[i]
+  }
+  return (y)
+}
+
+y = ma_ar11(0.6, 0.6)
+p1 = autoplot(y)
+p2 = ggAcf(y)
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+
+- f. Generate data from an AR(2) model with $\phi_1=-0.8$, $\phi_2=0.3$ and $\sigma^2=1$. (Note that these parameters will give a non-stationary series.)
+
+```{r}
+ar2 <- function(phi_1, phi_2) {
+  y <- ts(numeric(100))
+  e <- rnorm(100, 1)
+  for(i in 3:100) {
+    y[i] <- phi_1*y[i-1] + phi_2*y[i-2] + e[i]
+  }
+  return (y)
+}
+yar2 = ar2(-0.8, 0.3)
+```
+
+- g. Graph the latter two series and compare them.
+
+```{r}
+p1 = autoplot(yar2)
+p2 = ggAcf(yar2)
+gridExtra::grid.arrange(p1, p2, ncol = 2)
+```
+
+#### Exercise 8.8
+
+Consider austa, the total international visitors to Australia (in millions) for the period 1980-2015.
+
+- a. Use auto.arima() to find an appropriate ARIMA model. What model was selected. Check that the residuals look like white noise. Plot forecasts for the next 10 periods.
+
+```{r}
+fit011 <- auto.arima(austa)
+checkresiduals(fit011)
+autoplot(forecast(fit011, h=10))
+```
+
+All values in the ACF plot are within the threshold.
+
+- b. Plot forecasts from an ARIMA(0,1,1) model with no drift and compare these to part a. Remove the MA term and plot again.
+
+```{r}
+fit011 <- auto.arima(austa, allowdrift=F)
+autoplot(forecast(fit011, h=10))
+```
+
+- c. Plot forecasts from an ARIMA(2,1,3) model with drift. 
+
+```{r}
+fit <- Arima(austa, order=c(2,1,3), method='ML', include.drift=T)
+autoplot(forecast(fit,h=10))
+```
+
+Remove the constant and see what happens.
+
+```{r}
+fit <- Arima(austa, order=c(2,1,3), method='ML', include.drift=T, include.mean =F)
+autoplot(forecast(fit,h=10))
+```
+
+- d. Plot forecasts from an ARIMA(0,0,1) model with a constant. Remove the MA term and plot again.
+
+```{r}
+fit <- Arima(austa, order=c(0,0,1), method='ML')
+autoplot(forecast(fit,h=10))
+```
+
+- e. Plot forecasts from an ARIMA(0,2,1) model with no constant.
+
+```{r}
+fit <- Arima(austa, order=c(0,2,1), method='ML', include.mean=F)
+autoplot(forecast(fit,h=10))
+```
+
