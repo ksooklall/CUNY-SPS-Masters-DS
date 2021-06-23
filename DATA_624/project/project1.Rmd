@@ -1,0 +1,67 @@
+---
+title: "Project"
+author: "Kenan Sooklall"
+date: "6/18/2021"
+output: html_document
+---
+
+```{r, echo=F, message=F, warning=F}
+library(tidyverse)
+library(fpp2)
+```
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_624/project/'
+df <- read.csv(paste0(path, 'data.csv'))
+df <- df %>% mutate(date=as.Date(df$SeriesInd, origin="1899-12-30")) %>%
+  select(-c('SeriesInd'))
+```
+
+To get an idea how each Var relate to each other, they will be scaled to have a mean of 0 and std of 1.
+
+```{r}
+predictors = c('Var01', 'Var02', 'Var03', 'Var05')
+df %>% mutate_at(predictors, scale) %>% pivot_longer(cols=predictors) %>% ggplot(aes(x=date, y=value, color=name)) + geom_line() + facet_wrap(~group)
+```
+
+It looks like some Var are all very close while Var02 takes larger values
+
+```{r}
+df %>% mutate_at(predictors, scale) %>% filter(group == 'S03') %>% pivot_longer(cols=predictors) %>% ggplot(aes(x=date, y=value, color=name)) + geom_line() + facet_wrap(~name)
+```
+
+Var01, 03, 05, and 07 all look almost exactly the same with a slow trend upwards, while Var02 trending downwards with a lot of volatility. 
+
+Splitting the data into training and testing
+
+```{r}
+df = df %>% filter(group == 'S04')
+rows = nrow(df)
+col_pred = c('date', 'group', 'Var01', 'Var02')
+pivot = floor(rows*0.75)
+future = 140
+
+df_train <- df[1:pivot,col_pred]
+df_test <- df[(pivot+1):nrow(df),col_pred]
+```
+
+```{r}
+ggtsdisplay(df_train$Var01)
+```
+
+```{r}
+fitv1 <- auto.arima(df_train$Var01)
+fitv1 %>% forecast(h=(rows - pivot) + future) %>% autoplot()
+```
+
+
+```{r}
+ggtsdisplay(df_train$Var02)
+```
+
+```{r}
+fitv2 <- auto.arima(df_train$Var02)
+fitv2 %>% forecast(h=(rows - pivot) + future) %>% autoplot()
+```
+
+

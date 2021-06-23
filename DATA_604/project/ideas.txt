@@ -1,0 +1,14 @@
+us gdp,
+gdp is a function of many variables (x - inports)
+GDP is the dollar amount of all final goods/services produced within a country's borders
+Intermediate good are not included, like the price of the battery in your cell phone
+GDP is in $$
+GDP = Consumption + Investment + Gov Expenditure + (Exports - Imports)
+
+Consumption - everything that people are spending, new purchases
+Investment - Businesses
+Government Spending - who tax dollars are used
+Exports - good make in the country that are sent to other countries
+Imports - good made in another country that we puchase
+
+if (X-M) < 0: trade defecit
