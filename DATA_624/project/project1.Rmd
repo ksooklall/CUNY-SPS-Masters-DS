@@ -2,66 +2,184 @@
 title: "Project"
 author: "Kenan Sooklall"
 date: "6/18/2021"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r, echo=F, message=F, warning=F}
 library(tidyverse)
 library(fpp2)
+library(forecast)
 ```
+
+### Loading the data
 
 ```{r}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_624/project/'
-df <- read.csv(paste0(path, 'data.csv'))
-df <- df %>% mutate(date=as.Date(df$SeriesInd, origin="1899-12-30")) %>%
-  select(-c('SeriesInd'))
+df <- readxl::read_excel(paste0(path, 'DATA624_Project1_Data_Schema.xlsx'), sheet='S04', skip=2)
+df <- df %>% mutate(date=as.Date(df$SeriesInd, origin="1899-12-30"))
 ```
 
-To get an idea how each Var relate to each other, they will be scaled to have a mean of 0 and std of 1.
-
-```{r}
-predictors = c('Var01', 'Var02', 'Var03', 'Var05')
-df %>% mutate_at(predictors, scale) %>% pivot_longer(cols=predictors) %>% ggplot(aes(x=date, y=value, color=name)) + geom_line() + facet_wrap(~group)
-```
-
-It looks like some Var are all very close while Var02 takes larger values
-
-```{r}
-df %>% mutate_at(predictors, scale) %>% filter(group == 'S03') %>% pivot_longer(cols=predictors) %>% ggplot(aes(x=date, y=value, color=name)) + geom_line() + facet_wrap(~name)
-```
-
-Var01, 03, 05, and 07 all look almost exactly the same with a slow trend upwards, while Var02 trending downwards with a lot of volatility. 
+### Splitting the data
 
 Splitting the data into training and testing
 
 ```{r}
-df = df %>% filter(group == 'S04')
 rows = nrow(df)
-col_pred = c('date', 'group', 'Var01', 'Var02')
-pivot = floor(rows*0.75)
-future = 140
 
-df_train <- df[1:pivot,col_pred]
-df_test <- df[(pivot+1):nrow(df),col_pred]
+df_train <- df[1:1622,]
+df_test <- df[1623:rows,]
+
+df_train$splits <- 'train'
+df <- df %>% mutate(splits=if_else(Var01 < 100, 'train', 'test'))
 ```
+
+### Exploratory Data Analysis
+
+Check for Na values
+
+```{r}
+df_train %>% filter(is.na(Var01))
+```
+
+There are only 2 missing values in `Var01`, they will be replaced with the mean of the column
+
+```{r}
+df_train <- df_train %>% mutate(Var01=if_else(is.na(Var01), mean(Var01, na.rm=TRUE), Var01))
+
+df[1:1622, 'Var01'] <- df_train[1:1622, 'Var01']
+```
+
+Var01 has an upward trend, with a sharp increase from 2014 to 2016.
+
+```{r}
+df_train %>% ggplot(aes(x=date, y=Var01)) + geom_line()
+```
+
+Var02 has no trend, but many spikes with the largest happening in 2016.
+
+```{r}
+df_train %>% ggplot(aes(x=date, y=Var02)) + geom_line() + geom_smooth(method='gam')
+```
+
+Box plot after scaling data
+  
+```{r, warning=F}
+df_train %>% select(Var01, Var02) %>% mutate_all(scale) %>% gather(var, val) %>% ggplot(aes(x=var, y=val)) + geom_boxplot()
+```
+
+Var02 has a lot of outliers while Var01 has a smaller variance.
+
+
+```{r}
+p1 <- df_train %>% ggplot(aes(date,Var01)) + geom_line()
+
+# Volume plot
+p2 <- df_train %>% ggplot(aes(date,Var02))+geom_bar(stat = "identity", position = "stack")
+# Dark ages example: arrange using grid, not gridExtra
+library( grid )
+grid.newpage()
+pushViewport(viewport(layout = grid.layout(20, 1)))
+
+vplayout <- function(x, y)
+viewport(layout.pos.row = x, layout.pos.col = y)
+
+# Print them
+print(p1, vp = vplayout(1:15, 1))
+print(p2, vp = vplayout(15:20, 1))
+```
+
 
 ```{r}
 ggtsdisplay(df_train$Var01)
 ```
 
-```{r}
-fitv1 <- auto.arima(df_train$Var01)
-fitv1 %>% forecast(h=(rows - pivot) + future) %>% autoplot()
-```
-
+The ACF plot has all values above the critical values, while PACF has only one spike
 
 ```{r}
 ggtsdisplay(df_train$Var02)
 ```
 
+The ACF plot has all values above the critical values except at the end, while PACF has only a few spikes at the start.
+
+### Modeling
+
+Create a validation set of 20% of the data that will be used to test the model accuracy.
+
 ```{r}
-fitv2 <- auto.arima(df_train$Var02)
-fitv2 %>% forecast(h=(rows - pivot) + future) %>% autoplot()
+n <- nrow(df_train)
+train_rows <- floor(n * 0.8)
+valid_rows <- n - train_rows
+
+df_train[train_rows:(train_rows+valid_rows), 'splits'] <- 'valid'
+df_train$y_pred <- df_train$Var01
 ```
 
+#### Var01
+
+Using Exponential smoothing state space model for Var01
+
+```{r}
+fitv1 <- df_train[1:train_rows,]$Var01 %>% ets()
+valid_v1 <- fitv1 %>% forecast(h=valid_rows+1)
+valid_v1 %>% accuracy(df_train[(train_rows+1):n,]$Var01)
+```
+
+After training we visualize the the prediction on the valid rows
+
+```{r}
+#df_train[train_rows:(train_rows+valid_rows),'y_pred'] = valid_v1$lower[,'80%']
+df_train[train_rows:(train_rows+valid_rows),'y_pred'] = valid_v1 %>% data.frame() %>% select(Point.Forecast)
+df_train %>% filter(splits == 'valid') %>% select(Var01, y_pred, date) %>% gather(var, val, -date) %>% mutate(var=if_else(var == 'Var01', 'y_true', 'y_pred')) %>% ggplot(aes(x=date, y=val, color=var)) + geom_line()
+```
+
+Finally we can train on the whole training set to build a final model and forecast the test set
+
+```{r}
+fitv1 <- df_train$Var01 %>% ets()
+test_v1 <- fitv1 %>% forecast(h=140)
+autoplot(test_v1)
+```
+
+Using the point forecast for our final prediction
+
+```{r}
+#df[1623:nrow(df),'Var01'] = test_v1$upper[,'80%']
+df[1623:nrow(df),'Var01'] = test_v1 %>% data.frame() %>% select(Point.Forecast)
+df %>% ggplot(aes(x=date, y=Var01, color=splits)) + geom_line()
+```
+
+#### Var02
+
+For Var02 we will use an ARIMA model
+
+```{r}
+fitv2 <- auto.arima(df_train[1:train_rows,]$Var02)
+valid_v2 <- fitv2 %>% forecast(h=valid_rows+1) 
+valid_v2 %>% accuracy(df_train[(train_rows+1):n,]$Var02)
+```
+
+After training we visualize the the prediction on the valid rows
+
+```{r}
+#df_train[train_rows:(train_rows+valid_rows),'y_pred'] = valid_v2$upper[,'95%']
+df_train[train_rows:(train_rows+valid_rows),'y_pred'] = valid_v2 %>% data.frame() %>% select(Point.Forecast)
+df_train %>% filter(splits == 'valid') %>% select(Var02, y_pred, date) %>% gather(var, val, -date) %>% mutate(var=if_else(var == 'Var02', 'y_true', 'y_pred')) %>% ggplot(aes(x=date, y=val, color=var)) + geom_line()
+```
+
+Finally we can forecast the test set
+
+```{r}
+fitv2 <- auto.arima(df_train$Var02)
+test_v2 <- fitv2 %>% forecast(h=140)
+autoplot(test_v2)
+```
+
+Using the point forecast for our final prediction
+
+```{r}
+df[1623:nrow(df),'Var02'] = fitv2 %>% forecast(h=140) %>% data.frame() %>% select(Point.Forecast)
+df %>% ggplot(aes(x=date, y=Var02, color=splits)) + geom_line() + theme(legend.position = 'none') 
+```
 
