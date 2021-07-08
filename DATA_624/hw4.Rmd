@@ -1,0 +1,110 @@
+---
+title: "Homework 4-DATA 624"
+author: "Kenan Sooklall"
+date: "6/24/2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 5
+---
+
+### Exercise 6.3
+
+A chemical manufacturing process for a pharmaceutical product was discussed in Sect. 1.4. In this problem, the objective is to understand the relationship between biological measurements of the raw materials (predictors), measurements of the manufacturing process (predictors), and the response of product yield. Biological predictors cannot be changed but can be used to assess the quality of the raw material before processing. On the other hand, manufacturing process predictors can be changed in the manufacturing process. Improving product yield by 1% will boost revenue by approximately one hundred thousand dollars per batch:
+
+##### (a) Load the data
+
+```{r, echo=F, warning=F, message=F}
+library(tidyverse)
+library(caret)
+library(e1071)
+library(AppliedPredictiveModeling)
+data("ChemicalManufacturingProcess")
+
+glimpse(ChemicalManufacturingProcess)
+```
+
+The matrix processPredictors contains the 57 predictors (12 describing the input biological material and 45 describing the process predictors) for the 176 manufacturing runs. Yield contains the percent yield for each run.
+
+ - b. A small percentage of cells in the predictor set contain missing values. Use an imputation function to fill in these missing values (e.g., see Sect. 3.8).
+
+```{r}
+df <- ChemicalManufacturingProcess
+df %>% select(everything()) %>% summarise_all(~sum(is.na(.))) %>% gather(var, val) %>% filter(val > 0) %>% ggplot(aes(x=var, y=val)) + geom_col() + coord_flip()
+```
+
+From section 3.8, using preProcess from the caret package and knnImpute to fillna values.
+
+```{r}
+fillna <- preProcess(df, method = c("knnImpute"))
+df <- predict(fillna, df)
+df$Yield = ChemicalManufacturingProcess$Yield
+```
+
+ - c. Split the data into a training and a test set, pre-process the data, and tune a model of your choice from this chapter. What is the optimal value of the performance metric?
+ 
+ Using tidymodels we split the data into training and testing, the training set will be used for model tuning.
+
+```{r, warning=F, message=F}
+library(tidymodels)
+
+df_split <- initial_split(df, strata=Yield)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+```
+
+ When mixture = 1, it is a pure lasso model while mixture = 0 indicates that ridge regression is being used.
+
+Build the model and set up the workflow
+
+```{r}
+ctrl <- trainControl(method="cv", number=5)
+
+lmodel <- train(
+  x = df_train %>% select(-c('Yield')),
+  y = df_train$Yield,
+  method = "pls",
+  tuneLength = 30,
+  trControl = ctrl
+)
+```
+
+Plot all metrics
+
+```{r}
+lmodel$results %>% gather(var, val, -ncomp) %>% ggplot(aes(x=ncomp, y=val)) + geom_line() + facet_wrap(~var, scales='free')
+```
+
+From the plots it looks like a small amount of components gives the highest Rsquare and lowerst RMSE. Therefore we will go with 3 components.
+
+ - d. Predict the response for the test set. What is the value of the performance metric and how does this compare with the resampled performance metric on the training set?
+
+```{r}
+postResample(predict(lmodel, newdata = df_test, ncomp = mdl.ncomp), df_test$Yield)
+```
+
+```{r}
+getTrainPerf(lmodel)
+```
+
+As we would expect, the model does better on the training set than the testing set, from 1.24 to 1.34 RMSE.
+
+ - e. Which predictors are most important in the model you have trained? Do either the biological or process predictors dominate the list?
+ 
+```{r, echo=F, message=F}
+ggplot(varImp(lmodel), top=20)
+```
+ 
+ The top 5 most important predictor is are process followed by Biological. The most important process is 32.
+ 
+  - f. Explore the relationships between each of the top predictors and the response. How could this information be helpful in improving yield in future runs of the manufacturing process?
+  
+```{r}
+important_predictors <- c('ManufacturingProcess32', 'ManufacturingProcess09', 'ManufacturingProcess13', 'ManufacturingProcess36', 'ManufacturingProcess17', 'ManufacturingProcess06', 'Yield')
+
+df %>% select(important_predictors) %>% gather(var, val, -Yield) %>% ggplot(aes(x=val, y=Yield)) + geom_point() + facet_wrap(~var)
+```
+  
+From the plots above we can see 6,9,13,17 and 32 have a correlation while 36 doesn't look like it has a strong correlation.
+  
