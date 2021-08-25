@@ -12,3 +12,6 @@ Exports - good make in the country that are sent to other countries
 Imports - good made in another country that we puchase
 
 if (X-M) < 0: trade defecit
+
+
+https://realpython.com/simpy-simulating-with-python/
