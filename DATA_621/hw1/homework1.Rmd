@@ -1,0 +1,170 @@
+---
+title: "Homework 1 - Money Ball"
+author: "Kenan Sooklall"
+date: "9/1/2021"
+output: html_document
+---
+
+
+```{r, echo=F, warning=F, message=F}
+library(tidyverse)
+library(corrplot)
+library(inspectdf)
+```
+
+
+### Data Exploration
+
+Load data and rename columns. I removed TEAM in all column names since it wasn't informative.
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/hw1/'
+df <- read.csv(paste0(path, 'moneyball-training-data.csv')) %>%
+  select(-INDEX)
+names(df) <- gsub('TEAM_', '', x=names(df))
+```
+
+The training data has 16 columns and 2276 observations, the INDEX column was removed as stated. The target column is TARGET_WINS and the remaining columns are all potential predictor variables for a linear models
+
+```{r}
+summary(df)
+```
+
+These variables are all on a different scale which is ok for multiple linear regression. Some variables are missing values are others look like they might contain a lot of outliars.
+
+```{r}
+visdat::vis_miss(df, sort_miss = TRUE)
+df <- df %>% select(-BATTING_HBP)
+```
+
+BATTING_HBP is dropped because it is missing 91% of observations. No targets are missing.
+
+```{r}
+correlation <- cor(df)
+corrplot.mixed(correlation, tl.col = 'black', tl.pos = 'lt')
+```
+
+From the correlation plot we see some strong correlations between variables and some between predictor and target. It looks like BATTING_H, BATTING_2B, BATTING_BB have the strongest correlation with TARGET_WIN. BATTING_HR and PITCHING_HR have a strong correlation of 0.97 so one can be dropped.
+
+```{r}
+inspectdf::inspect_num(df) %>% show_plot()
+```
+
+TARGET_WINS, FIELDING_DP, BATTING_H, BATTING_2B, BATTING_BB are all normally distributed
+BASERUN_CS, BATTING_3B, FIELDGING_E, BASERUN_SB are right skewed
+PITCHING_HR, FIELDING_E, BASERUN_SB, PITCHING_BB, PITCHING_SO, PITCHING_H are heavily skewed with PITCHING_HR being unimodal. All non-normally distributed variable might need for feature engineering
+PITCHING_SO could be dropped since it has only a few unique values, therefore we can drop PITCHING_SO. 
+
+Overall it looks like the BATTING variables have the strongest correlation with the TARGET_WINS
+
+```{r}
+df %>% stack() %>% ggplot(aes(x=ind, y=values)) + geom_boxplot() + coord_flip()
+```
+
+From the boxplot we can see PICHING_H has a lot of outliars making it a predictor that will need extra work
+
+### Data Preparation
+
+With the data exploration complete we can now drop certain columns and impute missing values. The NA will be replaced with the median value of the cells since we are working with ints. 
+
+BATTING_HBP and PITCHING_SO are dropped for the above reason 
+
+```{r}
+df <- df %>% 
+  mutate_all(~ifelse(is.na(.), median(., na.rm = TRUE), .)) %>% 
+  select(-PITCHING_SO)
+```
+
+From knowledge of baseball and a bit of searching new features were created as a linear combination of the current.
+
+```{r}
+df <- df %>% 
+  mutate(OBP = (BATTING_H + BATTING_BB) / (BATTING_H + BATTING_BB - BASERUN_CS),
+         BAV = BATTING_H / (BATTING_H + BATTING_2B + BATTING_3B + BATTING_HR))
+```
+
+Where OBP is On Base Percentage and BAV is Batting Average
+
+### Build Models
+
+##### Model 1
+This model will use the imputted data frame and all predictor columns (after removals)
+
+```{r}
+m1 <- lm(TARGET_WINS ~ ., data=df)
+summary(m1)
+```
+
+##### Model 2
+For this model I will use only theoretical effect the positive impact on wins
+
+```{r}
+theory_pos <- c('TARGET_WINS', 'BATTING_H', 'BATTING_3B', 'BATTING_HR', 'BATTING_BB', 'BASERUN_SB', 'FIELDING_DP')
+df2 <- df %>% select(all_of(theory_pos))
+
+m2 <- lm(TARGET_WINS ~ ., data=df2)
+summary(m2)
+```
+
+##### Model 3
+For this model only predictors that have greater than 15% correlation with TARGET_WINS
+
+```{r}
+cor_cols <- data.frame(correlation) %>% filter(TARGET_WINS > 0.2) %>% rownames()
+df3 <- df %>% select(cor_cols)
+
+m3 <- lm(TARGET_WINS ~ ., data=df3)
+summary(m3)
+```
+
+#### Model 4
+From the 3 models above the p-vals for BATTING_H, BATTING_2B, BASERUN_SB, FIELDING_E, BAV indicate that they play a strong role in predicting TARGET_WINS. Therefore this last model will only use them as predictors
+
+```{r}
+low_pvals <- c('BATTING_H', 'BATTING_2B', 'BASERUN_SB', 'FIELDING_E', 'BAV', 'TARGET_WINS')
+df4 <- df %>% select(low_pvals)
+m4 <- lm(formula = TARGET_WINS ~., data=df4)
+summary(m4)
+```
+
+
+### Select Models
+
+The table below evaluates all of the models with RMSE, MSE, adjR2 and complexity. Both RMSE and adjR2 quantify how well a regression model fits a dataset. The RMSE tells us how well a regression model can predict the value of the response variable in absolute terms while adjR2 tells us how well a model can predict the value of the response variable in percentage terms. Since this is a multivariate regression problem we evaluates with adjR2 as opposed to R2. Complexity is determined by the number of variables used by the model.
+
+```{r}
+MSE = c(mean(m1$residuals^2), mean(m2$residuals^2), mean(m3$residuals^2), mean(m4$residuals^2))
+RMSE = sqrt(MSE)
+adjR2 = c(summary(m1)$adj.r.squared, summary(m2)$adj.r.squared, summary(m3)$adj.r.squared, summary(m4)$adj.r.squared)
+model=c('m1','m2','m3','m4')
+variables = c(length(m1$coefficients), length(m2$coefficients), length(m3$coefficients), length(m4$coefficients))
+
+mdf <- data.frame(model=model, variables=variables, RMSE=RMSE, MSE=MSE, adjR2=adjR2)
+```
+
+From the table above m1 is the best model with the lowest RMSE/MSE and highest adjR2; however it is the most complex. m3 is the simplest with 4 variables but the worst in terms of all other metrics. The best model seem to be m4 with 6 variables and an adjR2 that is only 3 point below the best.
+
+##### Evaluation 
+
+The evaluation dataset has to go through the same preprocessing as the training data. We impute missing values with the median and create the BAV column, then select the important X values to feed into the model m4.
+
+```{r}
+edf <- read.csv(paste0(path, 'moneyball-evaluation-data.csv'))
+names(edf) <- gsub('TEAM_', '', x=names(edf))
+edf <- edf %>% 
+  mutate_all(~ifelse(is.na(.), median(., na.rm = TRUE), .)) %>%
+  mutate(BAV = BATTING_H / (BATTING_H + BATTING_2B + BATTING_3B + BATTING_HR)) %>%
+  select(low_pvals[1:5])
+edf$TARGET_WINS <- predict(m4, edf)
+
+glimpse(edf)
+```
+
+Comparing statistics from the known TARGET_WINS to the predicted TARGET_WINS
+
+```{r}
+summary(df$TARGET_WINS)
+summary(edf$TARGET_WINS)
+```
+
+Our predicted values have a similar mean and IQR range; however the min and max vary. This is still kind of surprising because the model had an adjR2 of 0.28 which isn't very good but still captured enough of the relationship between X~y to make reasonable predictions on the evaluation set.

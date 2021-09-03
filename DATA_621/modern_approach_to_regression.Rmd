@@ -1,0 +1,18 @@
+---
+title: "MARR"
+author: "Kenan Sooklall"
+date: "9/1/2021"
+output: html_document
+---
+
+Chapter 2
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/datasets/'
+df <- read.csv(paste0(path, 'playbill.csv'))
+df %>% ggplot(aes(y=CurrentWeek, x=LastWeek)) + geom_point() + geom_smooth()
+```
