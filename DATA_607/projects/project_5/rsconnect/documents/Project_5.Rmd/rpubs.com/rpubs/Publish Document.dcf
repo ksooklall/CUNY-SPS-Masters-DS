@@ -1,0 +1,10 @@
+name: Publish Document
+title:
+username:
+account: rpubs
+server: rpubs.com
+hostUrl: rpubs.com
+appId: https://api.rpubs.com/api/v1/document/766672/035a0bb867cd409aafc53fe9d668610b
+bundleId: https://api.rpubs.com/api/v1/document/766672/035a0bb867cd409aafc53fe9d668610b
+url: http://rpubs.com/ksooklall/766672
+when: 1620661099.56215
