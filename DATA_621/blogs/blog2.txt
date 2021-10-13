@@ -1,0 +1,29 @@
+In this blog I will be looking at 2 different classification algorithms and the order in which they should be applied. These discriminant analysis models, model the distribution of the predictors X separately in each of the response classes (i.e. spam=“Yes”, ham=“No” ), and then uses Bayes’ theorem to flip these around into estimates for the probability of the response category given the value of X.
+
+LDA (Linear Discriminant Analysis) is used when a linear boundary is required between classifiers and QDA (Quadratic Discriminant Analysis) is used to find a non-linear boundary between classifiers. LDA and QDA work better when the response classes are separable and distribution of X=x for all class is normal. The more the classes are separable and the more the distribution is normal, the better the classification result for LDA and QDA. However LDA and QDA fail when there are more predictors than n, a simple rule of thumb is to use LDA & QDA on data sets where n gt 5*p.
+
+LDA - Linear discriminant analysis: Modeling and classifying the categorical responseY with a linear combination of predictor variables X
+
+- data is nomal: can be tested with shapiro-wilk normality test
+
+- covariance matrices are assumed to be identical for each class
+
+- good for small datasets, high bias, lower variance
+
+In R:library(MASS)model <- lda(Y~x, data = train)
+
+QDA - Quadratic discriminant analysis: Modeling and classifying the categorical responseY with a non-linear combination of predictor variables X
+
+- data is normal
+
+- each class has its own covariance matrix
+
+- good for large datasets, lower bias, higher variance
+
+In R:library(MASS)model <- qda(Y~x, data = train)
+
+If the assumptions of an LDA are met then an LDA is the best model for classification. LDA will be the best from the fact that a straight line is the simplest boundry for seperation. A linear model will have less terms and is easier to evaluate. However if LDA assumptions are violated, usually the covariance matrix requirement, QDA will do a better job.
+
+Other classification algorithms worth looking at are logistic regression and support vector machines(SVM)
+
+Referenceshttp://uc-r.github.io/discriminant_analysishttps://datascienceplus.com/how-to-perform-logistic-regression-lda-qda-in-r/#:~:text=LDA%20(Linear%20Discriminant%20Analysis)%20is,for%20all%20class%20is%20normal.

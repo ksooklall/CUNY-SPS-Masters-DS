@@ -1,0 +1,9 @@
+The TSNE Plot
+The TSNE plot is a dimensionality reduction technique which is a way to graphically simplify very large datasets. Within seqmonk it can be used to cluster data stores on the basis of the current quantitation across a large number of probes.
+
+Conceptually the TSNE plot is similar to a PCA, but with some important differences:
+
+TSNE always produces a 2D separationk, in contrast to PCA which can produce many different components
+TSNE is non-deterministic, meaning you won't get exactly the same output each time you run it (though the results are likely to be similar
+TSNE tends to cope better with non-linear signals in your data, so odd outliers tend to have less of an effect, and often the visible separation between relevant groups is improved
+TSNE offers no ability to reverse engineer the groups it identifies so in contrast to PCA you can't make a probe list based on the separation you see

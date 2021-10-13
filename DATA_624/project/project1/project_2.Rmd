@@ -1,0 +1,174 @@
+---
+title: "Project 2"
+author: "Kenan Sooklall"
+date: "7/8/2021"
+output: html_document
+---
+
+
+```{r, echo=F, warning=F}
+library(tidyverse)
+library(tidymodels)
+```
+
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_624/project/project1/'
+df <- read.csv(paste0(path, 'StudentData-TO_MODEL.csv'))
+```
+
+Explore the data
+
+```{r}
+skimr::skim(df)
+```
+
+```{r}
+df %>% ggplot(aes(x=PH)) + geom_histogram()
+```
+
+Drop rows where the label is missing
+
+```{r}
+means <- skimr::skim(df %>% select(-c('PH')))[10]
+df <- df %>% drop_na()
+```
+
+Split the data into training and testing
+
+```{r}
+set.seed(72)
+df_split <- initial_split(df, strata=PH)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+```
+
+Data preprocessing
+
+```{r}
+df_recipe <- recipe(PH ~., data=df_train) %>% 
+  update_role(Brand.Code, new_role='code')
+```
+
+Build model specification
+
+```{r}
+model_spec <- rand_forest(mtry = tune(), trees=1000, min_n=tune()) %>%
+  set_mode('regression') %>%
+  set_engine('ranger')
+```
+
+Create model workflow for the recipe and the model
+
+```{r}
+train_wf <- workflow() %>%
+  add_recipe(df_recipe) %>%
+  add_model(model_spec)
+```
+
+Hyper parameter tuning
+
+```{r}
+set.seed(42)
+folds <- vfold_cv(df_train)
+
+param_grid <- grid_regular(
+  mtry(range=c(10,30)),
+  min_n(range=c(1, 10)),
+  levels=5
+)
+
+doParallel::registerDoParallel()
+tune_params <- tune_grid(train_wf, resamples = folds, grid=param_grid)
+```
+
+View the relationship between mtry and min_n for rmse and rsq
+
+```{r}
+tune_params %>% 
+  collect_metrics() %>% 
+  select(c('mtry', 'min_n', '.metric', 'mean')) %>% 
+  pivot_longer(mtry:min_n, values_to = 'val', names_to='params') %>% 
+  ggplot(aes(x=val, y=mean, color=params)) + 
+  geom_line(show.legend=TRUE) + 
+  facet_wrap(~.metric, scales='free_y')
+```
+
+Select the best parameters and update the model
+
+```{r}
+best_params <- select_best(tune_params, 'rmse')
+
+model <- finalize_model(
+  model_spec,
+  best_params
+)
+```
+
+Determine the most important variables
+
+```{r}
+library(vip)
+
+model %>% 
+  set_engine('ranger', importance='permutation') %>%
+  fit(PH~., data=juice(df_recipe %>% prep) %>% select(-c('Brand.Code'))) %>%
+  vip(geom='col')
+```
+
+Finally fit on the testing data
+
+```{r}
+final_wf <- workflow() %>% 
+  add_recipe(df_recipe) %>%
+  add_model(model)
+
+final_result <- final_wf %>%
+  last_fit(df_split)
+```
+
+How did we perform on the test set
+
+```{r}
+final_result %>% collect_metrics()
+```
+
+Our predictions were about in line
+
+```{r}
+final_result %>% collect_predictions() %>% ggplot(aes(x=.pred, y=PH)) + geom_point() + geom_smooth()
+```
+
+```{r}
+final_result %>% 
+  collect_predictions() %>%
+  bind_cols(df_test)
+```
+
+
+```{r}
+final_model <- fit(final_wf, data=df_train)
+```
+
+Making prediction on testing set
+
+```{r}
+testing_df <- read.csv(paste0(path, 'StudentEvaluation-TO_PREDICT.csv'))
+testing_df <- testing_df %>% select(-c('PH'))
+```
+
+Fill missing values with mean from the training set
+
+```{r}
+#missing_df <- data.frame(names=testing_df %>% colnames(), values=means %>% drop_na())
+
+testing_df <- testing_df %>% replace_na(list(Carb.Volume=5.37019784,Fill.Ounces=23.97475457,PC.Volume=0.27711875,Carb.Pressure=68.18957547,Carb.Temp=141.09492338,PSC=0.08457368,PSC.Fill=0.19536892,PSC.CO2=0.05641390,Mnf.Flow=24.56893733,Carb.Pressure1=122.58637259,Fill.Pressure=47.92216556,Hyd.Pressure1=12.43757812,Hyd.Pressure2=20.96103286,Hyd.Pressure3=20.45845070,Hyd.Pressure4=96.28886265,Filler.Level=109.25237162,Filler.Speed=3687.19888624,Temperature=65.96754009,Usage.cont=20.99296181,Carb.Flow=2468.35422343,Density=1.17364981,MFR=704.04925816,Balling=2.19776965,Pressure.Vacuum=-5.21610268,Oxygen.Filler=0.04684259,Bowl.Setpoint=109.32658622,Pressure.Setpoint=47.61539664,Air.Pressurer=142.83399455,Alch.Rel=6.89741608,Carb.Rel=5.43678251,Balling.Lvl=2.05000778))
+```
+
+Make predictions
+
+```{r}
+testing_df$PH = predict(final_model, testing_df)
+write.csv(testing_df, 'StudenEvaluation-PREDICTED.csv')
+```
+

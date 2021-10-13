@@ -1,0 +1,15 @@
+For any model in all industries the most important part if the data. On a daily bases I have to collect data either from online or our internal sources and spend hours going through it for quality assurance. My tool of choice for this task is pandas, a very popular module in python. Pandas functionality is very similar to R-programming specifically tidyverse, where you want to avoid loops.
+
+A common situation would be data on a website that needs to be scraped. In pandas we have pd.read_html which takes a URL and returns a list of dataframes. I then have to go through them and find the table needed. It is very surprising how many tables are on a site that we don't recognize. For example this is the wikipedia page for "List of states and territories of the United States"-'https://en.wikipedia.org/wiki/List_of_states_and_territories_of_the_United_States'. If you look at it you might guess there are 5 or 6 tables; however pandas returned 20 tables. The table we would want is the one at index 1.
+
+Manually writing code to parse a web page can get very long and cumbersome. Pandas can work on pretty much any web page all with just 'read_html'. There is a great deal of time savings from getting the data.
+
+With the data collected I have to then go through the data cleaning/transformation process. From string manipulation to complex vector operations all can be done right in pandas. All of the EDA with plots are created to get more insight in the data. Finally feature engineering is conducted before feeding the data into the model and starting the circular process of training and optimization.
+
+Pandas is a huge framework that would require 100s of pages to explain all their functions. A lot of other projects have integrated it in their framework due to the simplicity.
+
+References:
+
+https://pandas.pydata.org/pandas-docs/stable/index.html
+
+https://towardsdatascience.com/data-mining-e06cf1a0b7ee
