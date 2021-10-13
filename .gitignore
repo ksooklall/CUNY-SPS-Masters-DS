@@ -134,6 +134,7 @@ dmypy.json
 *.jpg
 *.png
 *.xlsx
+*.mp4
 
 # others
 *.pdf

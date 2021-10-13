@@ -1,0 +1,3 @@
+Targets - The target protein or target organism that the drug will act on, these componds will come in contact with the protein or the organism and induce a response to activate or inhibit it
+
+More notes

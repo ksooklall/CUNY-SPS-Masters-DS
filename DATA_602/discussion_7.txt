@@ -1,0 +1,16 @@
+1. What are the benefits of using numpy? Why use it?
+Numpy is the core library for scientific computing in Python.
+Numpy is better than a python list.
+
+Size - Numpy data structures take up less space
+Performance - they have a need for speed and are faster than lists
+Functionality - SciPy and NumPy have optimized functions such as linear algebra operations built in.
+
+2. Create an empty numpy array.
+np.empty(10)
+3. Create a numpy array with all 0's.
+np.zeros(10)
+4. Create a numpy array with all 1's.
+np.ones(10)
+
+

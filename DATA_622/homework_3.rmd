@@ -1,0 +1,373 @@
+---
+title: "Homework 3"
+author: "DATA622"
+date: "9/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+loans <- readr::read_csv('https://raw.githubusercontent.com/christianthieme/Machine_Learning_Big_Data/main/HW3/Loan_approval.csv')
+```
+
+### Group 1 Members:
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+library(tidyverse)
+library(inspectdf)
+library(psych)
+library(MASS)
+library(tidyverse)
+library(caret)
+library(dplyr)
+library(randomForest)
+```
+
+-   David Moste
+-   Vinayak Kamath
+-   Kenan Sooklall
+-   Christian Thieme
+-   Lidiia Tronina
+
+\pagebreak
+
+## Introduction
+
+We have been provided a [dataset](https://raw.githubusercontent.com/christianthieme/Machine_Learning_Big_Data/main/HW3/Loan_approval.csv) containing the loan approval status of 614 loan applicants. In addition to the status, we have also been given 12 additional columns of data describing different characteristics of each loan applicant. Our task is to explore the data, and then use the knowledge gained to to create models using Linear Discriminant Analysis (LDA), K-Nearest Neighbors (KNN), Decision Trees, and Random Forests. Finally, we'll compare and contrast each method and its associated accuracy metrics.
+
+The data has the following variables:
+
+| Variable             | Description                                  |
+|----------------------|----------------------------------------------|
+| Loan_ID              | Unique Loan ID                               |
+| Gender               | Male/Female                                  |
+| Married              | Applicant married (Y/N)                      |
+| Dependents           | Number of dependents                         |
+| Education            | Applicant Education (Graduate/Undergraduate) |
+| Self_Employed        | Self employed (Y/N)                          |
+| ApplicantIncome      | Applicant income                             |
+| CoapplicantIncome    | Coapplicant income                           |
+| LoanAmount           | Loan amount in thousands                     |
+| Loan_Amount_Term     | Term of loan in months                       |
+| Credit History       | credit history meets guidlines               |
+| Property_Area        | Urban/Semi Urban/Rural                       |
+| Loan_Status (Target) | Loan approved (Y/N)                          |
+
+As can be seen from the table above, the dataset has a wide variety of numeric and categorical data. We'll dive deeper into this data now.
+
+## Exploratory Data Analysis
+
+Let's begin exploring by taking a high level look at our dataset:
+
+```{r}
+glimpse(loans)
+```
+
+From this view we can see that this dataset has 614 rows and 13 columns. As mentioned previously, there is a mix of both numeric and categorical data, although it appears that at least one numeric column should actually be categorical. As it stands, the split between numeric and categorical data looks like this:
+
+```{r}
+inspectdf::inspect_types(loans) %>%
+  show_plot
+```
+
+
+Continuous and categorical variables will be analyzed separately for the sake of clarity. We'll begin our analysis by looking at our numeric features. 
+
+### Numeric Features
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+train.num <- loans[, c('ApplicantIncome', 'CoapplicantIncome', 'LoanAmount','Loan_Amount_Term')]
+train.cat <- loans[, c('Gender', 'Married', 'Dependents', 'Education', 'Self_Employed',
+                           'Credit_History', 'Property_Area', 'Loan_Status')]
+train.cat$Gender <- as.factor(train.cat$Gender)
+train.cat$Married <- as.factor(train.cat$Married)
+train.cat$Dependents <- as.factor(train.cat$Dependents)
+train.cat$Education <- as.factor(train.cat$Education)
+train.cat$Self_Employed <- as.factor(train.cat$Self_Employed)
+train.cat$Credit_History <- as.factor(train.cat$Credit_History)
+train.cat$Property_Area <- as.factor(train.cat$Property_Area)
+train.cat$Loan_Status <- as.factor(train.cat$Loan_Status)
+
+summary.stat.num <- describe(train.num)[,c(2,8,3,5,9,4)]
+
+summary.stat.cat <- describe(train.cat)[,c(2,8,3,5,9,4)]
+
+summary.num <- summary(train.num)
+
+summary.cat1 <- summary(train.cat[, c( 'Dependents', 'Property_Area')])
+summary.cat2 <- summary(train.cat[, c('Gender', 'Married', 'Education', 'Self_Employed',
+                           'Credit_History',  'Loan_Status')])
+```
+
+
+```{r t2, echo=FALSE}
+knitr::kable(summary.stat.num)
+```
+
+Looking at the above summary table, we can see that there are outliers present in all numerical variables, with ApplicantIncome being the worst offender. Even at three times the standard deviation, its maximum value lies far outside of the 68-95-99.7 rule. There is also a significant difference between its mean and median, indicating there is skew present in this variable as well before any charts are actively looked at. Futher, we’ll look at each of these features distribution:
+
+
+```{r fig.height=5, fig.width=10}
+inspectdf::inspect_num(loans) %>% 
+ show_plot()
+```
+
+Looking at the above plots, we can see that:
+
+-   `ApplicantIncome` must be on a weekly or monthly basis as most values are fairly low
+-   `CoapplicantIncome` follows the same trend as applicant income
+-   `Credit_History` appears to be a categorical variable either 0 or 1
+-   `Loan_Amount_Term` appears to be 365 days (1 year) more than 80% of the time
+-   `LoanAmount` is fairly small, ranging from \$0-700. It appears that most loans are for somewhere between \$50 and \$200.
+
+It will also be helpful to understand the shape of the distributions of these variables for each application approval status, both Yes and No.   
+
+```{r  echo=FALSE,warning=FALSE, fig.height=6, fig.width=8}
+train.num.graph <- loans[, c('Loan_Status', 'ApplicantIncome', 'CoapplicantIncome', 'LoanAmount','Loan_Amount_Term')]
+
+hist.num <- train.num.graph %>%
+    gather(-Loan_Status, key = "var", value = "val") %>%
+    ggplot(aes(x = val, fill=factor(Loan_Status))) +
+    geom_histogram(position="dodge", bins=10, alpha=0.5) +
+    facet_wrap(~ var, scales = "free") +
+    scale_fill_manual("Loan_Status",values = c("#58BFFF", "#3300FF")) +
+    xlab("") +
+    ylab("") +
+    theme(panel.background = element_blank(), legend.position="top")
+
+hist.num
+```
+
+
+There does not seem to be a *significant* difference between those who get loan approval and those who do not for any of the predictors.
+
+As part of our analysis of numeric features, let's look at the relationship between these features and `Loan_Status`: 
+
+```{r fig.height=4, fig.width=10, message=FALSE, warning=FALSE}
+  loan_names <- loans %>% select_if(is.numeric)# %>% select(-Credit_History)
+  int_names <- names(loan_names)
+  myGlist <- vector('list', length(loan_names))
+  names(myGlist) <- int_names
+  
+  for (i in int_names) {       
+ 
+   myGlist[[i]] <- 
+       ggplot(loans) + 
+       aes_string(x = as.factor(loans$Loan_Status), y = i) + 
+       geom_boxplot(color = 'steelblue', 
+                    outlier.color = 'firebrick', 
+                    outlier.alpha = 0.35) +
+        labs(title = paste0(i,' vs Loan_Status'), y = i, x= 'Loan_Status') +
+        theme_minimal() + 
+        theme(
+          plot.title = element_text(hjust = 0.45),
+          panel.grid.major.y =  element_line(color = "grey", 
+                                             linetype = "dashed"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          axis.ticks.x = element_line(color = "grey")
+        )
+       
+      }
+
+    myGlist <- within(myGlist, rm(target_name))
+    gridExtra::grid.arrange(grobs = myGlist, ncol = 3)
+```
+
+
+These charts are pretty hard to read, and again, we don't see any significant relationships between these variables and `Loan_Status`. We note that we need to change `Credit_History` to a categorical variable. 
+
+### Categorical Features
+
+Next, let's turn our attention to our categorical variables. We have both binary categorical variables, and variables with 3 or more classes. 
+
+```{r t3, echo=FALSE}
+knitr::kable(summary.cat1, caption="Summary statistics for Categorical Variables")
+```
+
+
+```{r t4, echo=FALSE}
+knitr::kable(summary.cat2, caption="Summary statistics for Binary Categorical Variables")
+```
+
+`Dependents` and `Property_Area` each comprise multiple categories. On the other hand, `Gender`, `Married`, `Education`, `Self_Employed`, `Credit_History`, `Loan_Status` are all binaries. These summary tables are helpful, although sometimes its easier to view this data in a visual format: 
+
+
+```{r}
+inspect_cat(loans) %>% 
+  show_plot()
+```
+
+ 
+In looking at the chart and the summary tables, we see some very interesting things about the demographic of this dataset:
+
+-   Half of the population do not have any dependents
+-   Most people in this dataset are graduates
+-   Over 75% of the population is male
+-   65% of the population is married
+-   Most of the individuals are not self-employed
+
+
+We can also examine the dispersion of approval status between these variables. 
+
+```{r  echo=FALSE,warning=FALSE, fig.height=6, fig.width=8}
+bar.cat <- na.omit(train.cat) %>%
+    gather(-Loan_Status, key = "var", value = "val") %>%
+    ggplot(aes(x = val, fill=factor(Loan_Status))) +
+    geom_bar(position="dodge", alpha=0.5) +
+    facet_wrap(~ var, scales = "free") +
+    scale_fill_manual("Loan_Status",values = c("#58BFFF", "#3300FF")) +
+    xlab("") +
+    ylab("") +
+    theme(panel.background = element_blank(), legend.position="top") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+bar.cat
+```
+
+
+It looks like likelihoods are higher for applicants who have credit history and who are married and live in Semi-Urban area; as well as for those with a graduate degree.
+
+### Missing Data
+
+The data appears to have some missing values that we'll have to deal with as we move along. Since we know there are missing values, let's see how pervasive the issue is:
+
+```{r fig.width = 12, fig.height=6}
+visdat::vis_miss(loans, sort_miss = TRUE)
+```
+
+7 columns have missing data, ranging from 0.49% to 8.14%. What's interesting is there are 22 instances where `LoanAmount` is missing. In total, \~2% of the data has missing values.
+
+
+## Data Prep and Cleaning
+
+* NEED TO CHANGE CREDIT_HISTORY TO CATEGORICAL 
+* POSSIBLY IMPUTE MISSING VALUES???
+
+
+
+
+
+
+Having completed our EDA and data cleaning, we'll now turn our attention to modeling. 
+
+
+## Modeling
+
+
+### LDA
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+loans2 <-na.omit(loans)
+loans2$Gender <- as.factor(loans2$Gender)
+loans2$Married <- as.factor(loans2$Married)
+loans2$Dependents <- as.factor(loans2$Dependents)
+loans2$Education <- as.factor(loans2$Education)
+loans2$Self_Employed <- as.factor(loans2$Self_Employed)
+loans2$Credit_History <- as.factor(loans2$Credit_History)
+loans2$Property_Area <- as.factor(loans2$Property_Area)
+loans2$Loan_Status <- as.factor(loans2$Loan_Status)
+```
+
+First, we need to split the data into training(80%) and test dataset(20%).
+
+```{r message=FALSE, warning=FALSE}
+set.seed(123)
+training.samples <- loans2$Loan_Status %>%
+  createDataPartition(p = 0.8, list = FALSE)
+train.data <- loans2[training.samples, ]
+test.data <- loans2[-training.samples, ]
+```
+
+The purpose of the linear discriminant analysis is to find combination of the variables that give best possible separation between groups in our data set.
+
+The LDA output indicates that our prior probabilities are No = 0.309 and Yes = 0.690; in other words, 69% of the training observations are customers who got loan approval.
+It also provides the group means; these are the average of each predictor within each class, and are used by LDA as estimates.
+These suggest that customers that have approved applications, on average, have a lower loan amount and are more likely to be Male and be married with a credit history and from Semi-Urban Area.
+The coefficients of linear discriminants output provide the linear combination of variables that are used to form the LDA decision rule.
+
+```{r message=FALSE, warning=FALSE}
+# Run LDA (from MASS library)
+lda.loans <- MASS::lda(Loan_Status ~ Gender +Married +Dependents+Education +ApplicantIncome +CoapplicantIncome
+              +LoanAmount + Loan_Amount_Term + Credit_History +Property_Area +Self_Employed , data = train.data)
+lda.loans
+```
+
+
+The linear discriminant function from the result in above is $$
+0.24 * GenderMale + 0.602 * MarriedYes - 0.406 * Dependents1 + 0.167 * Dependents2 \\
++ 0.017 * Dependents3 - 0.388 * EducationNot Graduate - 0.030 * ApplicantIncome \\
+- 0.148 * CoapplicantIncome - 0.109 * LoanAmount - 0.060 * LoanAmountTerm + 2.965 * CreditHistory1 \\
++ 0.558 * PropertyAreaSemiurban - 0.081 * PropertyAreaUrban - 0.197 * SelfEmployedYes$$
+
+
+We can use plot() to produce plots of the linear discriminants obtained by computing this formula for each training observation. 
+
+```{r}
+plot(lda.loans)
+```
+
+As you can see, when it's greater than 0, the probability increases that the customer will get approved. 
+
+Prediction accuracy of LDA compares prediction results from the model output with the actual data using the confusion matrix.
+
+```{r}
+lda.predictions <- lda.loans %>% predict(test.data)
+#Confusion Matrix 
+table(lda.predictions$class, test.data$Loan_Status)
+```
+Correct classification rate is  83%
+```{r}
+#Prediction Accuracy
+mean(lda.predictions$class== test.data$Loan_Status)
+```
+
+
+### Decision Tree
+
+A decision tree is a supervised machine learning algorithm that can be used for both classification and regression problems. A decision tree is simply a series of sequential decisions made to reach a specific result.
+
+```{r, message=F}
+library(rpart)
+features <- c('Gender', 'Married', 'Dependents', 'Education', 'ApplicantIncome',
+              'CoapplicantIncome', 'LoanAmount', 'Loan_Amount_Term', 'Credit_History',
+              'Property_Area', 'Self_Employed')
+
+dt <- rpart(Loan_Status~., data=train.data %>% dplyr::select(c(all_of(features), Loan_Status)), method = "class")
+dt
+```
+
+The decision tree approves 70% of the loans and denies 30%.
+
+```{r}
+library(rpart.plot)
+rpart.plot(dt)
+```
+
+From the plot above we can see that having no credit history is a major factor in determining if the loan will be approved or not, followed by marriage, income and dependents. On closer examination having a good credit history and being married gives the highest chance to being approved.
+
+
+```{r}
+dt.predictions <- predict(dt, test.data, type='class')
+confusionMatrix(table(dt.predictions, test.data$Loan_Status), positive='Y')
+```
+
+The confusion matrix shows we correctly predicted Y 59 and N 14 times. Our model has higher precision (Pos Pred Value) than recall (Neg Perd Value). So if someone qualifies for a loan that is more accurate than someone being denied a loan.
+
+### Random Forest
+
+The decision tree algorithm is quite easy to understand and interpret. But often, a single tree is not sufficient for producing effective results. This is where the Random Forest algorithm comes into the picture
+
+```{r}
+rf <- randomForest(Loan_Status~., data=train.data %>% dplyr::select(c(all_of(features), Loan_Status)), method = "class")
+rf
+```
+
+The random forest was made with 500 trees.
+
+```{r}
+rf.predictions <- predict(rf, test.data, type='class')
+confusionMatrix(table(rf.predictions, test.data$Loan_Status), positive='Y')
+```
+
+The confusion matrix shows we correctly predicted Y 58 and N 15 times. Our model has higher recall (Neg Perd Value) than precision (Pos Pred Value). So if someone does not qualify for a loan that is more accurate than if someone qualifies.
