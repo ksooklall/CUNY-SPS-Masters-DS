@@ -1,0 +1,28 @@
+---
+title: "Untitled"
+author: "Kenan Sooklall"
+date: "10/13/2021"
+output: html_document
+---
+
+```{r echo=F, warning=F, include=F}
+library(tidyverse)
+library(naniar)
+```
+
+```{r}
+path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/final/'
+train <- read.csv(paste0(path,"train.csv"), stringsAsFactors = FALSE, colClasses = c("character","integer","character","character","character","character","character","character","character","integer","integer","integer"))
+
+df = train %>% head(100000)
+glimpse(df)
+```
+
+```{r}
+skimr::skim(df)
+```
+
+```{r}
+gg_miss_var(df, show_pct = TRUE)
+```
+
