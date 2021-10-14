@@ -1,9 +1,20 @@
-The TSNE Plot
-The TSNE plot is a dimensionality reduction technique which is a way to graphically simplify very large datasets. Within seqmonk it can be used to cluster data stores on the basis of the current quantitation across a large number of probes.
+The t-distributed stochastic neighbor embedding t-SNE Plot
 
-Conceptually the TSNE plot is similar to a PCA, but with some important differences:
+PCA is a linear algo
+The t-SNE plot is a dimensionality reduction technique which is a way to graphically simplify very large datasets. Within seqmonk it can be used to cluster data stores on the basis of the current quantitation across a large number of probes. t-SNE is the successor of SNE
 
-TSNE always produces a 2D separationk, in contrast to PCA which can produce many different components
-TSNE is non-deterministic, meaning you won't get exactly the same output each time you run it (though the results are likely to be similar
-TSNE tends to cope better with non-linear signals in your data, so odd outliers tend to have less of an effect, and often the visible separation between relevant groups is improved
-TSNE offers no ability to reverse engineer the groups it identifies so in contrast to PCA you can't make a probe list based on the separation you see
+
+Conceptually the t-SNE plot is similar to a PCA, but with some important differences:
+
+t-SNE always produces a 2D separation, in contrast to PCA which can produce many different components
+t-SNE is non-deterministic, meaning you won't get exactly the same output each time you run it (though the results are likely to be similar
+t-SNE tends to cope better with non-linear signals in your data, so odd outliers tend to have less of an effect, and often the visible separation between relevant groups is improved
+t-SNE offers no ability to reverse engineer the groups it identifies so in contrast to PCA you can't make a probe list based on the separation you see
+
+t-SNE works by taking a random point from the high dimension distribution and plotting it on normal curve(student's t) aganist all other points. Points that are close (within 1 standard devitation) will be projected to be in the same cluster and those that are far apart (greater than 1 std) will be in other cluster.
+
+The t-SNE algorithm adapts its notion of “distance” to regional density variations in the data set. As a result, it naturally expands dense clusters, and contracts sparse ones, evening out cluster sizes. You cannot see relative sizes of clusters in a t-SNE plot.
+
+
+references:
+https://distill.pub/2016/misread-tsne/
