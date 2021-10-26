@@ -1,0 +1,35 @@
+When 99% is not 99%.
+
+At work I had to build a pet classifier for common indoor pets. The first two that come to mind are dog and cat breeds. After collected data online from open source datasets I trained a model and got around 99% accuracy on the test set with 90%+ percision/recall on common breeds. This was very nice and I was ready to test it on company images. The model didn't do so well. I couldn't figure out why. I made sure I was testing on a dataset the model never saw and accounted for breeds that have a
+smaller sample. I knew some breeds were under represented but the results just didn't justify what was going on. After a bit of digging I found the issue and trained a different model that got the same 99% acc and 90%+ per/rec but this model generalized much better.
+
+The issue was the first model didn't really learn the breeds, it learned the background on the dogs and cats. Once that model was taken to company images where the background pixels have a much larger variance the model was just guessing. The second model was made more robust and it was forced to learn the pixels that correlate to the objects (dogs/cats) instead of the background.
+
+The error was in the preprocessing step. Below are the transformation made to each image before feeding into the models. Both models required the images to be resized, converted to tensors and then normalized.
+
+Model 1
+data_transforms = transforms.Compose([
+            transforms.Resize(img_size),
+            transforms.RandomHorizontalFlip(),
+            transforms.ToTensor(),
+            normalize])
+
+Model 2
+data_transforms = transforms.Compose([
+            transforms.Resize(img_size),
+            transforms.RandomAffine(0, shear=10, scale=(0.8,1.2)),
+            transforms.RandomHorizontalFlip(),
+            transforms.RandomVerticalFlip(),
+            transforms.ColorJitter(0.2, 0.2, 0.2),
+            transforms.RandomRotation(30),
+            transforms.RandomResizedCrop(img_size),
+            transforms.GaussianBlur(3),
+            transforms.ToTensor(),
+            transforms.RandomErasing(),
+            normalize])
+
+As you can see Model 1 only added a randomHorizontalFlip which doesn't change much about the image. That minute change didn't give the model enough of a challenge to learn the object in the image. Therefore it took the easy way out and recognized that more dog images were taken outside and most cat images were taken inside.
+
+Model 2 on the other hand has a bunch of transformations from bluring random parts of the image to straight up erasing certain segments on the image. There are also random rotations, resizing and color imbalances. These transformations forced the model to learn more than just the background, since for the same class there can be many transformations.
+
+The take away here is sometimes the test set isn't enough for you to realize the weakness in your models. Also depending on how complex your model is, there should be additional testing to find those edge cases you never thought of.

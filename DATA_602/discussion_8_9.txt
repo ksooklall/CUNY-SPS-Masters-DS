@@ -1,0 +1,31 @@
+1. What is pandas and what is it used for?
+Pandas is an open source framework that is used for everything data.
+Pandas stands for pandel data and was built by Wes McKinney in 2008.
+
+2. What is a pandas series?  Create an example.
+pd.Series([1,2,3])
+A series is a One-dimensional ndarray with axis labels
+
+3. What is a pandas DataFrame?  Create an example.
+A dataframe is a two dimensional matrix with named rows and columns
+df = pd.DataFrame({'files': ['f1', 'f2', 'f3'], 'size': [3423,25,6745]})
+
+4. How do you add a row/column with pandas?
+There are many ways to create a new column, here are 3
+
+df['content'] = ['aa', 'bb', 'cc']
+df.loc[:, 'content'] = ['aa', 'bb', 'cc']
+df.assign(content = ['aa', 'bb', 'cc'])
+
+There are many ways to create a new row, here is a safe way
+df.loc[3, :] = ['f4', 9786, 'dd']
+
+5. How do you delete a row/column with pandas?
+You can drop columns with
+
+df = df.drop(['content'], axis=1)
+df = df[['files', 'size']]
+
+You can drop rows with
+df.loc[:2]
+df.drop([0], axis=0)
