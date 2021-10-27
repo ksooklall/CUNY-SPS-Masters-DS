@@ -14,7 +14,7 @@ library(lubridate)
 library(gridExtra)
 ```
 
-The dataset we are analyzing is a Google Merchandise Store (also known as GStore, where Google swag is sold) customer dataset. The raw dataset contains 55 columns to predict the transaction revenue per customer. The outcome from this analysis will aid  in better use of marketing budgets. There are 2 datasets, big and small. The small dataset is about 1 million transactions and the big one is about 10 times larger. Due to hardware constraint the small dataset is used in this report.
+The dataset we are analyzing is a Google Merchandise Store (also known as GStore, where Google swag is sold) customer dataset. The raw dataset contains 12 columns to predict the transaction revenue per customer. The outcome from this analysis will aid in better use of marketing budgets. There are 2 datasets, big and small. The small dataset is about 1 million transactions and the big one is about 10 times larger. Due to hardware constraint the small dataset is used in this report.
 
 ### Preprocessing
 
@@ -54,13 +54,6 @@ df <- df %>%
   mutate(date=ymd(date))
 ```
 
-```{r}
-#skimr::skim(df)
-```
-
-```{r}
-#gg_miss_var(df, show_pct = TRUE)
-```
 
 ```{r}
 nan_count <- sum(!is.na(df$transactionRevenue))
@@ -73,7 +66,7 @@ df <- df %>%
 
 Only `r nan_count` sessions in the training set led to a transaction. This is only `r nan_pct`% of the observations, and that of course matches with the 98.7% missing values in the previous section. Altogether, the GStore made `r format_dollars(total_rev)` USD in revenues in that year. The missing transactionRevenue is replaced with 0 to avoid errors with NAN later on. This filling of missing value is acceptable since the lowest a revenue can go is 0.
 
-### Exploratory Data Analysis
+## Exploratory Data Analysis
 
 We being with looking at the transactionRevenue
 
@@ -87,43 +80,48 @@ p2 <- ggplot(tdf, aes(x=transactionRevenue10)) + geom_histogram()
 grid.arrange(p1, p2)
 ```
 
-The 
-Find columns that have only a few values, those columns will be dropped as they carry no row-wise information 
+Most transactions generate no revenue hence the strongly skewed right tail. However, if we log the transactionRevenue it looks almost normal,
+
+```{r}
+gg_miss_var(df %>% filter(transactionRevenue > 0), show_pct = TRUE)
+```
+
+#### Sparse columns
+
+Some columns have only a few values, those columns will be dropped as they carry no row-wise information.
 
 ```{r}
 uniq_counts <-df %>% 
   select_if(negate(is.numeric)) %>% 
   apply(2, function(x) length(unique(x)))
 uniq_cols <- names(uniq_counts[uniq_counts == 1])
+
+uniq_cols
+```
+
+17 Columns contain only one value for all 900k rows. The columns below were all dropped by checks for their usefulness towards positive revenue , NA count, unique value counts and duplication of another column. 
+
+adwordsClickInfo.isVideoAd - NA (882166) and False ()
+adwordsClickInfo.adNetworkType - NA, and only "Google Search" for revenue greater than 0
+adwordsClickInfo.gclId - According to [this](https://www.kaggle.com/c/ga-customer-revenue-prediction/discussion/66862 ) post gclId is a hash/encryption info for data is available in other features
+adwordsClickInfo.slot - 103 Top and 5362 RHS, the rest are NA
+adwordsClickInfo.page - NA and 1, for positive revenue
+campaignCode - NA for all value with positive revenue and "11251kjhkvahf" for other values
+isTrueDirect - NA and True for only a few rows
+visitId - sessionID already has this information
+
+```{r}
+drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect')
+
 df <- df %>% 
-  select(-uniq_cols)
+  select(-c(uniq_cols, drop_cols))
 ```
 
-Number of active users by day
+After dropping those columns we are left with 30 columns.
 
-```{r}
-df %>% 
-  group_by(date) %>% 
-  summarise(dailySessions = n()) %>%
-  ggplot(aes(x=date, y=dailySessions)) + 
-  geom_line() + 
-  geom_smooth(col='red') + 
-  labs(x="", y="Sessions per Day")
-```
+#### Active users
 
-It looks like between Oct 2016 and Jan 2017 there was a peek in user usage
-
-```{r}
-df %>% 
-  group_by(date) %>% 
-  summarise(revenue=sum(transactionRevenue)) %>%
-  ggplot(aes(x=date, y=revenue)) + 
-  geom_line() + 
-  geom_smooth(col='red') + 
-  labs(x="", y="Daily Revenue")
-```
-
-```{r}
+```{r, echo=F}
 session <- function(df, cols, cnt=10) {
     var_col <- enquo(cols)
     df %>% 
@@ -148,25 +146,44 @@ revenue <- function(dataframe, cols, cnt=10) {
     labs(x="", y="Revenue") +
     theme(legend.position="none")
 }
-
 ```
 
-The daily revenue is almost completely linear and some what independant to the number of active users
+An active user is someone that has visited the Google Merchandise Store
 
+```{r}
+p1 <- df %>% 
+  group_by(date) %>% 
+  summarise(dailySessions = n()) %>%
+  ggplot(aes(x=date, y=dailySessions)) + 
+  geom_line() + 
+  geom_smooth(col='red') + 
+  labs(x="", y="Sessions per Day")
 
-Channels define how users come to your website (Channel Groupings are rule-based groupings of your traffic sources). These groups are mostly defined by the Medium, and some also by Source, Social Source Referral or Ad Distribution Network. From Google Analytics:
+p2 <- df %>% 
+  group_by(date) %>% 
+  summarise(revenue=sum(transactionRevenue)) %>%
+  ggplot(aes(x=date, y=revenue)) + 
+  geom_line() + 
+  geom_smooth(col='red') + 
+  labs(x="", y="Daily Revenue")
 
-Source: the origin of your traffic, such as a search engine (for example, google) or a domain (example.com).
-Medium: the general category of the source, for example, organic search (organic), cost-per-click paid search (cpc), web referral (referral).
+p3 <- df %>% 
+  group_by(date) %>% 
+  summarise(revenue=sum(-log10(transactionRevenue + 0.01))) %>%
+  ggplot(aes(x=date, y=revenue)) + 
+  geom_line() + 
+  geom_smooth(col='red') + 
+  labs(x="", y="Daily Log Revenue")
 
-Examples:
+grid.arrange(p1, p2, p3, nrow=3)
+```
 
-Organic Search is defined by the medium only (Medium exactly matches organic).
-Referral is also defined by the medium only (Medium exactly matches referral).
-Social: Social Source Referral exactly matches Yes OR Medium matches regex ^(social|social-network|social-media|sm|social network|social media)$
-Direct: Source exactly matches direct AND Medium exactly matches (not set) OR Medium exactly matches (none)
+It looks like between Oct 2016 and Jan 2017 there was a peek in active users
+The daily revenue is almost completely linear and some what independant to the number of active users which seems incorrect. When we transform the revenue though log we see the affects of more active users.
 
-As you see in the plots, Organic Search and Social led to many sessions, but especially Social delivers hardly any revenues. Referral on the other hand delivers most revenues with a relatively small number of sessions.
+#### Channel Grouping
+
+Channels are the medium on how users came to the GStore.
 
 ```{r}
 p1 <- session(df, channelGrouping, 12)
@@ -174,22 +191,30 @@ p2 <- revenue(df, channelGrouping, 12)
 grid.arrange(p1, p2)
 ```
 
+As you see in the plots, Organic Search and Social channels led to the most sessions; however social channels delivers very little revenue. Referral on the other hand delivers most revenues with a relatively small number of sessions. This makes sense since a referral is a session with a purpose while other channel groups could be casual browsing.
 
 #### Device category
 
-The main takeaway here is that mobile and tablet have a lot fewer sessions, and relatively low revenues per session when compared to desktop.
+Device category are the hardware which people use to access the GStore, there are 3.
 
 ```{r}
-p1 <- session(df, deviceCategory, 12)
-p2 <- revenue(df, deviceCategory, 12)
+p1 <- session(df, deviceCategory, 6)
+p2 <- revenue(df, deviceCategory, 6)
 grid.arrange(p1, p2)
 ```
 
+The main takeaway here is that mobile and tablet have a lot fewer sessions, and relatively low revenues per session when compared to desktop. Desktops produce the most sessions and revenue.
 
 #### Operating System
-Since there are only 7 Operating Systems with revenues, I am only displaying those. Actually, (not set) had slightly more sessions than Windows Phone, but since (not set) is pretty meaningless and (not set) had no revenues anyway, I excluded (not set) from the first plot.
 
-What stands out is Macintosh had much higher revenues than Windows with fewer sessions. In addition, it also confirms again that the mobile sessions (Android and iOS) have little revenues compared to the number of sessions.
+An operating system is the next level from device category. There are 20 unique operating systems
+
+"Windows"       "Macintosh"     "Linux"         "Android"       "iOS"           "Chrome OS"    
+"BlackBerry"    "(not set)"     "Samsung"       "Windows Phone" "Xbox"          "Nintendo Wii" 
+"Firefox OS"    "Nintendo WiiU" "FreeBSD"       "Nokia"         "NTT DoCoMo"    "Nintendo 3DS" 
+"SunOS"         "OpenBSD"
+
+with revenues; however most have low sessions and revenue so they are ignored. The "(no set)" category is most likely a missing value.
 
 ```{r}
 p1 <- session(df, operatingSystem, 6)
@@ -197,8 +222,11 @@ p2 <- revenue(df, operatingSystem, 6)
 grid.arrange(p1, p2)
 ```
 
+What stands out is Macintosh had much higher revenues than Windows with fewer sessions. In addition, it also confirms again that the mobile sessions (Android and iOS) have little revenues compared to the number of sessions. Macintosh and Windows are desktop operating systems which is inline with the device category analysis.
+
 #### Browser
-While the first plot displays the top10 browsers with most sessions (n=10 is the default in the function), the second plot only displays 9 browsers as there were only 9 browsers with revenues. By far the most sessions and revenues come from the Chrome browser. Firefox also has a healthy balance between sessions and revenue. Safari has a lot of sessions with relatively low revenues.
+
+Web browsers are the last step to getting to the GStore. There are 54 web browsers from the popular chrome and safari to the less known such as Seznam and DoCoMo
 
 ```{r}
 p1 <- session(df, browser, 5)
@@ -206,11 +234,11 @@ p2 <- revenue(df, browser, 5)
 grid.arrange(p1, p2)
 ```
 
-Pageviews, Bounces and Hits
-2.6.1 Pageviews; all sessions.
-A pageview is each time a visitor views a page on your website, regardless of how many hits are generated.
+By far the most sessions and revenues come from the Chrome browser. Safari has a lot of sessions, more than FireFox but generates relatively low revenues. Firefox also has a healthy balance between sessions and revenue. 
 
-The distribution of pageviews is very right skewed. However, the second graph shows that most revenues come from (small) numbers of sessions with lots of pageviews!
+#### Pageviews, Bounces and Hits
+
+A pageview is each time a visitor views a page on your website.
 
 ```{r}
 p1 <- df %>% filter(!is.na(df$pageviews) & pageviews <=30) %>% 
@@ -223,8 +251,11 @@ p2 <- df %>% filter(!is.na(df$pageviews) & pageviews <=30) %>% group_by(pageview
 grid.arrange(p1, p2)
 ```
 
-Sessions, revenues and transactions by country
-The US really dwarf all other countries with regards to the number of sessions and the total revenues.
+The distribution of pageviews is very right skewed. This makes sense since we mostly use a small number of sites. Most of the revenue is generated from sites with a small number of pageviews.
+
+#### Country
+
+There are 222 countries in the dataset which is most of the world. Most of them have near 0 sessions, mostly because of the lack of internet access.
 
 ```{r}
 c1 <- session(df, country, 6)
@@ -232,15 +263,30 @@ c2 <- revenue(df, country, 6)
 grid.arrange(c1, c2)
 ```
 
+Since google is based in the US there is no surprise that the US has the highest session counts and largest revenue. Cananda and Venezuela follow very far behind.
+
+#### adContent
+
+AdContent as the name implies is the ad shown to the user at the time
 
 ```{r}
-df %>% group_by(country) %>%
-summarize(sessions= n(), totalRev=sum(transactionRevenue), sessionMean=totalRev/sessions) %>%
-filter(sessions>100) %>% top_n(20, wt=sessionMean) %>% arrange(desc(sessionMean))
+df %>% filter(transactionRevenue > 0) %>% drop_na(adContent) %>% group_by(adContent) %>% summarise(revenue=sum(transactionRevenue)) %>% ggplot(aes(x=adContent, y=revenue)) + geom_col() + labs(x='AdContent', y='Revenue') + coord_flip()
 ```
 
+The results here are expected for sessions that produced positive revenue. Ads that were about Google Merchandise Collection generated the most revenue. Since this is a categorical variable the missing values are difficult to impute.
+
+Look at the final dataframe
+
+```{r}
+skimr::skim(df)
+```
+
+Columns still worth looking at 
+ - keyword
+ 
 ## Modeling
 
 ```{r}
+features <- c(')
 library(randomForest)
 ```
