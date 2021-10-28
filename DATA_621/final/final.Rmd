@@ -1,5 +1,5 @@
 ---
-title: "Untitled"
+title: "Google Merchandise Store"
 author: "Kenan Sooklall"
 date: "10/13/2021"
 output: html_document
@@ -12,6 +12,7 @@ library(jsonlite)
 library(priceR)
 library(lubridate)
 library(gridExtra)
+library(corrplot)
 ```
 
 The dataset we are analyzing is a Google Merchandise Store (also known as GStore, where Google swag is sold) customer dataset. The raw dataset contains 12 columns to predict the transaction revenue per customer. The outcome from this analysis will aid in better use of marketing budgets. There are 2 datasets, big and small. The small dataset is about 1 million transactions and the big one is about 10 times larger. Due to hardware constraint the small dataset is used in this report.
@@ -71,18 +72,16 @@ Only `r nan_count` sessions in the training set led to a transaction. This is on
 We being with looking at the transactionRevenue
 
 ```{r}
-tdf <- df %>% 
-  filter(transactionRevenue > 0) %>% 
-  mutate(transactionRevenue10=log10(transactionRevenue))
-
-p1 <- ggplot(tdf, aes(x=transactionRevenue)) + geom_histogram()
-p2 <- ggplot(tdf, aes(x=transactionRevenue10)) + geom_histogram()
+p1 <- df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue)) + geom_histogram()
+p2 <- p1 + scale_x_log10(labels=scales::dollar_format())
 grid.arrange(p1, p2)
 ```
 
 Most transactions generate no revenue hence the strongly skewed right tail. However, if we log the transactionRevenue it looks almost normal,
 
 ```{r}
+df <- df %>%
+  mutate(transactionRevenue=log(transactionRevenue + 0.01))
 gg_miss_var(df %>% filter(transactionRevenue > 0), show_pct = TRUE)
 ```
 
@@ -109,9 +108,10 @@ adwordsClickInfo.page - NA and 1, for positive revenue
 campaignCode - NA for all value with positive revenue and "11251kjhkvahf" for other values
 isTrueDirect - NA and True for only a few rows
 visitId - sessionID already has this information
+visits - 1 for all positive revenue
 
 ```{r}
-drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect')
+drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect', 'visits')
 
 df <- df %>% 
   select(-c(uniq_cols, drop_cols))
@@ -198,8 +198,9 @@ As you see in the plots, Organic Search and Social channels led to the most sess
 Device category are the hardware which people use to access the GStore, there are 3.
 
 ```{r}
-p1 <- session(df, deviceCategory, 6)
-p2 <- revenue(df, deviceCategory, 6)
+p1 <- session(df, deviceCategory, 3)
+p2 <- revenue(df, deviceCategory, 3)
+#df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue, fill=deviceCategory)) + geom_histogram(position='identity', alpha=0.75, bins=50) + scale_x_log10(labels=scales::dollar_format())
 grid.arrange(p1, p2)
 ```
 
@@ -222,7 +223,7 @@ p2 <- revenue(df, operatingSystem, 6)
 grid.arrange(p1, p2)
 ```
 
-What stands out is Macintosh had much higher revenues than Windows with fewer sessions. In addition, it also confirms again that the mobile sessions (Android and iOS) have little revenues compared to the number of sessions. Macintosh and Windows are desktop operating systems which is inline with the device category analysis.
+What stands out is Macintosh has higher revenues than Windows with fewer sessions. In addition, it also confirms again that the mobile sessions (Android and iOS) have little revenues compared to the number of sessions. Macintosh and Windows are desktop operating systems which is inline with the device category analysis.
 
 #### Browser
 
@@ -284,9 +285,71 @@ skimr::skim(df)
 Columns still worth looking at 
  - keyword
  
+```{r, eval=F}
+train <- df[,which(sapply(df, is.numeric))] %>% select(-c('fullVisitorId', 'visitId')) %>% mutate(across(everything(), ~replace_na(0)))
+correlation <- cor(train)
+corrplot.mixed(correlation, tl.col = 'black', tl.pos = 'lt', number.cex= 11/ncol(raw))
+```
+ 
+Based on the EDA I would expected the most revenue from users with the following specifications
+
+browser - Chrome
+channelGrouping - Referral
+operatingSystem - Macintosh
+isMobile - False
+deviceCategory - Desktop
+continent - Americas
+country - United States
+city - New York
+ 
 ## Modeling
 
 ```{r}
-features <- c(')
+library(tidymodels)
 library(randomForest)
 ```
+
+I add 0.01 to the transactionRevenue to avoid -inf when taking the log10
+
+```{r}
+set.seed(42)
+df_split <- df %>% 
+  mutate(trevenue = log10(transactionRevenue + 0.01)) %>%
+  initial_split(strata = trevenue)
+
+df_train <- training(df_split)
+df_test <- training(df_split)
+
+set.seed(43)
+df_folds <- vfold_cv(df_train, v=2, strata = trevenue)
+```
+
+```{r}
+df_rec <- recipe(trevenue ~ channelGrouping + browser + operatingSystem + 
+                   isMobile + deviceCategory + continent + country + 
+                   city + pageviews, data=df_train) %>%
+  step_other(operatingSystem, country, city, browser, threshold = 0.01) %>%
+  step_impute_knn(pageviews)
+
+smp <- df_rec %>% prep() %>% bake(new_data=NULL)
+```
+
+Tuning the model
+
+```{r}
+rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees=10) %>%
+  set_mode('regression') %>%
+  set_engine('ranger')
+
+rf_workflow <- workflow() %>%
+  add_recipe(df_rec) %>%
+  add_model(rf_spec)
+```
+
+
+```{r}
+set.seed(44)
+doParallel::registerDoParallel(cores=8)
+rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=5)
+```
+
