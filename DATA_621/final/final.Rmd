@@ -62,7 +62,7 @@ nan_pct <- nan_count / nrow(df) * 100
 total_rev <- sum(df$transactionRevenue, na.rm=T)
 
 df <- df %>%
-  mutate(transactionRevenue=replace_na(transactionRevenue, 0))
+    mutate(transactionRevenue=replace_na(transactionRevenue, 0))
 ```
 
 Only `r nan_count` sessions in the training set led to a transaction. This is only `r nan_pct`% of the observations, and that of course matches with the 98.7% missing values in the previous section. Altogether, the GStore made `r format_dollars(total_rev)` USD in revenues in that year. The missing transactionRevenue is replaced with 0 to avoid errors with NAN later on. This filling of missing value is acceptable since the lowest a revenue can go is 0.
@@ -73,16 +73,16 @@ We being with looking at the transactionRevenue
 
 ```{r}
 p1 <- df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue)) + geom_histogram()
-p2 <- p1 + scale_x_log10(labels=scales::dollar_format())
+p2 <- df %>% filter(transactionRevenue > 0) %>% mutate(transactionRevenue=log(transactionRevenue)) %>% ggplot(aes(x=transactionRevenue)) + geom_histogram()
 grid.arrange(p1, p2)
 ```
 
-Most transactions generate no revenue hence the strongly skewed right tail. However, if we log the transactionRevenue it looks almost normal,
+Most transactions generate no revenue hence the strongly skewed right tail. However, if we log the transactionRevenue it looks almost normal. Since the metrics of the competitation is in log scale, the transactionRevenue will be converted to log scale from here on.
 
 ```{r}
 df <- df %>%
   mutate(transactionRevenue=log(transactionRevenue + 0.01))
-gg_miss_var(df %>% filter(transactionRevenue > 0), show_pct = TRUE)
+gg_miss_var(df %>% filter(transactionRevenue > 0.01), show_pct = TRUE)
 ```
 
 #### Sparse columns
@@ -114,7 +114,7 @@ visits - 1 for all positive revenue
 drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect', 'visits')
 
 df <- df %>% 
-  select(-c(uniq_cols, drop_cols))
+  select(-c(all_of(uniq_cols), all_of(drop_cols)))
 ```
 
 After dropping those columns we are left with 30 columns.
@@ -167,15 +167,7 @@ p2 <- df %>%
   geom_smooth(col='red') + 
   labs(x="", y="Daily Revenue")
 
-p3 <- df %>% 
-  group_by(date) %>% 
-  summarise(revenue=sum(-log10(transactionRevenue + 0.01))) %>%
-  ggplot(aes(x=date, y=revenue)) + 
-  geom_line() + 
-  geom_smooth(col='red') + 
-  labs(x="", y="Daily Log Revenue")
-
-grid.arrange(p1, p2, p3, nrow=3)
+grid.arrange(p1, p2, nrow=2)
 ```
 
 It looks like between Oct 2016 and Jan 2017 there was a peek in active users
@@ -200,7 +192,7 @@ Device category are the hardware which people use to access the GStore, there ar
 ```{r}
 p1 <- session(df, deviceCategory, 3)
 p2 <- revenue(df, deviceCategory, 3)
-#df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue, fill=deviceCategory)) + geom_histogram(position='identity', alpha=0.75, bins=50) + scale_x_log10(labels=scales::dollar_format())
+#df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue, fill=deviceCategory)) + geom_histogram(position='identity', alpha=0.75, bins=50) + scale_x_log(labels=scales::dollar_format())
 grid.arrange(p1, p2)
 ```
 
@@ -304,30 +296,35 @@ city - New York
  
 ## Modeling
 
-```{r}
+```{r, warning=F, error=F, message=F}
 library(tidymodels)
 library(randomForest)
+library(vip)
 ```
 
-I add 0.01 to the transactionRevenue to avoid -inf when taking the log10
+I add 0.01 to the transactionRevenue to avoid -inf when taking the log
 
 ```{r}
 set.seed(42)
 df_split <- df %>% 
-  mutate(trevenue = log10(transactionRevenue + 0.01)) %>%
+  filter(transactionRevenue > 0) %>%
+  mutate(trevenue = log(transactionRevenue)) %>%
   initial_split(strata = trevenue)
 
 df_train <- training(df_split)
 df_test <- training(df_split)
 
 set.seed(43)
-df_folds <- vfold_cv(df_train, v=2, strata = trevenue)
+df_folds <- bootstraps(df_train, strata = trevenue, times=10)
 ```
+
+Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 
 ```{r}
 df_rec <- recipe(trevenue ~ channelGrouping + browser + operatingSystem + 
                    isMobile + deviceCategory + continent + country + 
-                   city + pageviews, data=df_train) %>%
+                   city + pageviews, hits, data=df_train) %>%
+  step_novel(operatingSystem, country, city, browser) %>%
   step_other(operatingSystem, country, city, browser, threshold = 0.01) %>%
   step_impute_knn(pageviews)
 
@@ -337,7 +334,7 @@ smp <- df_rec %>% prep() %>% bake(new_data=NULL)
 Tuning the model
 
 ```{r}
-rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees=10) %>%
+rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees=1500) %>%
   set_mode('regression') %>%
   set_engine('ranger')
 
@@ -349,7 +346,66 @@ rf_workflow <- workflow() %>%
 
 ```{r}
 set.seed(44)
-doParallel::registerDoParallel(cores=8)
-rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=5)
+doParallel::registerDoParallel()
+rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=30)
+```
+
+The metric used in this competation is RMSE
+```{r}
+show_best(rf_tune, metric='rmse')
+```
+
+```{r}
+autoplot(rf_tune)
+```
+
+```{r}
+rf_model <- rf_workflow %>%
+  finalize_workflow(select_best(rf_tune, metric='rmse'))
+```
+
+When the tuning completed we can now train the model with the best fit parameters on the train set and test on the test set
+
+```{r}
+rf_fit <- last_fit(rf_model, df_split)
+rf_fit
+```
+
+```{r}
+collect_metrics(rf_fit)
+```
+
+
+```{r}
+collect_predictions(rf_fit) %>% 
+  ggplot(aes(x=trevenue, y=.pred)) + 
+  geom_abline(lty=2) + 
+  geom_point(alpha=0.5, color='blue')  + 
+  coord_fixed()
+```
+
+Manual prediction
+
+```{r}
+model <- rf_fit$.workflow[[1]]
+predict(model, df_test[100,])
+```
+
+Feature importance
+
+```{r}
+imp_spec <- rf_spec %>%
+  finalize_model(select_best(rf_tune, metric = 'rmse')) %>%
+  set_engine('ranger', importance='permutation')
+```
+
+```{r}
+workflow() %>%
+  add_recipe(df_rec) %>%
+  add_model(imp_spec) %>%
+  fit(df_train) %>%
+  extract_fit_parsnip() %>%
+  vip() + 
+  labs(y='Importance', x='Features')
 ```
 
