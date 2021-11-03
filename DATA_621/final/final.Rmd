@@ -24,7 +24,7 @@ The data is a mix of csv and json where the json data are separate columns. That
 ```{r, eval=F}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/final/'
 
-df <- read.csv(paste0(path,"train.csv"), header = T, stringsAsFactors = F, colClasses = c(fullVisitorId = "character"))
+df <- read.csv(paste0(path,"test.csv"), header = T, stringsAsFactors = F, colClasses = c(fullVisitorId = "character"))
 
 df_device <- paste("[", paste(df$device, collapse = ","), "]") %>% fromJSON(flatten = T)
 df_geoNetwork <- paste("[", paste(df$geoNetwork, collapse = ","), "]") %>% fromJSON(flatten = T)
@@ -43,7 +43,7 @@ numVars <- c("visits", "hits", "bounces", "pageviews", "newVisits")
 df[, numVars] <- lapply(df[, numVars], as.integer)
 
 df$visitStartTime <- as.POSIXct(df$visitStartTime, tz="UTC", origin='1970-01-01')
-write.csv(df, 'DATA_621/final/train_clean.csv', row.names = FALSE)
+write.csv(df, 'DATA_621/final/test_clean.csv', row.names = FALSE)
 ```
 
 The clean dataset has 903653 transactions and 55 columns, where each transaction is one visit to google store. The target variable is transactionRevenue, the amount of money GStore brought in from that transaction.
@@ -51,8 +51,7 @@ The clean dataset has 903653 transactions and 55 columns, where each transaction
 ```{r}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/final/'
 df <- read.csv(paste0(path, 'train_clean.csv'))
-df <- df %>%
-  mutate(date=ymd(date))
+df <- df %>% mutate(date=ymd(date))
 ```
 
 
@@ -60,9 +59,6 @@ df <- df %>%
 nan_count <- sum(!is.na(df$transactionRevenue))
 nan_pct <- nan_count / nrow(df) * 100
 total_rev <- sum(df$transactionRevenue, na.rm=T)
-
-df <- df %>%
-    mutate(transactionRevenue=replace_na(transactionRevenue, 0))
 ```
 
 Only `r nan_count` sessions in the training set led to a transaction. This is only `r nan_pct`% of the observations, and that of course matches with the 98.7% missing values in the previous section. Altogether, the GStore made `r format_dollars(total_rev)` USD in revenues in that year. The missing transactionRevenue is replaced with 0 to avoid errors with NAN later on. This filling of missing value is acceptable since the lowest a revenue can go is 0.
@@ -81,9 +77,17 @@ Most transactions generate no revenue hence the strongly skewed right tail. Howe
 
 ```{r}
 df <- df %>%
-  mutate(transactionRevenue=log(transactionRevenue + 0.01))
-gg_miss_var(df %>% filter(transactionRevenue > 0.01), show_pct = TRUE)
+  mutate(transactionRevenue=log(transactionRevenue),
+         transactionRevenue=replace_na(transactionRevenue,0))
+gg_miss_var(df %>% filter(transactionRevenue > 0), show_pct = TRUE)
 ```
+
+
+```{r}
+df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=date, y=transactionRevenue)) + geom_line()
+```
+
+It looks like transactionRevenue doesn't so much variation through out the year
 
 #### Sparse columns
 
@@ -111,10 +115,9 @@ visitId - sessionID already has this information
 visits - 1 for all positive revenue
 
 ```{r}
-drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect', 'visits')
+drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect', 'visits', uniq_cols)
 
-df <- df %>% 
-  select(-c(all_of(uniq_cols), all_of(drop_cols)))
+df <- df %>% select(-all_of(drop_cols))
 ```
 
 After dropping those columns we are left with 30 columns.
@@ -132,8 +135,6 @@ session <- function(df, cols, cnt=10) {
     labs(x="", y="Sessions") +
     theme(legend.position="none")
 }
-
-
 revenue <- function(dataframe, cols, cnt=10) {
     var_col <- enquo(cols)
     df %>% 
@@ -170,8 +171,8 @@ p2 <- df %>%
 grid.arrange(p1, p2, nrow=2)
 ```
 
-It looks like between Oct 2016 and Jan 2017 there was a peek in active users
-The daily revenue is almost completely linear and some what independant to the number of active users which seems incorrect. When we transform the revenue though log we see the affects of more active users.
+It looks like between Oct 2016 and Jan 2017 there was a peek in active users. 
+The daily revenue slightly peeks around the same time then plateaus.
 
 #### Channel Grouping
 
@@ -192,7 +193,7 @@ Device category are the hardware which people use to access the GStore, there ar
 ```{r}
 p1 <- session(df, deviceCategory, 3)
 p2 <- revenue(df, deviceCategory, 3)
-#df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue, fill=deviceCategory)) + geom_histogram(position='identity', alpha=0.75, bins=50) + scale_x_log(labels=scales::dollar_format())
+#p3 <- df %>% filter(transactionRevenue > 0) %>% ggplot(aes(x=transactionRevenue, fill=deviceCategory)) + geom_histogram(position='identity', alpha=0.75, bins=50)
 grid.arrange(p1, p2)
 ```
 
@@ -276,13 +277,7 @@ skimr::skim(df)
 
 Columns still worth looking at 
  - keyword
- 
-```{r, eval=F}
-train <- df[,which(sapply(df, is.numeric))] %>% select(-c('fullVisitorId', 'visitId')) %>% mutate(across(everything(), ~replace_na(0)))
-correlation <- cor(train)
-corrplot.mixed(correlation, tl.col = 'black', tl.pos = 'lt', number.cex= 11/ncol(raw))
-```
- 
+
 Based on the EDA I would expected the most revenue from users with the following specifications
 
 browser - Chrome
@@ -296,42 +291,51 @@ city - New York
  
 ## Modeling
 
+The target in this dataset is a revenue so we will begin with a randomforest regression. Given the size of the dataset we will build a model on revenue greater than 0. The predictions will then be threshold to 0 for values between the 1st Quartile (17.03) and the Min (9.21) which is 13.12.
+
 ```{r, warning=F, error=F, message=F}
 library(tidymodels)
 library(randomForest)
 library(vip)
 ```
 
-I add 0.01 to the transactionRevenue to avoid -inf when taking the log
+#### Train test split
+
+We begin by splitting the data into training and testing
 
 ```{r}
 set.seed(42)
 df_split <- df %>% 
   filter(transactionRevenue > 0) %>%
-  mutate(trevenue = log(transactionRevenue)) %>%
-  initial_split(strata = trevenue)
+  initial_split(strata = transactionRevenue)
 
 df_train <- training(df_split)
 df_test <- training(df_split)
 
 set.seed(43)
-df_folds <- bootstraps(df_train, strata = trevenue, times=10)
+df_folds <- bootstraps(df_train, strata = transactionRevenue, times=10)
 ```
 
+#### Preprocessing
+
+Certain features are selected based on the analysis above. Some of those features are then thresholded based on frequency below 1%. Other featues are imputed with knn.
 Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 
 ```{r}
-df_rec <- recipe(trevenue ~ channelGrouping + browser + operatingSystem + 
-                   isMobile + deviceCategory + continent + country + 
-                   city + pageviews, hits, data=df_train) %>%
-  step_novel(operatingSystem, country, city, browser) %>%
-  step_other(operatingSystem, country, city, browser, threshold = 0.01) %>%
-  step_impute_knn(pageviews)
+df_rec <- recipe(transactionRevenue ~ channelGrouping + browser + operatingSystem + 
+                   isMobile + deviceCategory + continent + subContinent + country +
+                   region + metro + city + networkDomain + hits + pageviews + 
+                   source + medium, data=df_train) %>%
+  step_novel(operatingSystem, country, city, browser, medium, networkDomain, metro, source, region, subContinent) %>%
+  step_other(operatingSystem, country, city, browser, medium, networkDomain, subContinent, threshold = 0.01) %>%
+  step_impute_knn(pageviews, hits)
 
 smp <- df_rec %>% prep() %>% bake(new_data=NULL)
 ```
 
-Tuning the model
+#### Tuning 
+
+With the data preprocessed we build the random forest model with tuneable parameters
 
 ```{r}
 rf_spec <- rand_forest(mtry = tune(), min_n = tune(), trees=1500) %>%
@@ -343,21 +347,26 @@ rf_workflow <- workflow() %>%
   add_model(rf_spec)
 ```
 
+#### Training
+
+Using parallel processing 10 models are trained across a grid of 20 to find the best hyperparameters for the random forest model
 
 ```{r}
 set.seed(44)
 doParallel::registerDoParallel()
-rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=30)
+rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=20)
 ```
 
-The metric used in this competation is RMSE
+#### Evaluation
+
+The metric used in this competition is RMSE, so values corresponding to the lowest values are chosen
+
 ```{r}
 show_best(rf_tune, metric='rmse')
-```
-
-```{r}
 autoplot(rf_tune)
 ```
+
+Selecting the best parameters we train the full model on the trainined set
 
 ```{r}
 rf_model <- rf_workflow %>%
@@ -366,29 +375,24 @@ rf_model <- rf_workflow %>%
 
 When the tuning completed we can now train the model with the best fit parameters on the train set and test on the test set
 
-```{r}
-rf_fit <- last_fit(rf_model, df_split)
-rf_fit
-```
+#### Testing
 
 ```{r}
+rf_fit <- last_fit(rf_model, df_split)
 collect_metrics(rf_fit)
 ```
 
+Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of 1.10.
+
+
+Finally we can see how our model performed against the true revenue
 
 ```{r}
 collect_predictions(rf_fit) %>% 
-  ggplot(aes(x=trevenue, y=.pred)) + 
+  ggplot(aes(x=transactionRevenue, y=.pred)) + 
   geom_abline(lty=2) + 
   geom_point(alpha=0.5, color='blue')  + 
   coord_fixed()
-```
-
-Manual prediction
-
-```{r}
-model <- rf_fit$.workflow[[1]]
-predict(model, df_test[100,])
 ```
 
 Feature importance
@@ -397,15 +401,44 @@ Feature importance
 imp_spec <- rf_spec %>%
   finalize_model(select_best(rf_tune, metric = 'rmse')) %>%
   set_engine('ranger', importance='permutation')
-```
 
-```{r}
 workflow() %>%
   add_recipe(df_rec) %>%
   add_model(imp_spec) %>%
-  fit(df_train) %>%
+  fit(df_test) %>%
   extract_fit_parsnip() %>%
   vip() + 
   labs(y='Importance', x='Features')
 ```
+
+It looks like the number of hits and pageviews are among the most important features.
+
+Manual prediction
+
+```{r}
+model <- rf_fit$.workflow[[1]]
+predict(model, df_test[100,])
+```
+
+
+With the trained model we can now predict on the kaggle test set. The results will be uploaded to the leader board for evaluation
+
+```{r}
+test <- read.csv(paste0(path, 'test_clean.csv'))
+```
+
+```{r, eval=F}
+X <- c('channelGrouping' , 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source','medium')
+
+#chrvars <- df_test %>% select(where(is.character)) %>% names()
+#test[, chrvars] <- lapply(test[, chrvars], as.character)
+
+stest = test %>% select(X)
+
+y_hat <- c()
+
+y_hat <- predict(model, new_data=stest)
+```
+
+
 
