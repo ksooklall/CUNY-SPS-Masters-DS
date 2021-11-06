@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ## GStore, Revenue per Customer Prediction
 
-For our final project, we will be looking at the Kaggle competition `Google Analytics Customer Review Prediction` where we will *predict revenue per customer* for the Google store.
+For our final project, we will be looking at the Kaggle competition `Google Analytics Customer Review Prediction` where we will build a model to predict the natural log of the sum of all transactions per user for the Google store.
 
 In this competition, we're challenged to analyze the Google Merchandise Store customer dataset to predict revenue per customer. Understanding patterns in customer revenue can help guide marketing strategy, as well as lend insight into how customer behavior changes over time.
 
@@ -22,7 +22,7 @@ In this competition, we're challenged to analyze the Google Merchandise Store cu
 
 It is a widely held belief that 80% of a business' revenue comes from 20% of their customers, also known as the *80/20 rule*. If we are able to predict revenue per customer, then we should be able to identify this most important 20% of a stores customers.  We selected a Kaggle competition so that, in addition to the feedback gathered from our model's performance on a holdout set, we will also be able to learn from how other teams approached this problem. Seeing others' work after we complete ours will let us know which of our methods were most successful, and what strategies we might consider in future work.
 
-With our analysis, we hope to discover the characteristics of the highest revenue-generating customers.
+With our analysis, we hope to discover the characteristics of the highest revenue-generating customers. A model that predicts top spenders will allow a business to: a) optimize marketing campaigns for ROI based on targeting top spenders; b) identify predictors that can be leveraged to identify ‘second-tier’ customers who may be encouraged to higher levels of purchasing; c) reduce potential attrition of top spenders over time by identifying motivating factors (from predictor pool).
 
 
 ## Background
@@ -51,5 +51,9 @@ This technique is generally used in machine learning, but we don't see why we co
 
 ## Methodology:
 
-We will begin with feature engineering with some of the approaches mentioned above.
+The dataset contains about 1 million transactions but only 1% of them have positive revenue. We will conduct of our analysis on the 1% due to memory and time constraints. There are 13 columns that contain nested jsons that need to be parsed for more features. The parsing of those jsons and the restructure of the dataset will be another problem to tackle.
+
+For modeling, we will begin with feature engineering with some of the approaches mentioned above.
 We will start with both linear regression models and Random Forest decision trees to model the data. Based on our outcome from those models we can extend our analysis to different models or fine-tune those models. The final model will be submitted to Kaggle to see how it stacks up against the community.
+
+The raw data can be found here: https://www.kaggle.com/c/ga-customer-revenue-prediction
