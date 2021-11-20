@@ -1,0 +1,5 @@
+Exponential family
+
+At this point is our classes we have all heard about the binomial distribution and poission distributions. What I recently discovered is that they are part of a much larger family known as exponential family distributions. Other common members of the family are normal, exponential and chi-squared distributions. Lesser known are gamma, wishart and dirichlet.
+
+We have used the common ones in class but have you guys had experience with the latter?

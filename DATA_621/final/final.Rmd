@@ -51,7 +51,10 @@ The clean dataset has 903653 transactions and 55 columns, where each transaction
 ```{r}
 path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_621/final/'
 df <- read.csv(paste0(path, 'train_clean.csv'))
-df <- df %>% mutate(date=ymd(date))
+df <- df %>% mutate(date=ymd(date),
+                    day=weekdays(date), 
+                    month=months(date), 
+                    year=year(date))
 ```
 
 
@@ -128,7 +131,7 @@ After dropping those columns we are left with 30 columns.
 session <- function(df, cols, cnt=10) {
     var_col <- enquo(cols)
     df %>% 
-      count(!!var_col) %>% 
+      count(!!var_col) %>%
       top_n(cnt, wt=n) %>%
     ggplot(aes_(x=var_col, y=~n, fill=var_col)) +
     geom_bar(stat='identity') +
@@ -173,6 +176,36 @@ grid.arrange(p1, p2, nrow=2)
 
 It looks like between Oct 2016 and Jan 2017 there was a peek in active users. 
 The daily revenue slightly peeks around the same time then plateaus.
+
+
+#### fullVistorId
+
+FullVistorId is a unique identifier for each user of the Google Merchandise Store.
+
+```{r}
+df %>% group_by(fullVisitorId) %>% summarise(revenue=sum(transactionRevenue)) %>% filter(revenue > 0) %>% ggplot(aes(x=fullVisitorId, y=revenue)) + geom_point()
+```
+
+We can see most visitors spend a small amount while a few spend a lot, with one individual spending the most.
+
+#### Datetime
+
+```{r}
+month_order = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
+p1 <- session(df, month, 12) + scale_x_discrete(limits=month_order)
+p2 <- revenue(df, month, 12) + scale_x_discrete(limits=month_order)
+grid.arrange(p1, p2)
+```
+
+
+```{r}
+day_order = c('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')
+p1 <- session(df, day, 7) + scale_x_discrete(limits=day_order)
+p2 <- revenue(df, day, 7) + scale_x_discrete(limits=day_order)
+grid.arrange(p1, p2)
+```
+
+    
 
 #### Channel Grouping
 
@@ -289,6 +322,15 @@ continent - Americas
 country - United States
 city - New York
  
+TODO: 
+*******************
+Groupby fullVistorId agg sum tranRev, and other numeric values            DONE
+look at month day and year                                                DONE
+second model GLM
+final section comparing GLM and RF
+Final project presentation slide shows
+ 
+ 
 ## Modeling
 
 The target in this dataset is a revenue so we will begin with a randomforest regression. Given the size of the dataset we will build a model on revenue greater than 0. The predictions will then be threshold to 0 for values between the 1st Quartile (17.03) and the Min (9.21) which is 13.12.
@@ -318,7 +360,7 @@ df_folds <- bootstraps(df_train, strata = transactionRevenue, times=10)
 
 #### Preprocessing
 
-Certain features are selected based on the analysis above. Some of those features are then thresholded based on frequency below 1%. Other featues are imputed with knn.
+Certain features are selected based on the analysis above. Some of those features are then thresholded based on frequency below 1%. Other features are imputed with knn.
 Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 
 ```{r}

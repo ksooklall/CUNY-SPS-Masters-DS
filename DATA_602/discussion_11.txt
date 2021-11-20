@@ -1,0 +1,15 @@
+Artificial intelligence is marketed as potentially putting people out of work as it automates large swathes of workflows and eliminates the need for human input as we move closer and closer to a technological singularity. To some this is exciting to others it is scary.
+
+What does this mean for data scientists?
+Data scientists will be needed more than ever as all AI models need data. From cleaning to building and evaluating models data scientists can do it all.
+
+Are data scientists leading the charge to replace themselves with sophisticated and continuously improving algorithms?
+
+I think we will get into a feedback loop, where DS build sophisticated AI and then those AI do the DS work but will need the DS for updates and maintaince
+
+What are your thoughts on this? Where is this all headed?
+
+When it comes to human input, there are industries that are constantly suffered from going extinct. That process will not end, what we need to do is continue learning. Tedious jobs will be gone but new jobs will take their place. The issue is we never know what those new jobs will be. For example, imagine telling someone in the 1920s that in 100 years < 5% of the population will be farmers and a lot of jobs will be computer related. Their response will be, "what is a computer?"
+
+And what does it mean for the data science world and career opportunities?
+I believe data science has solidified it's position in therm of career opportunities. Every company can benifit from a DS through out the stack.

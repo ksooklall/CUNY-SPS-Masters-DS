@@ -1,10 +1,11 @@
 ---
 title: "Final Proposal"
 author: "Kenan Sooklall, Jack Wright, Rachel Greenlee, Sean Connin, Daniel Moscoe, Stefano Biguzzi, Mustafa Telab"
-date: "10/22/2021"
+date: "2021-11-07"
 output:
   tufte::tufte_html: default
   tufte::tufte_handout: default
+  
 ---
 
 ```{r setup, include=FALSE}

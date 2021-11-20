@@ -1,0 +1,9 @@
+logistic regression and GLM
+
+I found the mlogit library very useful for running logistic regression models
+library(mlogit)
+df <- read.csv('path_to_my_data')
+lreg = mlogit(target ~ ., data=df);
+summary(simple0)
+
+What libraries have you used for logistic regression.
