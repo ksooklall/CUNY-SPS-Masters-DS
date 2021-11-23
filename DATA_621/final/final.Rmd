@@ -190,6 +190,8 @@ We can see most visitors spend a small amount while a few spend a lot, with one 
 
 #### Datetime
 
+The date column was parsed into days and months to see if there is any information on the session day/month and the transactionRevenue.
+
 ```{r}
 month_order = c('January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December')
 p1 <- session(df, month, 12) + scale_x_discrete(limits=month_order)
@@ -197,6 +199,7 @@ p2 <- revenue(df, month, 12) + scale_x_discrete(limits=month_order)
 grid.arrange(p1, p2)
 ```
 
+The last quarter of the year has a lot of sessions and generates the most revenue. There is an increase in revenue from Jan to May with relatively the same amount of sessions. December generate the highest revenue which might be due to the holidays.
 
 ```{r}
 day_order = c('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday')
@@ -205,7 +208,7 @@ p2 <- revenue(df, day, 7) + scale_x_discrete(limits=day_order)
 grid.arrange(p1, p2)
 ```
 
-    
+Weekdays have the most activate sessions and the highest revenue. Revenue start low on Sunday, peaks on Monday and then slowly go down for the rest of the week. Sessions follow a more parabolic curve, peaking on Tuesday and tapering off on both sides.
 
 #### Channel Grouping
 
@@ -337,6 +340,7 @@ The target in this dataset is a revenue so we will begin with a randomforest reg
 
 ```{r, warning=F, error=F, message=F}
 library(tidymodels)
+library(xgboost)
 library(randomForest)
 library(vip)
 ```
@@ -364,10 +368,9 @@ Certain features are selected based on the analysis above. Some of those feature
 Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 
 ```{r}
-df_rec <- recipe(transactionRevenue ~ channelGrouping + browser + operatingSystem + 
-                   isMobile + deviceCategory + continent + subContinent + country +
-                   region + metro + city + networkDomain + hits + pageviews + 
-                   source + medium, data=df_train) %>%
+features <- c('transactionRevenue', 'channelGrouping', 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source', 'medium')
+
+df_rec <- recipe(transactionRevenue ~ ., data=df_train %>% select(features)) %>%
   step_novel(operatingSystem, country, city, browser, medium, networkDomain, metro, source, region, subContinent) %>%
   step_other(operatingSystem, country, city, browser, medium, networkDomain, subContinent, threshold = 0.01) %>%
   step_impute_knn(pageviews, hits)
@@ -376,6 +379,9 @@ smp <- df_rec %>% prep() %>% bake(new_data=NULL)
 ```
 
 #### Tuning 
+
+Random Forest is a bagging technique that contains a number of decision trees on various subsets of the given dataset and takes the average to improve the predictive accuracy of that dataset.” Instead of relying on one decision tree, the random forest takes the prediction from each tree and based on the majority votes of predictions, and it predicts the final output. The greater number of trees in the forest leads to higher accuracy and prevents the problem of overfitting.
+source (https://medium.com/geekculture/xgboost-versus-random-forest-898e42870f30)[random_forest]
 
 With the data preprocessed we build the random forest model with tuneable parameters
 
@@ -396,7 +402,7 @@ Using parallel processing 10 models are trained across a grid of 20 to find the 
 ```{r}
 set.seed(44)
 doParallel::registerDoParallel()
-rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=20)
+rf_tune <- tune_grid(rf_workflow, resamples = df_folds, grid=5)
 ```
 
 #### Evaluation
@@ -422,9 +428,10 @@ When the tuning completed we can now train the model with the best fit parameter
 ```{r}
 rf_fit <- last_fit(rf_model, df_split)
 collect_metrics(rf_fit)
+rmse_val <- collect_metrics(rf_fit) %>% filter(.metric == 'rmse') %>% select(.estimate)
 ```
 
-Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of 1.10.
+Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of `rmse_val`.
 
 
 Finally we can see how our model performed against the true revenue
@@ -455,32 +462,52 @@ workflow() %>%
 
 It looks like the number of hits and pageviews are among the most important features.
 
-Manual prediction
-
 ```{r}
 model <- rf_fit$.workflow[[1]]
-predict(model, df_test[100,])
+y_pred <- predict(model, df_test %>% select(features[2:17]))
+rf_df <- data.frame(y_pred=y_pred$.pred, y_true=df_test %>% select(transactionRevenue))
+rmse <- sqrt(mean((rf_df$transactionRevenue - rf_df$y_pred)^2))
+p1 <- rf_df %>% 
+  ggplot(aes(x=y_pred, y=transactionRevenue)) + 
+    geom_point() +
+    labs(title=paste0('Random Forest RMSE ',round(rmse,3)))
 ```
 
+#### Generalized Linear Model
+
+```{r}
+glm1 <- glm(transactionRevenue ~ ., data=df_train %>% select(features), family='gaussian')
+y_pred <- predict(glm1, newdata = df_test %>% select(features[2:17]))
+glm_df <- data.frame(y_pred=y_pred, y_true=df_test %>% select(transactionRevenue))
+```
+
+```{r}
+rmse <- sqrt(mean((glm_df$transactionRevenue - glm_df$y_pred)^2))
+p2 <- glm_df %>% 
+  ggplot(aes(x=y_pred, y=transactionRevenue)) + 
+    geom_point() +
+    labs(title=paste0('GLM RMSE ',round(rmse,3)))
+```
+
+### Model Evaluation
+
+The RMSE of the random forest model is lower than the GLM model therefore random forest is the better model.
+
+```{r}
+grid.arrange(p1, p2)
+```
+
+The random forest model is more narrow than the GLM model which explains why its RMSE is lower.
+
+
+### Competation testing
 
 With the trained model we can now predict on the kaggle test set. The results will be uploaded to the leader board for evaluation
 
 ```{r}
-test <- read.csv(paste0(path, 'test_clean.csv'))
+test <- read.csv(paste0(path, 'test_clean.csv')) %>% select(features[2:17])
 ```
 
 ```{r, eval=F}
-X <- c('channelGrouping' , 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source','medium')
-
-#chrvars <- df_test %>% select(where(is.character)) %>% names()
-#test[, chrvars] <- lapply(test[, chrvars], as.character)
-
-stest = test %>% select(X)
-
-y_hat <- c()
-
 y_hat <- predict(model, new_data=stest)
 ```
-
-
-
