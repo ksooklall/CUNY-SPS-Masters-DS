@@ -311,9 +311,6 @@ Look at the final dataframe
 skimr::skim(df)
 ```
 
-Columns still worth looking at 
- - keyword
-
 Based on the EDA I would expected the most revenue from users with the following specifications
 
 browser - Chrome
@@ -324,15 +321,6 @@ deviceCategory - Desktop
 continent - Americas
 country - United States
 city - New York
- 
-TODO: 
-*******************
-Groupby fullVistorId agg sum tranRev, and other numeric values            DONE
-look at month day and year                                                DONE
-second model GLM
-final section comparing GLM and RF
-Final project presentation slide shows
- 
  
 ## Modeling
 
@@ -368,7 +356,7 @@ Certain features are selected based on the analysis above. Some of those feature
 Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 
 ```{r}
-features <- c('transactionRevenue', 'channelGrouping', 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source', 'medium')
+features <- c('transactionRevenue', 'channelGrouping', 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source', 'medium', 'day', 'month')
 
 df_rec <- recipe(transactionRevenue ~ ., data=df_train %>% select(features)) %>%
   step_novel(operatingSystem, country, city, browser, medium, networkDomain, metro, source, region, subContinent) %>%
@@ -431,8 +419,7 @@ collect_metrics(rf_fit)
 rmse_val <- collect_metrics(rf_fit) %>% filter(.metric == 'rmse') %>% select(.estimate)
 ```
 
-Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of `rmse_val`.
-
+Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of `r rmse_val`.
 
 Finally we can see how our model performed against the true revenue
 
@@ -464,11 +451,11 @@ It looks like the number of hits and pageviews are among the most important feat
 
 ```{r}
 model <- rf_fit$.workflow[[1]]
-y_pred <- predict(model, df_test %>% select(features[2:17]))
-rf_df <- data.frame(y_pred=y_pred$.pred, y_true=df_test %>% select(transactionRevenue))
-rmse <- sqrt(mean((rf_df$transactionRevenue - rf_df$y_pred)^2))
+y_pred <- predict(model, df_test %>% select(features[2:19]))
+rf_df <- data.frame(y_pred=y_pred$.pred, y_true=df_test$transactionRevenue)
+rmse <- sqrt(mean((rf_df$y_true - rf_df$y_pred)^2))
 p1 <- rf_df %>% 
-  ggplot(aes(x=y_pred, y=transactionRevenue)) + 
+  ggplot(aes(x=y_pred, y=y_true)) + 
     geom_point() +
     labs(title=paste0('Random Forest RMSE ',round(rmse,3)))
 ```
@@ -477,14 +464,14 @@ p1 <- rf_df %>%
 
 ```{r}
 glm1 <- glm(transactionRevenue ~ ., data=df_train %>% select(features), family='gaussian')
-y_pred <- predict(glm1, newdata = df_test %>% select(features[2:17]))
-glm_df <- data.frame(y_pred=y_pred, y_true=df_test %>% select(transactionRevenue))
+y_pred <- predict(glm1, newdata = df_test %>% select(features[2:19]))
+glm_df <- data.frame(y_pred=y_pred, y_true=df_test$transactionRevenue)
 ```
 
 ```{r}
-rmse <- sqrt(mean((glm_df$transactionRevenue - glm_df$y_pred)^2))
+rmse <- sqrt(mean((glm_df$y_true - glm_df$y_pred)^2))
 p2 <- glm_df %>% 
-  ggplot(aes(x=y_pred, y=transactionRevenue)) + 
+  ggplot(aes(x=y_pred, y=y_true)) + 
     geom_point() +
     labs(title=paste0('GLM RMSE ',round(rmse,3)))
 ```
@@ -497,17 +484,20 @@ The RMSE of the random forest model is lower than the GLM model therefore random
 grid.arrange(p1, p2)
 ```
 
-The random forest model is more narrow than the GLM model which explains why its RMSE is lower.
-
+The random forest model is more narrow than the GLM model which explains why its RMSE is lower. The values for the random forest is also spread across while the GLM predictions are more lumped together in the middle.
 
 ### Competation testing
 
 With the trained model we can now predict on the kaggle test set. The results will be uploaded to the leader board for evaluation
 
-```{r}
-test <- read.csv(paste0(path, 'test_clean.csv')) %>% select(features[2:17])
+```{r, eval=F}
+test <- read.csv(paste0(path, 'test_clean.csv')) %>% 
+  mutate(date=ymd(date),
+                    day=weekdays(date), 
+                    month=months(date), 
+                    year=year(date)) %>%
+  select(features[2:19])
+y_hat <- predict(glm1, new_data=test)
 ```
 
-```{r, eval=F}
-y_hat <- predict(model, new_data=stest)
-```
+
