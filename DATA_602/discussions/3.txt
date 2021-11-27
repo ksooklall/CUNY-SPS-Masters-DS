@@ -1,0 +1,15 @@
+Kenan Sooklall - List and Dict
+
+A list in python is a collection of objects that can be of any type
+
+A dict is an object that has key value pairs. The keys need to be hashable so no floats while the value can be anything
+
+Store sales
+
+sales = []
+
+for i in ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']:
+
+    sales.append(int(input('{} sales: '.format(i))))
+
+print('Weekly sales: {}'.format(sum(sales)/len(sales)))

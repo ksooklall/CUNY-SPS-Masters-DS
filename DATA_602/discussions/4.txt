@@ -1,0 +1,19 @@
+Kenan Sooklall - Conditional statements
+
+1. functions are an essential part of programming - Why?  (Guiding questions: What are the benefits of functions?  How would not having functions impact your coding?).
+
+Functions alow us to reuse code in different parts of our script. They save a lot of time from repeating ourselves. Functions help organize our code into blocks and allow us to parallelize expensive operations.
+
+2. Conditional statements allow you to incorporate choices in your programming.  How and why is this useful?
+Conditional statements such as if statements are at the heart of how programming became useful to society. The ability to threshold a value before sending it to the clients is necessary for checks.
+
+Then:
+The mailroom has asked you to design a simple payroll program that calculates a student employee’s gross pay, including any overtime wages. If any employee works over 20 hours in a week, the mailroom pays them 1.5 times their regular hourly pay rate for all hours over 20.
+
+I had some fun with this one
+
+employees = input('How many employess as integer: ')
+
+hr_rate =[(int(i.split(',')[0]),int(i.split(',')[1])) for i in [input('How many hours did you work and at what rate ex(20,15): ') for i in range(employees)]]
+
+pays = [20 * rate + 20 * 1.5 * (hours - 20) if hours > 20 else hours * rate for hours,rate in hr_rate]

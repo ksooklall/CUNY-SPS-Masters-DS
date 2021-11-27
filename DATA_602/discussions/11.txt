@@ -1,0 +1,20 @@
+Data-ink ratio and Plotly
+
+What is the data-ink ratio?
+Data-ink ratio = Data-ink / total ink used to print the graphic
+
+which is the proportion of a graphics ink devoted to non-redundant display of data information
+
+According to the article, what are the "five laws of Data-Ink"?
+Above all else show the data,
+
+Maximise the data-ink ratio,
+
+Erase non-data-ink,
+
+Erase redundant data-ink,
+
+Revise and edit.
+
+What is plotly? What are some ways it helps reduce the amount of non-data ink on your visualizations?
+Plotly is a hugh data visualization tool that is used across many languages like R, Python and javascript. Plotly let's you plot the most important information and stores other values for display when the mouse hovers over a point on the graph. Plotly can be customized to display and hide pretty much anything

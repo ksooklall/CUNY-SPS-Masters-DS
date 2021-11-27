@@ -1,0 +1,13 @@
+Kenan Sooklall - OOP
+
+1.) Explain and give an example of OOP.
+OOP and I have an unhealthy relationship, sometimes I think it's the most important part of coding and others I find it the most inconvient approach. Object-oriented programming is a programming paradigm that provides a means of structuring programs so that properties and behaviors are bundled into individual objects. A very common OOP example is an ATM machine, where you have Person Class and ATM Class.
+
+2.) Write a Python class to reverse a string word by word.
+Input string : 'hello .py'
+
+instr = input()
+
+revstr = ' '.join(aa.split(' ')[::-1])
+
+Expected Output: '.py hello'

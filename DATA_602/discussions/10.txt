@@ -1,0 +1,26 @@
+Matplottlib and Seaborn
+
+1. What is matplottlib and seaborn?  When would you choose one over the other?
+
+Matplotlib is like the grandfather of all plotting libraries in python. Virtually every visualization tool uses mathplotlib in one way or another. Seaborn is one of those tools. Seaborn is built on top of matplotlib and has a lot of built in functions for faster plots. One line in seaborn can be 10 in matplotlib. When starting off it's best to go with seaborn; however, if you have a custom plot that is very specific to your data and seaborn as no equivalent, then you have to go to matplotlib.
+
+2. Image you are creating a visualization for a presentation at work.  What are some recommendations or guidelines you would follow to make engaging and informative visuals?
+
+Try to make your graph simple so it's easy to digest. Don't add too much color as it might cause the viewer eyes to stray. If color is needed, be consistent between graphs, for example if revenue is blue and profit is green then all plot that has those two columns should follow that format.
+
+3. Give an example of either a matplotlib or seaborn graphic (give code).  You may also reference an informative article.
+Plotting a bar plot in matplotlib
+
+import numpy as np
+
+import pandas as pd
+
+import matplotlib.pyplot as plt
+
+import seaborn as sns; sns.set()
+
+df = pd.DataFrame(np.random.rand(10,10))
+
+plt.scatter(x=df[0], y=df[1])
+
+sns.scatterplot(x=0, y=1, data=df)

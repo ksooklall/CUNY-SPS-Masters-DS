@@ -1,0 +1,9 @@
+Kenan Sooklall - Syntax/Logical Errors
+
+This code wouldn't run due to the missing test3 for the third test score.
+
+Also the calculation of the average is a logical error meaning the code will compile but the results will be incorrect.
+
+The correct way to compute the average would be (test1 + test2 +test3)/3. I believe the last print statement should be in the if statement due to the content of the text.
+
+If so, that would make it another logical error.
