@@ -1,0 +1,3 @@
+Influential, high leverage and outlying points
+
+The second video on regression points brought up a very interesting point about regression models. The instructor explains an influential, high leverage and outlying points. I never thought of how a regression model is affected by those points. The anology made with a high leverage points an a weight on a balance scale was very unique. I never though of points as having leverage or influence but now it seems so obvious

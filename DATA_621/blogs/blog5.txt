@@ -1,0 +1,29 @@
+Universal Function Approximators
+
+One of the main tasks we have as data scientists is to build a model that fits our data. By fit we mean a function that maps our predictors X to our response y with as small an error as possible. That statement can be written mathematically as
+
+|g(x) - f(x)| < e
+note the absolute value
+
+where: g(x) is our model
+       f(x) is y
+       e is error
+
+We first decide on what error is acceptable. We all want e ~ 0 but that's not realistic.
+
+One set of functions that works very well to satify that request are neural networks (NN). Neural networks are universal function approximators. It doesn't matter how complex the function or how many inputs there exists a neural network that can fit all x in X. What is suprising is the fact that NN have been around for decades but only recently made it into the spot light.
+
+A simplified reason for this universality is the fact that with one hidden layer you can always add more neurons for each addition x. Each layer is a set of trainable parameters called weights. These weights can move up and down to make the approximation better. However those weights alone would make the NN a universal LINEAR function approximator. We get the nonlinearality by passing the weights through non-linear activation functions.
+
+A(w*x+b)
+
+where:  w - weights
+        b - bias
+        A - activation function, like sigmoid
+
+A draw back from nerual networks is the slipery slope of overfitting. Since we can always fit a NN to the data we can memorize the data unintentionally. This is why we usually slip our data into training and testing to verify that we didn't overfit.
+
+A deep understanding of how NN are univeral function approximators can be found in the references below
+
+http://neuralnetworksanddeeplearning.com/chap4.html
+https://towardsdatascience.com/neural-networks-and-the-universal-approximation-theorem-8a389a33d30a#:~:text=The%20Universal%20Approximation%20Theorem%20tells,number%20of%20inputs%20and%20outputs.

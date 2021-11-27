@@ -1,0 +1,19 @@
+K Fold Cross Validation
+
+K-fold Cross-validation is a resampling procedure used to train machine learning models
+The procedure has a single parameter called k that refers to the number of groups that a given data sample is to be split into. It is a popular method because it is simple to understand and because it generally results in a less biased or less optimistic estimate of the model skill than other methods, such as a simple train/test split.
+
+The general procedure is as follows:
+Shuffle the dataset randomly.
+
+Split the dataset into k groups
+
+For each unique group:
+
+    Split the data into training and testingFit a model on the training set and evaluate it on the test set
+
+Importantly, each observation in the data sample is assigned to an individual group and stays in that group for the duration of the procedure. This means that each sample is given the opportunity to be used in the hold out set 1 time and used to train the model k-1 times.
+
+Reference
+
+https://machinelearningmastery.com/k-fold-cross-validation/

@@ -1,0 +1,3 @@
+Filling missing non-numeric
+
+When there are missing numeric data there are a lot of approaches one can take. However I found that it's very difficult to fill missing non numeric variables without domain knowledge. In practice I usually try to find correlations between other columns and "guess" the missing value. More often than I am forced to just drop those missing values. How do you guys handle these situtations.

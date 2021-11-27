@@ -1,0 +1,3 @@
+Linear Regression
+
+The videos in week1 state the assumptions made when using linear regression (video 2). Assumption 2 shows two graphs where the second one doesn't meet the requirements; however I think that chart would still be fine for a linear regression model. The data shows a growing trend. What do you think?

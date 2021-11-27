@@ -1,0 +1,5 @@
+Limitations of Imputations
+
+Most of the time we deal with missing data we jump to filling with some algorithm or function. From fill with mean/median or KNN or some other algorithm. However the sad truth is that sometimes we have to step back and learn about the industry where the data was obtained. Simply put, we need domain knowledge to know that some value just won't work while others are nearly impossible.
+
+One example would be the medical field specifically genomics. There are 20 amino acids that are the building blocks of life so if you missing a row and impute 21 that would be incorrect.

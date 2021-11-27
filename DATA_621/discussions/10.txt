@@ -1,0 +1,5 @@
+Robust Regression
+
+OLS is very sensitive to outliers, a few data points can cause the regression line to become steeper that expected. In such datasets Robust regression might be a good strategy since it is a compromise between excluding outliears entirely. The idea of robust regression is to weigh the observations differently based on how well behaved these observations are. Roughly speaking, it is a form of weighted and reweighted least squares regression.
+
+reference: https://stats.idre.ucla.edu/r/dae/robust-regression/

@@ -55,6 +55,9 @@ df <- df %>% mutate(date=ymd(date),
                     day=weekdays(date), 
                     month=months(date), 
                     year=year(date))
+
+factor_cols <- c('visitNumber', 'hits', 'pageviews', 'bounces', 'newVisits')
+df[factor_cols] <- lapply(df[factor_cols], factor)
 ```
 
 
@@ -107,15 +110,15 @@ uniq_cols
 
 17 Columns contain only one value for all 900k rows. The columns below were all dropped by checks for their usefulness towards positive revenue , NA count, unique value counts and duplication of another column. 
 
-adwordsClickInfo.isVideoAd - NA (882166) and False ()
-adwordsClickInfo.adNetworkType - NA, and only "Google Search" for revenue greater than 0
-adwordsClickInfo.gclId - According to [this](https://www.kaggle.com/c/ga-customer-revenue-prediction/discussion/66862 ) post gclId is a hash/encryption info for data is available in other features
-adwordsClickInfo.slot - 103 Top and 5362 RHS, the rest are NA
-adwordsClickInfo.page - NA and 1, for positive revenue
-campaignCode - NA for all value with positive revenue and "11251kjhkvahf" for other values
-isTrueDirect - NA and True for only a few rows
-visitId - sessionID already has this information
-visits - 1 for all positive revenue
+- adwordsClickInfo.isVideoAd - NA (882166) and False ()
+- adwordsClickInfo.adNetworkType - NA, and only "Google Search" for revenue greater than 0
+- adwordsClickInfo.gclId - According to [this](https://www.kaggle.com/c/ga-customer-revenue-prediction/discussion/66862 ) post gclId is a hash/encryption info for data is available in other features
+- adwordsClickInfo.slot - 103 Top and 5362 RHS, the rest are NA
+- adwordsClickInfo.page - NA and 1, for positive revenue
+- campaignCode - NA for all value with positive revenue and "11251kjhkvahf" for other values
+- isTrueDirect - NA and True for only a few rows
+- visitId - sessionID already has this information
+- visits - 1 for all positive revenue
 
 ```{r}
 drop_cols = c('adwordsClickInfo.isVideoAd', 'adwordsClickInfo.adNetworkType', 'adwordsClickInfo.gclId', 'adwordsClickInfo.slot', 'adwordsClickInfo.page', 'campaignCode', 'isTrueDirect', 'visits', uniq_cols)
@@ -360,7 +363,7 @@ features <- c('transactionRevenue', 'channelGrouping', 'browser', 'operatingSyst
 
 df_rec <- recipe(transactionRevenue ~ ., data=df_train %>% select(features)) %>%
   step_novel(operatingSystem, country, city, browser, medium, networkDomain, metro, source, region, subContinent) %>%
-  step_other(operatingSystem, country, city, browser, medium, networkDomain, subContinent, threshold = 0.01) %>%
+  step_other(operatingSystem, country, city, browser, medium, networkDomain, subContinent, metro, threshold = 0.01) %>%
   step_impute_knn(pageviews, hits)
 
 smp <- df_rec %>% prep() %>% bake(new_data=NULL)
@@ -463,7 +466,8 @@ p1 <- rf_df %>%
 #### Generalized Linear Model
 
 ```{r}
-glm1 <- glm(transactionRevenue ~ ., data=df_train %>% select(features), family='gaussian')
+# sapply(df_train %>% select(features), function(x) sum(is.na(x)))
+glm1 <- glm(transactionRevenue ~ ., data=smp %>% select(features), family='gaussian')
 y_pred <- predict(glm1, newdata = df_test %>% select(features[2:19]))
 glm_df <- data.frame(y_pred=y_pred, y_true=df_test$transactionRevenue)
 ```
@@ -499,5 +503,3 @@ test <- read.csv(paste0(path, 'test_clean.csv')) %>%
   select(features[2:19])
 y_hat <- predict(glm1, new_data=test)
 ```
-
-

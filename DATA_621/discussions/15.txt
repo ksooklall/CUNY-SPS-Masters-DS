@@ -1,0 +1,7 @@
+Splines
+
+The second video in this weeks material talks about splines and how they are used to approximate functions. The author states at the end that the quibic spline is used the most due to the fact that it's first and second derivates are nice and smooth.
+
+Based on that fact I wonder if an exp spline would work as well since it has the same properities.
+
+What other functions do you think will make for a good spline function?

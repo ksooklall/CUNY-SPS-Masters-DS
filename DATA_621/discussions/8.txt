@@ -1,0 +1,3 @@
+Validation dataset
+
+In HW1 and HW3 we split our data into training and testing sets for model training and testing. There is a third split that hasn't been covered which is the validation set(val). The val set is used during training to evaluate how the model while training. For fast ML models a validation set isn't needed but for models that take hours to weeks to train it's critical. You don't want your model training for days if it stopped learning after a few hours, the val set loss would signal that. Further more the val set accuracy can tell you when your model is starting to over fit so you can stop training earlier.

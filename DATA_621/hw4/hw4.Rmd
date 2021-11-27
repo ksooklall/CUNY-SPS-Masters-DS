@@ -1,0 +1,694 @@
+---
+title: "hw4"
+author: "Kenan Sooklall"
+date: "11/16/2021"
+output: html_document
+---
+---
+title: "Crash & Cost Prediction"
+author: "Biguzzi, Connin, Greenlee, Moscoe, Sooklall, Telab, and Wright"
+date: "10/15/2021"
+header-includes:
+  - \usepackage{dcolumn}
+output: 
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=F}
+knitr::opts_chunk$set(echo = F, results = 'asis', comment = NA, warning = F, message = F)
+options(knitr.kable.NA = '')
+```
+
+
+# Introduction
+The below analysis centers around predicting the probability of a car crash; and the cost implications of said crash, based on a collection of observations.  Naturally we will begin with an exploration of the data to build an initial impression on the relationships; which will guide our variable transformations and/or variable selections.  This will lead into the construction of two models: a logistic regression for the binary target variable of Crash vs No Crash; and a linear model for the target dollar cost variable.  Ultimately, we will integrate both results to provide a summarry from the context of an insurance provider.
+
+In this report we will: 
+
+* Explore the data
+* Transform data to address multicollenearity and meet variable distribution needs
+* Compare different models and select the most accurate model
+* Test our model on the evaluation dataset
+
+```{r import_packages, message=F}
+library(tidyverse)
+library(janitor)
+library(magrittr)
+library(flextable)
+library(dlookr)
+library(ggpubr)
+library(viridis)
+library(mice)
+library(corrplot)
+library(logistf)
+library(car)
+library(stargazer)
+library(caret)
+library(pROC)
+#library(MASS)
+library(pscl)
+library(broom)
+```
+
+
+```{r createfunctions}
+myboxplot <- function(data,x,y){
+  fig = data%>%
+  ggplot(aes(data[[x]],data[[y]])) +
+  geom_boxplot() +
+  ggtitle(paste0(y," by ", x))+
+    xlab(NULL)+
+    ylab(NULL)
+print(fig)
+}
+
+myhist <- function(data,x,y){
+  fig = data%>%
+  ggplot(aes(log(data[[y]]) , fill = data[[x]])) +
+  geom_histogram() +
+  ggtitle(paste0("log ",y," by ", x))+
+    xlab(NULL)+
+    ylab(NULL)
+print(fig)
+}
+
+modelmtx  <- function(data, model,name,threshold){ 
+target = names(model.frame(model))[1]
+data$predicted = factor(ifelse(predict(model,data,type="response") > threshold ,1,0))
+confusion <- confusionMatrix(data$predicted, data[[target]])
+mresults <- tibble(
+       model_name = name,
+       predictors = length(coef(model))-1,
+       precision = confusion$byClass[[5]],
+       auc = auc(roc(response = as.numeric(data[[target]]), predictor = as.numeric(data$predicted)))[1],
+       AIC = model$aic, 
+       BIC = BIC(model)
+       )
+    return(mresults)
+}
+
+```
+
+
+```{r import_data, message = F}
+evalpath = 'https://raw.githubusercontent.com/mtelab1/CUNYSPS_DATA621/main/insurance-evaluation-data.csv'
+trainpath = 'https://raw.githubusercontent.com/mtelab1/CUNYSPS_DATA621/main/insurance_training_data.csv'
+raw <- read_csv(trainpath)
+test <- read_csv(evalpath)
+```
+
+```{r initial_cleaning, message= FALSE}
+raw%<>%clean_names
+
+# remove any empty rows and cols
+raw%<>%remove_empty(c("rows", "cols"))
+# assess presence of duplicates
+get_dupes(raw)
+# basic characterization
+str(raw)
+#clean extraneous symbols from char col values and convert to numeric as appropriate
+df<-raw%>%
+    mutate_if(is_character, str_replace_all, '\\$|,|z_|<', '')%>%
+    mutate_at(c(8,10,17,21), as.numeric)%>%
+    mutate_at(c(2), as.factor)%>%
+  dplyr::select(-index)
+# round numeric columns
+df%<>%mutate_if(is.numeric, round)
+# identify unique values in our character cols
+id_distinct <- df%>%
+    dplyr::select(where(is_character))%>%
+    map(~str_c(unique(.x),collapse = ",")) %>%
+    bind_rows() %>%
+    gather(key = col_name, value = col_unique)
+# Update col values for clarity and brevity
+df%<>%
+    mutate_if(is_character, str_replace_all, "No|no",'N')%>%
+    mutate_if(is_character, str_replace_all, "Yes|yes",'Y')%>%
+    mutate_if(is_character, str_replace_all, "Highly Urban/ Urban",'Urban')%>%
+    mutate_if(is_character, str_replace_all, "Highly Rural/ Rural",'Rural')
+# convert character cols to factor and set level for education col
+df %<>%mutate_if(is_character, ~(factor(.)))
+df$education<-factor(df$education, levels=c("High School", "Bachelors", "Masters", "PhD"))
+```
+
+```{r missingness,fig.height = 8, fig.width = 15}
+#basic missing table
+df%>%
+    diagnose()%>%
+    dplyr::select(-unique_count, -unique_rate)%>%
+    filter(missing_count>0)%>%
+    arrange(desc(missing_count))%>%
+    flextable()
+# missing plots 
+df%>%plot_na_pareto(only_na = TRUE) # only plots vars with missing
+df%>%plot_na_intersect(only_na = TRUE)
+```
+
+```{r imputations}
+#impute numerical vars using dlookr, methods have been preselected based on initial plots.
+#car_age
+plot(imputate_na(df, car_age, target_flag, method = "rpart", seed = 999))+
+  theme_minimal()+ theme(legend.position = "top")
+car_age<-imputate_na(df, car_age, target_flag, method = "rpart", seed = 999)
+summary(car_age)
+#home_val
+plot(imputate_na(df, home_val, target_flag, method = "rpart"))+
+  theme_minimal()+
+  theme(legend.position = "top")
+home_val<-imputate_na(df, home_val, target_flag, method = "rpart")
+summary(home_val)
+#yoj
+plot(imputate_na(df, yoj, target_flag, method = "rpart"))+
+  theme_minimal()+
+  theme(legend.position = "top")
+yoj<- imputate_na(df, yoj, target_flag, method = "rpart")
+summary(yoj)
+# income
+plot(imputate_na(df, income, target_flag, method = "rpart"))+
+  theme_minimal()+
+  theme(legend.position = "top")
+income<-imputate_na(df, income, target_flag, method = "rpart")
+summary(income)
+#age
+plot(imputate_na(df, age, method = "rpart"))+  #any of the tests work here
+  theme_minimal()+
+  theme(legend.position = "top")
+age<-imputate_na(df, age, method = "rpart")
+summary(age)
+temp<-cbind(car_age, home_val, yoj, income, age)
+temp%<>%as.data.frame(temp)
+df%<>%dplyr::select(!c(car_age, home_val, yoj, income, age))%>%
+    cbind(temp)
+df%<>%mutate_if(is.numeric, round)
+```
+
+###Distributions
+
+There are some important findings from examining the histograms of the variables.
+Response variables: Both of our target variables are very skewed with a long right tail.  'target_amt' appears to respond well to a log transformation.  However 'target_flag' is categorical; so we will plan on implementing a zero inflation strategy.
+Predictors:  'car_age' and 'home_val' show a bimodal distribution, with centers around zero and more normal appearring right tail.  This is to be expected with 'home_val' as those who do not have a home would return a zero value.  The same is not obviouse for why 'car_age' would have so many clustered closed to zero.  We cannot say more without further context, but it should be noted in case there are issues down the line.
+
+```{r view_distributions}
+#identify highly skewed data
+df%>%find_skewness(index=FALSE, thres=TRUE) #this is good
+#identify outliers
+df%>%find_outliers(index=FALSE, rate=TRUE) # this is good
+# assess normality - Shapiro Wilke
+df%>%normality()
+df%>%plot_normality()	
+# other diagnostics
+df%>%
+    diagnose_numeric()%>%
+    dplyr::select(variables, min, mean, median, max, zero, minus)%>%
+    flextable(theme_fun = theme_booktabs())
+df%>%
+    diagnose_category()%>%
+    flextable(theme_fun = theme_booktabs())
+```
+
+We note outlier concentrations of >5% for target_amt, kidsdriv, homekids, oldclaim, yoj.
+
+```{r outliers}
+diagnose_outlier(df)  %>% flextable() 
+
+df %>% 
+    dplyr::select(find_outliers(df, index = FALSE)) %>% 
+    plot_outlier()
+```
+Running a Fisher test for the categorical variables, we establish that the groups are indeed different in target variable distribution.  However 'sex' and 'red_car' appear to have such a small relationship, that be may consider excluding them for efficiency.
+
+```{r}
+df_num = df  %>% dplyr::select(where(is.numeric)) %>% names()
+df_chr = df  %>% dplyr::select(!where(is.numeric)) %>% names()
+for (n in seq(1,length(df_chr)-1)){
+ tryCatch({
+   t = df$target_flag
+  p = df[[df_chr[n]]]
+print(df_chr[n])
+print(fisher.test(table(t ,p)))
+},error=function(e){})
+}
+
+```
+
+
+```{r flag_categorical_relationship, fig.height=5, fig.width=3}
+df %>% 
+  target_by(target_flag) %>%      
+  relate(parent1) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(mstatus) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(sex) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(education) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(job) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(car_use) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(car_type) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(red_car) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(revoked) %>% 
+  plot()
+df %>% 
+  target_by(target_flag) %>%      
+  relate(urbanicity) %>% 
+  plot()
+```
+
+
+
+```{r flag_numerical_relationship}
+#grab numeric fields
+df_num = df  %>% dplyr::select(where(is.numeric)) %>% names()
+df_chr = df  %>% dplyr::select(!where(is.numeric)) %>% names()
+
+ for (n in seq(1,length(df))) {
+  myboxplot(df,'target_flag', df_num[n])
+ }
+```
+
+
+```{r flag_numerical_relationship_1}
+#for (v in seq(1,length(df))) {
+#  myhist(df,'target_flag', df_num[v])
+#}
+```
+
+
+###Covariance
+We establish that there is only one pair of predictors that have a covariance of >.5.  We may consider combining into an interaction term, or possible removing one from the model.
+```{r covariance}
+#grab numeric fields
+df_num = df  %>% dplyr::select(where(is.numeric)) %>% names()
+df_chr = df  %>% dplyr::select(!where(is.numeric)) %>% names()
+
+correlation <- cor(dplyr::select(df,df_num))
+corrplot.mixed(correlation, tl.col = 'black', tl.pos = 'lt',number.cex= 11/ncol(raw))
+df%>%
+    correlate()%>%
+    filter(coef_corr > .5 | coef_corr < -.5)%>%
+  slice(1)
+```
+
+
+
+```{r preserve_df}
+dfpreserve = df
+```
+
+
+#Flag Models
+
+##Model 1: Base logistic model
+```{r set_flagdf}
+df%<>%
+    select(!c(target_amt))
+# change kidsdrive to categorical
+    df%<>%
+    mutate(kidsdriv = case_when(kidsdriv == 0 ~ 'N'
+         ,TRUE  ~ 'Y'))
+# change job into blue collar and professional levels
+df%<>%
+    mutate(job = case_when(job == 'Blue Collar' ~ 'Blue Collar',
+                           job != 'Blue Collar' ~ 'Professional', 
+                           TRUE ~ as.character(NA)))
+df%<>%mutate(job = na_if(job, "NA"))
+#change chars to factors and level education
+df %<>%mutate_if(is_character, ~(factor(.)))
+df$education<-factor(df$education, levels=c("High School", "Bachelors", "Masters", "PhD"))
+```
+
+
+```{r set_flagm1}
+#build model
+base_df<-df
+model1 <- glm(target_flag ~ ., base_df, family='binomial') 
+model1_aki<-step(model1,  direction = "both",trace=0) # use Akiaike step, trace 0 prevents intermediate printing, rename model to preserve base
+summary(model1_aki)
+```
+
+
+###Flag Model 1 Evaluation
+
+***Diagnostics***
+```{r flagm1_diagnostics}
+#look at fit metrics - create parallel df for this purpose
+model1_df<-base_df%>%
+  select(!c(sex, age, car_age, red_car)) # nonsignificant in model1
+model1_df$predicted<-predict(model1_aki,model1_df,type='response')
+model1_df%<>%
+  mutate(predicted_obs = case_when(
+        predicted >= 0.5 ~ 1,
+        predicted < 0.5 ~ 0))
+model1_df$predicted_obs<-as.factor(model1_df$predicted_obs)
+model1_df$target_flag<-as.factor(model1_df$target_flag)
+#create confusion matrix
+(model1_cm<-confusionMatrix(data = model1_df$predicted_obs, reference = model1_df$target_flag))
+# related model results - drawing code from HW3
+(model1_metrics <- tibble(model = "Base Model: base variables",
+                  predictors = length(coef(model1_aki))-1,
+                  precision = model1_cm$byClass[5],
+                  auc = auc(roc(response = as.numeric(model1_df$target_flag),
+                                predictor = as.numeric(model1_df$predicted)))[1],  #note: using predicted (probs) vs predicted_obs (0,1)
+                  AIC = model1_aki$aic, BIC = BIC(model1_aki)))
+
+#roc curve with AUC
+ 
+par(pty='s')
+
+proc<- roc(response=model1_df$target_flag, predictor=model1_df$predicted, plot=TRUE, legacy.axes=TRUE, auc.polygon=TRUE, col='blue', main = 'Model 1 ROC Curve', max.auc.polygon=TRUE, print.auc=TRUE)
+
+```
+
+
+***Dispersion***
+No evidence of dispersion
+
+```{r flagm1_dispersion}
+# evaluate using deviance and quasibinomial comparison
+deviance(model1_aki)/df.residual(model1_aki) # if considerably greater than one we should be concerned
+# dble check with two model fit
+quasi_model <-  glm(target_flag ~ .,family='quasibinomial', base_df) # note: using base_df
+pchisq(summary(quasi_model)$dispersion * model1_aki$df.residual,
+model1_aki$df.residual, lower = F)  
+```
+
+***Linearity***
+
+We can determine that linearity is questionable for yoj, home-kids, oldclaim. We also observe a clustering pattern in oldclaim; which may suggest the need for factoring the predictor?
+
+```{r flagm1_linearity}
+#incorporate logit into model1_df
+model1_df%<>%
+    mutate(logit = log(predicted/(1-predicted)))
+# check linearity btwn numerical predictors and logit
+with(model1_df, scatter.smooth(travtime, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(tif, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(mvr_pts, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(home_val, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(yoj, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(income, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(homekids, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(oldclaim, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(clm_freq, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+with(model1_df, scatter.smooth(bluebook, logit, lpars = list(col = "red", lwd = 3, lty = 3)))
+```
+
+
+***Outliers & Influenctial Points***
+
+computes the standardized residuals (.std.resid) and the Cook’s distance (.cooksd) using the R function augment() [broom package]
+See: http://www.sthda.com/english/articles/36-classification-methods-essentials/148-logistic-regression-assumptions-and-diagnostics-in-r/
+
+Findings:
+Cooks distance indicates several standout obs (3722, 3592, 6501) but no influential points (id. D >1.0)
+Only 1 obs has std residual beyond 3 stdev: 5101
+
+
+```{r flagm1_Outliers_Influenctial}
+# Extract model results
+model1_aki$data <- augment(model1_aki) %>% 
+  mutate(index = 1:n()) 
+#top 10 largest values
+model1_aki$data %>% top_n(10, .cooksd)
+plot(model1_aki, which = 4, id.n = 3)  # keep an eye on obs > 4/n 
+#plot std residuals
+ggplot(model1_aki$data, aes(index, .std.resid)) + 
+   geom_point(aes(color = target_flag), alpha = .5) +
+  theme_bw()
+#Filter potential influential data points with abs(.std.res) > 3
+model1_aki$data %>% 
+  filter(abs(.std.resid) > 3)
+```
+***Multicollinearity***
+
+Findings: no problems with collinearity
+
+```{r flagm1_Multicollinearity}
+car::vif(model1_aki)
+```
+
+***Independence***
+
+We see a definite pattern which suggests that the model may be misclassified
+
+```{r flagm1_Independence, fig.height=10, fig.width=15}
+res_chk<-model1_df%>%mutate(residuals = residuals(model1_aki), linpred = predict(model1_aki))
+bins<- group_by(res_chk, cut(linpred, breaks=unique(quantile(linpred, (1:100)/101))))
+diag<-summarize(bins, residuals=mean(residuals), linpred = mean(linpred))
+plot(residuals~linpred, diag, xlab = "linear predictor")
+```
+***Goodness of Fit***
+Findings: we have issues with trav_time, bluebook, income,  claim_freq, mvr_pts, and yoj  
+
+```{r flagm1_fit, fig.align='center', fig.height=10,fig.width=10, message = FALSE}
+marginals<-mmps(model1_aki,main=NULL)
+```
+
+
+##Model 2: Apply Predictor Transformations
+
+The following transformations result from some trial and error:
+sqrt: travtime, mvr_pts, yoj, clm_freq, income
+log: bluebook
+Note: AIC has gone down slightly relative to Model1
+travtime, clm_freq, mvr_pts still off
+
+```{r set_flagdf2 , message = FALSE}
+#create df to contain log transformed vars from model 
+model2_df<-model1_df%>%
+  select(!c(predicted, predicted_obs))%>%
+  mutate(sqrt_travtime = sqrt(travtime))%>%
+  mutate(sqrt_mvr_pts = sqrt(mvr_pts))%>% 
+  mutate(sqrt_yoj = sqrt(yoj))%>% 
+  mutate(sqrt_clm_freq = sqrt(clm_freq))%>% 
+  mutate(log_bluebook= log(bluebook))%>%
+  mutate(sqrt_income=sqrt(income))
+#model2_df%<>%
+ # select(!c(travtime, mvr_pts, yoj, clm_freq, bluebook, income))
+```
+
+
+```{r set_flagdm2 ,message = FALSE}
+#build model with transformed vars
+model2 <- glm(target_flag~kidsdriv+homekids+parent1+mstatus+education+car_use+tif+car_type+oldclaim+revoked+urbanicity+home_val+job+sqrt_travtime+sqrt_mvr_pts+sqrt_yoj+sqrt_clm_freq+log_bluebook+sqrt_income,family='binomial',model2_df)
+#model2 <- glm(target_flag~kidsdriv+homekids+parent1+mstatus+education+car_use+tif+car_type+oldclaim+revoked+urbanicity+home_val+sqrt(travtime)+sqrt(mvr_pts)+sqrt(yoj)+sqrt(clm_freq)+log(bluebook)+sqrt(income),family='binomial',model2_df)
+model2_aki<-step(model2, trace=0) 
+summary(model2_aki)
+```
+
+```{r flagm2_diagnostics , fig.align='center', fig.height=10,fig.width=10, message = FALSE}
+#additional metrics
+model2_df$predicted<-predict(model2_aki,model2_df, type='response')
+model2_df%<>%
+  mutate(predicted_obs = case_when(
+        predicted >= 0.5 ~ 1,
+        predicted < 0.5 ~ 0))
+
+model2_df$predicted_obs<-as.factor(model2_df$predicted_obs)
+model2_df$target_flag<-as.factor(model2_df$target_flag)
+
+#confusion matrix
+
+model2_cm<-confusionMatrix(data = model2_df$predicted_obs, reference = model2_df$target_flag)
+
+# interaction results
+
+model2_mtrics <- tibble(model = "transformation Model: base variables",
+                  predictors = length(coef(model2_aki))-1,
+                  precision = model2_cm$byClass[5],
+                  auc = auc(roc(response = as.numeric(model2_df$target_flag),
+                                predictor = as.numeric(model2_df$predicted)))[1],
+                  AIC = model2_aki$aic, BIC = BIC(model2_aki))
+
+#roc curve with AUC
+
+par(pty='s')
+
+proc<- roc(response=model2_df$target_flag, predictor=model2_df$predicted, plot=TRUE, legacy.axes=TRUE, auc.polygon=TRUE, col='blue', main = 'PROC ROC Curve', max.auc.polygon=TRUE, print.auc=TRUE)
+
+#review marginal plots
+#model2_marg<-mmps(model2_aki,main=NULL)
+```
+
+##Model 2b - update transformatins to include polynomials for a check
+
+Reassess using polynomial for travtime, clm_freq, mvr_pts 
+Note: very slight improvement in AIC, improved marginals, much harder to interpret.
+
+```{r set_flagm2B_df, message = FALSE}
+#create df to contain log transformed vars from model 
+model2b_df<-model1_df%>%
+  select(!c(predicted, predicted_obs))%>%
+  mutate(sqrt_yoj = sqrt(yoj))%>% 
+  mutate(log_bluebook= log(bluebook))%>%
+  mutate(sqrt_income=sqrt(income))
+model2b_df%<>%
+  select(!c( yoj, bluebook, income))
+```
+
+
+```{r set_flagm2B,message = FALSE}
+#build model with transformed vars
+model2b <- glm(target_flag~kidsdriv+homekids+parent1+mstatus+education+car_use+tif+car_type+oldclaim+revoked+urbanicity+home_val+job+travtime+I(travtime^2)+mvr_pts+I(mvr_pts^2)+I(mvr_pts^3)+sqrt_yoj+clm_freq+I(clm_freq^2)+I(clm_freq^3)+log_bluebook+sqrt_income,family='binomial',model2b_df)
+model2b_aki<-step(model2b, trace=0) 
+summary(model2b_aki)
+```
+
+
+```{r flagm2B_diagnostics, fig.align='center', fig.height=10,fig.width=10, message = FALSE}
+#additional metrics
+model2b_df$predicted<-predict(model2b_aki,model2b_df, type='response')
+model2b_df%<>%
+  mutate(predicted_obs = case_when(
+        predicted >= 0.5 ~ 1,
+        predicted < 0.5 ~ 0))
+model2b_df$predicted_obs<-as.factor(model2b_df$predicted_obs)
+model2b_df$target_flag<-as.factor(model2b_df$target_flag)
+#confusion matrix
+(model2b_cm<-confusionMatrix(data = model2b_df$predicted_obs, reference = model2b_df$target_flag))
+# interaction results
+(model2b_metrics <- tibble(model = "transformation Model 2b: base variables",
+                  predictors = length(coef(model2b_aki))-1,
+                  precision = model2b_cm$byClass[5],
+                  auc = auc(roc(response = as.numeric(model2b_df$target_flag),
+                                predictor = as.numeric(model2b_df$predicted)))[1],
+                  AIC = model2b_aki$aic, BIC = BIC(model2b_aki)))
+#roc curve with AUC
+par(pty='s')
+proc<- roc(response=model2b_df$target_flag, predictor=model2b_df$predicted, plot=TRUE, legacy.axes=TRUE, auc.polygon=TRUE, col='blue', main = 'PROC ROC Curve', max.auc.polygon=TRUE, print.auc=TRUE)
+#review marginal plots
+#model2b_marg<-mmps(model2b_aki,main=NULL) too much memory
+```
+
+***Residuals***
+
+Still seeing autocorrelation
+```{r fig.height=10, fig.width=15}
+res2b_chk<-model2b_df%>%mutate('residuals' = residuals(model2b_aki), linpred = predict(model2b_aki))
+bins<- group_by(res2b_chk, cut(linpred, breaks=unique(quantile(linpred, (1:100)/101))))
+diag<-summarize(bins, residuals=mean(residuals), linpred = mean(linpred))
+plot(residuals~linpred, diag, xlab = "linear predictor")
+```
+
+#Cost prediction
+```{r set_df}
+dfcrash = dfpreserve%>% 
+  filter(target_flag == 1)%>%
+  select(-target_flag)
+```
+
+###Exploration on new dataset
+```{r crash_covariance}
+df_num = dfcrash  %>% dplyr::select(where(is.numeric)) %>% names()
+df_chr = dfcrash  %>% dplyr::select(!where(is.numeric)) %>% names()
+correlation <- dfcrash %>% select(df_num)%>%cor()
+corrplot.mixed(correlation, tl.col = 'black', tl.pos = 'lt', number.cex= 11/ncol(raw))
+```
+
+```{r target_relationship}
+for (n in seq(1,length(df_chr))) {
+  myboxplot(dfcrash,df_chr[n],'target_amt')
+}
+```
+
+```{r target_relationship_1,message= FALSE, warning= FALSE}
+for (n in seq(1,length(df_chr))){
+  myhist(dfcrash,df_chr[n],'target_amt')
+}
+```
+
+
+#Cost Model
+
+Firstly, we will like to how the saturated model performs under the standard gaussian assumptions.  We find there are only four vairables with significant p-values; and the r-squared is very low.  Also the redisidual plots fail the required assumptions regarding the normal distrbution and constant variance.  We will experiment with the variable selection, but we also need to either transform the response variable or change the link function.
+
+```{r cost_model_saturated}
+costsaturated = lm(target_amt~ .,dfcrash)
+summary(costsaturated)
+plot(costsaturated)
+```
+By removing some of the variables we earmarked earlier in the analysis, we can see a reduction in the AIC; but the residuals still need to be addressed.
+```{r cost_model_1}
+dfcrashm1 = dfcrash %>%
+  select(-parent1, -age, -homekids, - kidsdriv, -red_car, -urbanicity,-job)
+  
+costm1 = lm(target_amt ~ .,dfcrashm1)
+costm1 <- step(costm1 ,direction = 'forward',trace=0)
+summary(costm1)
+plot(costm1)
+```
+
+For model two, we transform the response variable with log().  We certainly see an inprovement in the residuals and the p-values.
+```{r cost_model_2}
+dfcrashm2 = dfcrashm1
+  
+costm2 = lm(log(target_amt) ~ .,dfcrashm2)
+costm2 <- step(costm2 ,direction = 'forward',trace=0)
+summary(costm2)
+plot(costm2)
+```
+
+For our third model, we move to include wights.  By regressing model1's residuals against its fitted values, we end up with a distribution of values and can be used as weights.  The distribution of the variance seems to be largest in the middle of the range; so by taking the absolute value of the weights, we can put less emphasis on those values.
+```{r set_wieghts}
+weightlm = glm(costm1$residuals ~ costm1$fitted.values)
+wts = abs(weightlm$fitted.values )
+#+ abs(min(weightlm$fitted.values))
+plot(costm1$fitted.values, wts)
+```
+
+One of the drawbacks of using wieghts is that it does not improve the distribution of the residuals visually.  However, we see a substantial improvement from model2 in terms of the significance of predictors and r^2.  So far this is the best performing model.
+```{r cost_model_3}
+dfcrashm3 = dfcrashm1
+costm3 = lm(target_amt ~ .
+             ,dfcrashm3
+             ,weights = wts)
+costm3 <- step(costm3 ,direction = 'forward',trace=0)
+summary(costm3)
+plot(costm3)
+```
+
+
+Before we declare model 3 the winner, we'll take one more shot using robust regression.  The below rlm() function will iterate the wieghts used in the regression depending on the chosen method.
+```{r cost_model_4}
+library(MASS)
+dfcrashm4 = dfcrashm1
+costm4 = rlm(target_amt ~ .,dfcrashm4, 
+             method = "MM"
+   ,weights = wts 
+    )
+summary(costm4)
+plot(costm4$fitted.values,dfcrashm4$target_amt)
+```
+
+
+```{r}
+flagwinner = model2_aki
+costwinner = costm3
+test%<>%clean_names
+
+test$target_flag = predict(flagwinner,test)
+test$target_amt = predict(costwinner,test)
+test$expected_cost = test$target_flag * test$target_amt
+```

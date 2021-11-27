@@ -1,0 +1,3 @@
+Mapping from categorical to numeric
+
+Sometimes our dataset has non-numeric columns that we wish to use in our model so we have to quantify them in someway. The common approach is using dummies for binary variables and a numeric count for non binary. Do you guys know another approach for handling such cases? For example states in the US.

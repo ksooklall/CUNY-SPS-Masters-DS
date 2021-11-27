@@ -1,0 +1,5 @@
+Lasso Regression
+
+From reading Ridge regression I thought we should also speak about Lasso regression. In R both can be used by linear_reg(mixture = 0-1) where 0 and 1 are ridge/lasso regression and any number in between will create an elastic regressor. The acronym “LASSO” stands for Least Absolute Shrinkage and Selection Operator. Lasso regression performs L1 regularization, which adds a penalty equal to the absolute value of the magnitude of coefficients. On the other hand, Ridge regression performs L2 regularization which doesn't result in elimination of coefficients or sparse models. This makes the Lasso far easier to interpret than the Ridge.
+
+My question to you is how do you decide which to use Lasso, Ridge or Elastic?

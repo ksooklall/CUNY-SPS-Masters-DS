@@ -1,0 +1,13 @@
+Poisson distribution
+
+These are some interesting facts about lambda in the Poisson distribution that's worth knowing
+
+Even though the Poisson distribution models rare events, the rate lambda can be any number. It doesn’t always have to be small.
+
+The Poisson Distribution is asymmetric, it is always skewed toward the right. Because it is inhibited by the zero occurrence barrier on the left and it is unlimited on the other side.
+
+As lambda becomes bigger, the graph looks more like a normal distribution.
+
+As n -> inf p has to approach 0 or else n*p -> inf which doesn't makes sense
+
+reference: https://www.kdnuggets.com/2019/08/poisson-distribution.html

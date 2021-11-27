@@ -1,0 +1,23 @@
+LM and GLM
+
+Here is a quick summary of LM and GLM models
+
+LM - Linear model like linear regression
+
+    - Normal errors, constant variance
+
+Equation
+
+y = a + bx + e
+where a,b are the coefficient, e-error
+
+GLM - Generalized Linear Model
+
+  - Non-normal errors, non-constant variance
+
+Equation
+
+log(y) = a + bx + e -> y = exp(a + bx) + e -> y = exp(a)*exp(bx) + e
+GLM is multiplicative but still linear since the exponent is a linear model (a+bx)
+
+reference: https://www.youtube.com/watch?v=P-WYkSZp9lY&t=644s

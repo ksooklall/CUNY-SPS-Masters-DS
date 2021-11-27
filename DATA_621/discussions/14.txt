@@ -1,0 +1,19 @@
+Basic Panel Data Analysis
+
+This video on linear regression https://www.youtube.com/watch?v=pQvhi60yN74 is an amazing explanation for panel data analysis
+
+The first comment on this video explains it all:
+
+This is the best lecture I have taken about the Fixed effect. You are better than any other econometrics professors I have met. Thank you so much for your crystal clear explanations.
+
+The professor breaks down how his model goes from a simple
+
+Linear Model - y = b0 + b1*x
+
+to a more complex one
+
+Individual fixed effects model - y = b0 + b1 * x + F_i + T_i
+
+where F and T are other predictors.
+
+
