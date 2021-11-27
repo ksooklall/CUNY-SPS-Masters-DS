@@ -1,0 +1,688 @@
+---
+title: "HW4 - DATA622"
+author: "Group 1"
+date: "11/3/2021"
+output:
+  html_document: 
+    toc: true
+    toc-title: "HW4 - DATA622"
+    toc_depth: 3
+    toc_float:
+      collapsed: false
+      smooth_scroll: false
+    theme: united
+    highlight: tango
+  pdf_document: default
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(inspectdf)
+library(psych)
+library(kableExtra)
+library(mice)
+library(janitor)
+library(e1071)
+library(caret)
+library(tidymodels)
+library(gbm)
+library(dplyr)
+```
+
+
+### Group 1 Members:
+-   David Moste
+-   Vinayak Kamath
+-   Kenan Sooklall
+-   Christian Thieme
+-   Lidiia Tronina
+
+\pagebreak
+
+## Introduction
+
+For this project, we will be working with a mental health [dataset](https://raw.githubusercontent.com/christianthieme/Machine_Learning_Big_Data/main/HW4/ADHD_data.csv) obtained from a previously completed research project on attention deficit hyperactivity disorder (ADHD). The dataset contains information from 175 individuals who took part in the study and includes 54 columns broken into the following categories: 
+
+| Excel Column | Variable                 | Key                                  |
+|--------------|--------------------------|--------------------------------------|
+| C            | Sex                      |  Male-1, Female-2                    |
+| D            | Race                     |  White-1, African American-2, Hispanic-3, Asian-4, Native American-5, Other or missing data -6 |
+| E-W          | ADHD self-report scale | Never-0, rarely-1, sometimes-2, often-3, very often-4 |
+| X-AM         | Mood disorder questions |  No-0, yes-1; question 3: no problem-0, minor-1, moderate-2, serious-3 |
+| AN-AS        | Individual substances misuse |  no use-0, use-1, abuse-2, dependence-3 |
+| AT           | Court Order |  No-0, Yes-1 |
+| AU           | Education | 1-12 grade, 13+ college |
+| AV           | History of Violence | No-0, Yes-1 |
+| AW           | Disorderly Conduct | No-0, Yes-1 |
+| AX           | Suicide attempt | No-0, Yes-1 |
+| AY           | Abuse History | No-0, Physical (P)-1, Sexual (S)-2, Emotional (E)-3, P&S-4, P&E-5, S&E-6, P&S&E-7 |
+| AZ           | Non-substance-related Dx | 0 – none; 1 – one; 2 – More than one |
+| BA           | Substance-related Dx | 0 – none; 1 – one Substance-related; 2 – two; 3 – three or more |
+| BB           | Psychiatric Meds | 0 – none; 1 – one psychotropic med; 2 – more than one psychotropic med | 
+
+
+Our task is first to explore the data, then using the understanding gained, to build a clustering model to determine different segments of patients. Additionally, we'll perform Principal Component Analysis on a subset of the dataset to see what information can be gleaned. Finally, we'll use Gradient Boosting and Support Vector Machines to predict if a patient has attempted suicide.  
+
+As can be seen from the table above, the dataset has a wide variety of numeric and categorical data. We'll dive deeper into this data now.
+
+--- 
+
+## Exploratory Data Analysis
+
+```{r message=FALSE, warning=FALSE, include=FALSE}
+adhd <- readr::read_csv('https://raw.githubusercontent.com/christianthieme/Machine_Learning_Big_Data/main/HW4/ADHD_data.csv')
+```
+
+Let’s begin exploring by taking a high level look at our dataset:
+
+```{r}
+glimpse(adhd)
+```
+We can see that there is a mix of both numeric and categorical data. We note that most of the numerical features are actually binary categorical variables. Before going too far, let's change the data type of these variables so we can explore our data properly: 
+
+```{r echo=FALSE}
+adhd <- adhd %>% mutate_if(is.double, as.factor)
+adhd$Age <- as.integer(adhd$Age)
+inspectdf::inspect_types(adhd) %>%
+  show_plot
+```
+
+Having made the necessary changes, we can see in the visual above, that our dataset is mostly categorical data. However, there is one column that is of type character and another column that is of type integer. 
+
+### Numerical Features
+
+```{r echo=FALSE}
+table <- describe(adhd$Age)[,c(2,8,3,5,9,4)]
+rownames(table) <-  c('Age')
+knitr::kable(table) %>%
+  kable_styling()
+```
+
+Looking at the summary above, we can see that the age of the subjects of this research study are between 1 and 42 with the median value being 25. Let's now take a look at the shape of our distribution and see if there are significant outliers: 
+
+```{r echo=FALSE}
+inspectdf::inspect_num(adhd) %>% 
+ show_plot()
+```
+
+In looking at the distribution of `Age`, it appears that our dataset is multi-modal. This often means that there are sub-populations within the data. We'll keep this in mind as we continue our exploration. We do not see any significant outliers. 
+
+Later, we will be building models to predict which individuals have attempted suicide. As such, we'll look at the distribution of `Age` broken down by whether an individual has attempted suicide or not: 
+
+
+```{r message=FALSE, warning=FALSE, echo=FALSE}
+ggplot(adhd %>% filter(Suicide %in% c(1,0)) ) + 
+  aes( y = Age, fill = Suicide) + 
+  geom_histogram() +
+  coord_flip()
+ 
+```
+
+Based on the histogram above, we do not note any significant differences in the distributions. However, this may be more easily determined by looking at a boxplot. 
+
+```{r echo=FALSE}
+ ggplot(adhd %>% filter(Suicide %in% c(1,0))) + 
+       aes(x = Suicide, y = Age) + 
+       geom_boxplot(color = 'steelblue', 
+                    outlier.color = 'firebrick', 
+                    outlier.alpha = 0.35) +
+        labs(title = 'Suicide vs Loan_Status', y = 'Age', x= 'Suicide') +
+        theme_minimal() + 
+        theme(
+          plot.title = element_text(hjust = 0.45),
+          panel.grid.major.y =  element_line(color = "grey", 
+                                             linetype = "dashed"),
+          panel.grid.major.x = element_blank(),
+          panel.grid.minor.y = element_blank(),
+          panel.grid.minor.x = element_blank(),
+          axis.ticks.x = element_line(color = "grey")
+        )
+       
+      
+```
+
+In looking at the boxplots above, we can see that it does appear that, in general, those who attempted suicide were younger than those who did not. 
+
+### Categorical Features 
+
+Now let’s turn our attention to our categorical variables. We have both binary categorical variables, and variables with 3 or more classes. Looking at this data in a table would be unwieldy due to its size, so we'll visualize this data instead. 
+
+```{r echo=FALSE, fig.height=10, fig.width=8}
+inspect_cat(adhd) %>% 
+  show_plot()
+```
+
+In looking at the summary table above, we note: 
+
+* `Abuse`: Nearly half of our population has been subject to some type of abuse 
+* `ADHD Q1-18`: There is a fairly equal dispersion between each of these responses
+* `Alcohol`: Alcohol appears to be used by half of our population
+* `Cocaine`: About a 1/3 of the population uses cocaine
+* `Court Order`: Majority of the population does not have a court order
+* `Disorderly Conduct`: Over half of the population has had disorderly conduct
+* `Education`: A very small percentage of population has attended college
+* `Hx of Violence`: Very few of the subjects have a history of violence
+* `MDQ1-MDQ3`: There is a fairly even breakout in response for each of these questions
+* `Non-subst Dx`: We note the presence of quite a few missing values in this column. Most individuals do not have a non-substance prescription
+* `Opiods`: Most subjects do not have opiods
+* `Psych meds.`: The majority of this column is missing data
+* `Race`: The majority of the population is either white or African American
+* `Sedative-hypnotics`: Hardly anyone in the population is using sedative-hypnotics
+* `Sex`: The population is a fairly even split between males and females
+* `Stimulants`: Stimulant usage among the participants is very minimal
+* `Subst Dx`: A fairly even split between each of these categories. We note the presence of quite a few missing values in this column
+* `Suicide`: It appears that around around a 1/4 of the population has attempted suicide
+* `THC`: THC only affects around 1/3 of our population
+
+Again, we will be building models to predict who has attempted to commit suicide, so it will also be helpful to understand the the distributions of these variables as it relates to our `Suicide` variable, both Yes and No. As mentioned above, only 1/4 of the population has attempted suicide, so we expect counts for those who have attempted suicide to be considerably lower than those who have not, however, the purpose of the below charts is simply to compare the shapes of the distributions to determine if anything major sticks out as a red flag. 
+
+```{r  echo=FALSE,warning=FALSE, fig.height=15, fig.width=12}
+suicide_graph <- adhd %>%
+    select(-Age, -Initial, -'ADHD Total', -'MD TOTAL') %>%
+    gather(-Suicide, key = "var", value = "val") %>%
+    ggplot(aes(x = val, fill=factor(Suicide))) +
+    geom_bar(position="dodge", alpha=0.5) +
+    facet_wrap(~ var, scales = "free") +
+    scale_fill_manual("Suicide",values = c("#58BFFF", "#3300FF")) +
+    xlab("") +
+    ylab("") +
+    theme(panel.background = element_blank(), legend.position="top")
+suicide_graph
+```
+
+Based on the charts above, we do not note anything we would consider out of the ordinary in comparing these distribution shapes. 
+
+### Missing Data
+
+As we've seen throughout our EDA, there are quite a few missing values within the columns. Let's take a closer look at this so we can determine the best way to deal with them. 
+
+```{r echo=FALSE, fig.height=6, fig.width=12}
+visdat::vis_miss(adhd, sort_miss = TRUE)
+```
+
+It appears that about 2.6% of our dataset is missing values and as previously mentioned, `Psych meds.` makes up a large portion of that. Because of this, there would be no good way to impute these values and so we have decided to drop this variable from the dataset. 
+
+```{r}
+adhd <- adhd %>% 
+  select(-`Psych meds.` )
+```
+
+
+Further, we see that many of the respondents who have missing data about a suicide attempt, also have additional missing data. As our objective is to predict suicide attempts, we will drop those subjects who have missing data for that variable since the data will be unusable when it comes to modeling. 
+
+```{r}
+adhd <- adhd %>% 
+  filter(!is.na(Suicide))
+```
+
+Having adjusted these, let's now look at our missing data again. 
+
+```{r echo=FALSE, fig.height=6, fig.width=12}
+visdat::vis_miss(adhd, sort_miss = TRUE)
+```
+
+We can see clearly that these adjustments have made a significant impact on the dataset. There is now only 0.4% of our dataset that is missing. We can now use an imputation method to fill in the remainder of the missing values. 
+
+We have chosen to use the pmm method (predictive mean matching) from the mice library to impute our missing values. Predictive mean matching calculates the predicted value for our target variable, and, for missing values, forms a small set of “candidate donors” from the complete cases that are closest to the predicted value for our missing entry. Donors are then randomly chosen from candidates and imputed where values were once missing. To apply pmm we assume that the distribution is the same for missing cells as it is for observed data, and thus, the approach may be more limited when the % of missing values is higher. 
+
+In order to apply this method, we'll need to adjust our column names that have spacing. We can use the `clean_names` function from the `janitor` library to do this for us. Once this is completed, we'll impute our missing values: 
+
+```{r}
+adhd <- adhd %>% 
+  janitor::clean_names()
+adhd <- mice(data = adhd, m = 1, method = "pmm", seed = 500)
+adhd <- mice::complete(adhd, 1)
+```
+
+We can see now that we have successfully imputed all missing values: 
+
+```{r}
+visdat::vis_miss(adhd, sort_miss = TRUE)
+```
+
+--- 
+
+## Modeling
+
+### Unsupervised Learning and Dimensionality Reduction
+
+In the below sections we will explore our dataset further using clustering to see if R can identify any "unseen" patterns within the data. Next, we'll use principal component analysis (PCA) to reduce the dimensionality of our data and to see if we can identify which features have the highest variance within our dataset. 
+
+#### K-Means Clustering
+
+K-Means clustering is a technique to create clusters by finding groups that are similar, as determined by euclidean distance. This method has many advantages (i.e. computationally efficient) and disadvantages (i.e. results change with every run, dependent on the starting values, no real way to determine appropriate number of clusters). We ultimately chose to use k-means instead of hierarchical clustering due to there being no real reason to believe this data has a hierarchical structure to it.
+
+The first step was to pull out only the columns we wanted to use. Since k-means is based on euclidean distance, we chose to only use variables that had continuous values, ruling out all binary and factor based predictors. Some of this data came in as factors (despite it being continuous), so we had to convert those to numeric values.
+
+```{r}
+library(tidyverse)
+adhd_km <- adhd %>%
+  select(age, md_total, education, adhd_total)
+adhd_km <- adhd_km %>%
+  mutate_if(is.factor, as.character) %>%
+  mutate_if(is.character, as.numeric)
+```
+
+The next step was to transform the data. Again, the euclidean based distance measurement requires that we center and scale the data. We also chose to perform a Box-Cox transformation to help reduce skewness.
+
+```{r}
+library(caret)
+adhd_km_trans <- preProcess(adhd_km,
+                            method = c("center", "scale", "BoxCox"))
+adhd_km_trans <- predict(adhd_km_trans, adhd_km)
+```
+
+Now that we have our data set up, we can get a sense of how many clusters to create. To do this, we used the silhouette method. When the average silhouette width starts to decrease, you stop gaining information by dividing clusters. This led us to an optimal number of 2 cluster.
+
+```{r}
+library(factoextra)
+fviz_nbclust(adhd_km_trans, kmeans, method = "silhouette", k.max = 20)
+```
+
+Now we can visualize our clusters! To visualize these four dimensional clusters, we used PCA to reduce the dimensionality of our data.
+
+```{r}
+library(factoextra)
+km.res <- kmeans(adhd_km_trans, centers = 2, nstart = 50)
+fviz_cluster(km.res, adhd_km_trans)
+```
+
+What incredible clusters! In an effort to get a sense of the differences between these clusters and what made them unique, we went back to the original data and performed a comparative analysis. We computed the mean for each factor within each cluster and plotted these values on a graph to see the differences in the two clusters more clearly.
+
+```{r}
+library(tidyverse)
+adhd_km_res <- cbind(adhd_km, km.res$cluster)
+km_comparison <- adhd_km_res %>%
+  group_by(km.res$cluster) %>%
+  rename(cluster = `km.res$cluster`) %>%
+  summarise_all(mean) %>%
+  pivot_longer(c("age":"adhd_total"),
+               names_to = "category",
+               values_to = "mean")
+ggplot(km_comparison,
+       aes(x = as.factor(cluster),
+           y = mean,
+           fill = as.factor(category))) +
+  geom_bar(position = "dodge",
+           stat = "identity") +
+  scale_fill_brewer(palette = "Set3") +
+  labs(x = "Cluster",
+       y = "Value",
+       fill = "Factor")
+```
+
+By looking at these two clusters, we can see that one of our clusters has a high total ADHD and MD score while also having a lower age and education. This would indicate that our two groups are the:
+
+* Younger and less educated with high ADHD and MD scores
+* Older and more educated with lower ADHD and MD scores
+
+Out of curiosity, we wanted to add back in a single binary variable, `suicide`, since we knew we would be investigating it later. We knew k-means would struggle with this, but we were curious to see how much it would impact the outcome.
+
+We went through the same steps as before, but this time included suicide as our first variable.
+
+```{r}
+library(tidyverse)
+library(caret)
+library(factoextra)
+adhd_km <- adhd %>%
+  select(suicide, age, md_total, education, adhd_total)
+adhd_km <- adhd_km %>%
+  mutate_if(is.factor, as.character) %>%
+  mutate_if(is.character, as.numeric)
+adhd_km_trans <- preProcess(adhd_km,
+                            method = c("center", "scale", "BoxCox"))
+adhd_km_trans <- predict(adhd_km_trans, adhd_km)
+fviz_nbclust(adhd_km_trans, kmeans, method = "silhouette", k.max = 20)
+km.res <- kmeans(adhd_km_trans, centers = 12, nstart = 50)
+fviz_cluster(km.res, adhd_km_trans)
+adhd_km_res <- cbind(adhd_km, km.res$cluster)
+km_comparison <- adhd_km_res %>%
+  group_by(km.res$cluster) %>%
+  rename(cluster = `km.res$cluster`) %>%
+  summarise_all(mean) %>%
+  pivot_longer(c("suicide":"adhd_total"),
+               names_to = "category",
+               values_to = "mean")
+ggplot(km_comparison,
+       aes(x = as.factor(cluster),
+           y = mean,
+           fill = as.factor(category))) +
+  geom_bar(position = "dodge",
+           stat = "identity") +
+  scale_fill_brewer(palette = "Set3") +
+  labs(x = "Cluster",
+       y = "Value",
+       fill = "Factor")
+```
+
+Adding in just one binary variable - suicide - had a massive impact on our clustering. The optimal number of clusters increased by 600% all the way up to 12 clusters. All of a sudden we have clusters that fit a bunch of different scenarios. Based on our clusters, we ended up with the following conclusions:
+
+* We had 4 groups that had non-zero means for suicide (meaning suicide was attempted)
+* Of these 4 groups, 3 had higher ADHD scores, 1 was an older group and 1 was a younger group, and education for all 4 groups was low.
+
+We're curious if the massive increase in the optimal number of clusters was caused by the addition of a single variable or the addition of a binary variable. The best way to tell would be to replace the binary suicide variable with another continuous variable, but we already used all of the provided continuous variables. We could always remove one of our original variables and retain the binary suicide variable, but even this would cause some level of distortion.
+
+---  
+
+### Principal Component Analysis 
+
+PCA is used in exploratory data analysis and for making predictive models. It is commonly used for dimensionality reduction by projecting each data point onto only the first few principal components to obtain lower-dimensional data while preserving as much of the data's variation as possible. The first principal component can equivalently be defined as a direction that maximizes the variance of the projected data. The i-th principal component can be taken as a direction orthogonal to the first i-1 principal components that maximizes the variance of the projected data. (Source : https://en.wikipedia.org/wiki/Principal_component_analysis)
+
+We’ll use the `prcomp()` function to reduce the number of dimensions on our entire dataset and measure the amount of variance explained that is beneficial. As mentioned previously, PCA works best with numerical data, as such, we will exclude the categorical variable `Initials`. We are now left with a matrix of 52 columns and 150+ rows which we will pass through `prcomp( )` function for the principal component analysis. 
+
+This function returns the results as an object of class ‘prcomp’. We will assign the output to a variable named `pca.out`.
+
+For this analysis we will concentrate on the responses to the mood disorder questions as mood swings seems to be a strong predictor for suicide attempts.
+
+```{r}
+#working on  copy for pca analysis
+adhd.pca <- data.frame(adhd)
+
+#droping character column for PCA analysis.
+adhd.pca <- adhd.pca[,-1]
+
+#droping ADHD disorders questionnaire columnsand the suicide column for PCA analysis.
+adhd.pca <- select(adhd.pca , -c(adhd_q1,adhd_q2, adhd_q3, adhd_q4, adhd_q5, adhd_q6, adhd_q7
+                                 , adhd_q8, adhd_q9, adhd_q10, adhd_q11, adhd_q12
+                                 , adhd_q13, adhd_q14, adhd_q15, adhd_q16, adhd_q17
+                                 , adhd_q18, adhd_total
+                                 , suicide))
+
+#converting columns to numeric from factor for PCA analysis
+adhd.pca$sex <- as.numeric(adhd.pca$sex)
+adhd.pca$age <- as.numeric(adhd.pca$age)
+adhd.pca$race <- as.numeric(adhd.pca$race)
+#adhd.pca$adhd_q1 <- as.numeric(adhd.pca$adhd_q1)
+#adhd.pca$adhd_q2 <- as.numeric(adhd.pca$adhd_q2)
+#adhd.pca$adhd_q3 <- as.numeric(adhd.pca$adhd_q3)
+#adhd.pca$adhd_q4 <- as.numeric(adhd.pca$adhd_q4)
+#adhd.pca$adhd_q5 <- as.numeric(adhd.pca$adhd_q5)
+#adhd.pca$adhd_q6 <- as.numeric(adhd.pca$adhd_q6)
+#adhd.pca$adhd_q7 <- as.numeric(adhd.pca$adhd_q7)
+#adhd.pca$adhd_q8 <- as.numeric(adhd.pca$adhd_q8)
+#adhd.pca$adhd_q9 <- as.numeric(adhd.pca$adhd_q9)
+#adhd.pca$adhd_q10 <- as.numeric(adhd.pca$adhd_q10)
+#adhd.pca$adhd_q11 <- as.numeric(adhd.pca$adhd_q11)
+#adhd.pca$adhd_q12 <- as.numeric(adhd.pca$adhd_q12)
+#adhd.pca$adhd_q13 <- as.numeric(adhd.pca$adhd_q13)
+#adhd.pca$adhd_q14 <- as.numeric(adhd.pca$adhd_q14)
+#adhd.pca$adhd_q15 <- as.numeric(adhd.pca$adhd_q15)
+#adhd.pca$adhd_q16 <- as.numeric(adhd.pca$adhd_q16)
+#adhd.pca$adhd_q17 <- as.numeric(adhd.pca$adhd_q17)
+#adhd.pca$adhd_q18 <- as.numeric(adhd.pca$adhd_q18)
+#adhd.pca$adhd_total <- as.numeric(adhd.pca$adhd_total)
+adhd.pca$md_q1a <- as.numeric(adhd.pca$md_q1a)
+adhd.pca$md_q1b <- as.numeric(adhd.pca$md_q1b)
+adhd.pca$md_q1c <- as.numeric(adhd.pca$md_q1c)
+adhd.pca$md_q1d <- as.numeric(adhd.pca$md_q1d)
+adhd.pca$md_q1e <- as.numeric(adhd.pca$md_q1e)
+adhd.pca$md_q1f <- as.numeric(adhd.pca$md_q1f)
+adhd.pca$md_q1g <- as.numeric(adhd.pca$md_q1g)
+adhd.pca$md_q1h <- as.numeric(adhd.pca$md_q1h)
+adhd.pca$md_q1i <- as.numeric(adhd.pca$md_q1i)
+adhd.pca$md_q1j <- as.numeric(adhd.pca$md_q1j)
+adhd.pca$md_q1k <- as.numeric(adhd.pca$md_q1k)
+adhd.pca$md_q1l <- as.numeric(adhd.pca$md_q1l)
+adhd.pca$md_q1m <- as.numeric(adhd.pca$md_q1m)
+adhd.pca$md_q2 <- as.numeric(adhd.pca$md_q2)
+adhd.pca$md_q3 <- as.numeric(adhd.pca$md_q3)
+adhd.pca$md_total <- as.numeric(adhd.pca$md_total)
+adhd.pca$alcohol <- as.numeric(adhd.pca$alcohol)
+adhd.pca$thc <- as.numeric(adhd.pca$thc)
+adhd.pca$cocaine <- as.numeric(adhd.pca$cocaine)
+adhd.pca$stimulants <- as.numeric(adhd.pca$stimulants)
+adhd.pca$sedative_hypnotics <- as.numeric(adhd.pca$sedative_hypnotics)
+adhd.pca$opioids <- as.numeric(adhd.pca$opioids)
+adhd.pca$court_order <- as.numeric(adhd.pca$court_order)
+adhd.pca$education <- as.numeric(adhd.pca$education)
+adhd.pca$hx_of_violence <- as.numeric(adhd.pca$education)
+adhd.pca$disorderly_conduct <- as.numeric(adhd.pca$disorderly_conduct)
+#adhd.pca$suicide <- as.numeric(adhd.pca$suicide)
+adhd.pca$abuse <- as.numeric(adhd.pca$abuse)
+adhd.pca$non_subst_dx <- as.numeric(adhd.pca$non_subst_dx)
+adhd.pca$subst_dx <- as.numeric(adhd.pca$subst_dx)
+
+#prcomp function
+pca.out = prcomp(adhd.pca, scale= TRUE )
+pca.out
+
+
+```
+
+Next, we will print the summary of the prcomp object:
+
+```{r}
+# summary of the prcomp object
+summary(pca.out)
+
+```
+
+Here we get principal components named PC1-PC32. Each of these explains a percentage of the total variation in the dataset. For example, PC1 explains nearly 22% of the total variance i.e. around One-fourth of the information of the dataset can be encapsulated by just that one Principal Component. PC2 explains 8% and so on. 
+
+Next, we'll visualize these components to better understand this analysis. While plotting a PCA we refer to a scatter plot of the first two principal components PC1 and PC2. These plots reveal the features of the data such as non-linearity and the possible departure from normality. PC1 and PC2 are evaluated for each sample vector and plotted. 
+
+```{r}
+# loading library
+library(ggfortify)
+
+#The autoplot( ) function of the ‘ggfortify package’ for plotting PCA:
+pca.out.plot <- autoplot(pca.out, data = adhd,colour='suicide' )
+  
+pca.out.plot
+```  
+
+From the above plot, we cannot see a clear clustering of the suicide dots.  With a low 22% and 9%  on PC1 and PC2, this is what we'd expect to see.  
+
+To determine the ideal number of components to include that captures the most variance, we can use the `plot()` function on the precomp object.
+
+```{r message=FALSE, warning=FALSE}
+plot(pca.out, type="l")
+```  
+
+In a screeplot the ‘arm-bend’ represents a decrease in cumulative contribution. The above plot shows the bend at the second principal component. A scree plot is a diagnostic tool to check whether PCA works well on the data or not; PC1 captures the most variation, PC2 — the second most, and so on. We use  scree plot to select the principal components to keep. The ideal curve should be steep and then bends at an 'arm-bend' — this is the cutting-off point — and after that our curve flattens out. In the visual above, PC 1,2,3,4,5 and 6 are enough to describe the variance within the data.
+
+We can also use this PCA analysis to determine which of the questions accounted for the most variance (had the heaviest bearing on the results). For PC1, we can see that Question Q1a is the most important (md_q1a   -0.26892181) and for PC2, we can see that the Question Q3 is the most important (md_q3  -0.236710147) along with the question on Cocaine (cocaine 0.381655078). 
+
+---
+
+### Predicting Suicide Attempts
+
+Having concluded our exploratory data analysis, we'll build two models to attempt to predict suicide attempts. The first model will leverage gradient boosting and the second model will use support vector machines. 
+
+#### Gradient Boosting
+
+We begin by dropping the `Initial` column as it doesn't hold any predictive information. The data is then split into training and testing sets: 
+
+```{r}
+set.seed(777)
+df_split = initial_split(adhd %>% select(-c(initial)), strata=suicide)
+df_train <- training(df_split)
+df_test <- testing(df_split)
+```
+
+Gradient boosting machines are similar to random forests or bagging approaches, but instead of just growing a large number of trees from independent random samples of the data, they are grown sequentially on transformations of the data. Boosting is a method to improve (boost) the weak learners sequentially and increase the model accuracy with a combined model.
+
+
+Unlike random forests, GBMs can have high variability in accuracy dependent on their hyperparameter settings.
+
+Boosting has 5 tuning parameters that we can focus on:
+
+* The number of trees. 
+
+* The shrinkage parameter λ (eta in the params), a small positive number. This controls the rate at which boosting learns.
+
+* The number of splits in each tree, which controls the complexity of the boosted ensemble (controlled with max.depth).
+
+* The interaction depth, number of splits it has to perform on a tree.
+
+* The distribution type. We will use “adaboost”, as we are working with 0-1 outcomes.
+
+We will tune the model with the training set to find the best combination with lowest RMSE error. 
+
+```{r, message=FALSE}
+# search grid
+hyper_grid <- expand.grid(
+  n.trees = c(1000,3000),
+  shrinkage = c(0.01, 0.05),
+  interaction.depth = c(3, 5, 7),
+  n.minobsinnode = c(5, 10, 15)
+)
+
+# create model fit function
+model_fit <- function(n.trees, shrinkage, interaction.depth, n.minobsinnode) {
+  set.seed(777)
+  m <- gbm(
+    formula = as.character(suicide) ~ .,
+    data = data.frame(df_train),
+    distribution = "adaboost",
+    n.trees = n.trees,
+    shrinkage = shrinkage,
+    interaction.depth = interaction.depth,
+    n.minobsinnode = n.minobsinnode,
+    cv.folds = 10
+  )
+  # compute RMSE
+  sqrt(min(m$cv.error))
+}
+
+
+hyper_grid$rmse <- purrr::pmap_dbl(
+  hyper_grid,
+  ~ model_fit(
+    n.trees = ..1,
+    shrinkage = ..2,
+    interaction.depth = ..3,
+    n.minobsinnode = ..4
+  )
+)
+
+# results
+arrange(hyper_grid, rmse)
+```
+
+We experienced no improvement in our RMSE after we tried to reduce/increase the number of trees.
+
+From the results above, we see the optimal hyperparameters are:
+
+* the number of trees to 1000
+
+* interaction depth to 3
+
+* shrinkage to 0.01
+
+* n.minobsinnode to 15
+
+We will use these values to build the model for our test set. 
+
+```{r, message=FALSE}
+set.seed(777)
+modelGBM=gbm(as.character(suicide)~., data=data.frame(df_train)
+             ,n.trees=1000,distribution='adaboost',interaction.depth=3,shrinkage=0.01, n.minobsinnode = 15)
+
+print(modelGBM)
+```
+
+
+```{r, message=FALSE}
+pgbm=predict(modelGBM,newdata=data.frame(df_test),n.trees = 1000,type='response')
+pgbm[pgbm>0.5]=1
+pgbm[pgbm<=0.5]=0
+
+```
+
+```{r, message=FALSE}
+confusionMatrix(as.factor(df_test$suicide),as.factor(pgbm), positive='1')
+```
+
+
+Above, we can see the accuracy metrics for our final model. It appears that Boosting has a correct classification rate of 65% and a sensitivity of 33%. Obviously with these results, we would not recommend using this model. While we can with some accuracy predict who will not attempt to commit suicide, the model is very bad at predicting who would attempt to commit suicide. However, we'll use these results as a benchmark as we move forward to the SVM method.
+
+As a point of interest, we can use the `summary` function on our final model object to give us a variable importance plot. Not surprisingly, `adhd_total`and `md_total` are the most important variables in the model.
+
+```{r}
+summary(modelGBM,
+        cBars = 10,
+        n.trees = modelGBM$n.trees,
+        plotit = TRUE,
+        order = TRUE,
+        method = relative.influence,
+        normalize = TRUE)
+```
+
+
+
+#### Support Vector Machine
+
+A Support Vector Machine (SVM) is an algorithm that searches the feature space for the optimal hyper plane. This hyper plane will separate the features by classes with the maximum margin. Here we train an SVM to find the dividing plane between those who commit suicide and those who don't base on the features we have.
+
+The trained dataset is fit to an SVM
+
+```{r}
+set.seed(42)
+svm_model = svm(suicide~., data=df_train, kernel='linear', probability=TRUE)
+summary(svm_model)
+```
+
+Our base model consists of 71 support vectors where 31 are assigned to label 0 (no suicide) and 40 to label 1 (suicide)
+
+We will tune the SVM with the training set to find the best values for gamma and cost. The tuning process is done with 10 fold cross validation.
+
+```{r}
+set.seed(42)
+svm_tune <- tune.svm(suicide~., data = df_train, gamma = 0.25, cost = seq(0.1,1,0.1))
+summary(svm_tune)
+svm_best <- svm_tune$best.model
+```
+
+It looks like the best parameters are gamma = 0.25 and cost = 0.1.
+
+```{r, echo=F}
+set.seed(42)
+svm_model = svm(suicide~., data=df_train, cost=0.1, gamma=0.25, kernel='linear', probability=TRUE)
+summary(svm_model)
+svm_best <- svm_model
+```
+
+Now with the best model we can try it against the test set:
+
+```{r}
+set.seed(42)
+
+y_test = predict(svm_best, df_test %>% select(-c(suicide)))
+confusionMatrix(df_test[,'suicide'], y_test, positive='1')
+```
+
+Based on the results above, we can see that the model is most accurate at predicting someone who will not commit suicide with 24 true negatives. The largest mistake is 8 false positives, meaning the model predicted that those individuals would attempt suicide when they didn't. There are also 4 false negatives which is a situation where the model predicts those individual won't attempt suicide when they did.
+
+```{r}
+set.seed(42)
+pred <- predict(svm_best, df_test, decision.values = TRUE, probability = TRUE)
+pred_prob <- attr(pred, 'probabilities')
+df_prob <- cbind(df_test %>% select(suicide), y_test, pred_prob)
+names(df_prob) = c('y_true' ,'y_pred', 'negative', 'positive')
+summary(df_prob)
+```
+
+The predicted probabilities are inline with our analysis of the training and testing set. From the predicted probabilities the SVM model is more likely to predict that an individual will not commit suicide, true negatives. The sensitivity and specificity further add to this models strength but the low positive predicative value shows it's draw backs. This SVM wouldn't do well in the real world since it will miss the most important cases, the situation where we want to stop someone from attempting suicide.
+
+There is always a trade off between precision and recall, and depending on the situation, we want to prioritize one over the other. In the case of suicides false positives are fine because that means we put time into stopping someone who wasn't going to commit suicide anyways. However false negatives are the worst, since that would be an individual that isn't given attention and will mostly likely commit suicide.
+
+#### Modeling Comparison
+
+Detailed results of the individual models are given above, however, a comparison of our gradient boosted model and SVM model are provided below: 
+
+| Model          | Accuracy   | Specificity | Sensitivity |
+|----------------|------------|-------------|-------------|
+| Gradient Boost |     65.0%  |    70.5%   |     33.3%     |          
+| SVM            |     70.0%  |     75.0%  |     50.0%     |  
+
+
+While the accuracy of these models may at first glance seem impressive, the purpose of these models was to predict whether a patient attempted suicide or not. This means we shouldn't necessarily focus on accuracy as our measure for this model, instead we should focus on the sensitivity, which tells us how many of the subjects that did attempt suicide where actually correctly predicted by our model. In looking at our sensitivity above we can see that our results are lackluster. We would not recommend using either of these models to predict suicide attempts in their current state. However, if our objective was to build a model that could predict those who would not attempt suicide, this may be a potential model as both models have a specificity of greater than 70%. 
+
+
+
+## Conclusion
+
+Having concluded our analysis and modeling, we can see that this dataset is ripe with information to better understand those with ADHD as well as indicators for those who may be contemplating suicide. As a next step to this project, different/additional features would be used in modeling to see if additional signal could be found to make better predictions for those who may attempt suicide. As can be seen, modeling of this type, if done correctly, has the potential to save lives.  

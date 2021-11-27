@@ -1,0 +1,13 @@
+Kenan Sooklall - Curse Of Dimensionality
+
+It was R.Bellman who first coined the term “curse of dimensionality” (CoD) in his book Adaptive Control Process a Guided Tour. The curse of dimensionality says that, as the number of features grow the amount of data points needed to generalize grows exponentially. For example if you have 50 points on a line it's very easy to see the trend, once we go to 2d there is a lot more space and in 3d there is more empty space than data points.
+
+Nonparametric techniques are subject to the CoD since they do not rely on any distribution. Parametric methods assume underlying statistical distributions in the data making them more robust to CoD.
+
+References:
+
+https://aiaspirant.com/curse-of-dimensionality/
+
+https://www.oreilly.com/library/view/python-natural-language/9781787121423/ed2a7e80-8a53-4610-a9f6-cec48c5a3e47.xhtml#:~:text=The%20curse%20of%20dimensionality%20says,to%20generalize%20accurately%20grows%20exponentially.&text=Get%20Python%20Natural%20Language%20Processing%20now%20with%20O'Reilly%20online%20learning.,-About%20O'Reilly
+
+https://help.xlstat.com/s/article/what-is-the-difference-between-a-parametric-and-a-nonparametric-test?language=en_US#:~:text=a%20nonparametric%20test%3F-,What%20is%20the%20difference%20between%20a%20parametric%20and%20a%20nonparametric,statistical%20distributions%20in%20the%20data.&text=Nonparametric%20tests%20do%20not%20rely,of%20validity%20are%20not%20met.

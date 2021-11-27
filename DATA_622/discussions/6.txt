@@ -1,0 +1,3 @@
+Decision Tree
+
+A very interesting article on the usefullness of decision trees. The ability of decision trees to mold to any problem such as social or business is rather amazing. Decision trees are complex but this article puts them in a more fimliar light.

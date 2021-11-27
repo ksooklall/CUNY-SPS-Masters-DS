@@ -1,0 +1,7 @@
+Kenan Sooklall - Machine and Statistical learning
+
+The major difference between machine learning and statistics is their purpose. Machine learning models are designed to make the most accurate predictions possible. Statistical models are designed for inference about the relationships between variables. When it comes to perserving interpretablity machine learning is fine some simple models like lasso regression but nearly impossible for neural networks. Statistical learning is almost always interpertable. In the both tools are needed for the best results.
+
+References
+
+https://towardsdatascience.com/the-actual-difference-between-statistics-and-machine-learning-64b49f07ea3

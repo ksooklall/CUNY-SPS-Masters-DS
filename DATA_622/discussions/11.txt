@@ -1,0 +1,7 @@
+K-means and HCA
+
+k-means is method of cluster analysis using a pre-specified number of clusters. It requires advance knowledge of K. If knowledge of K is unknown the results can be misinterpreted or clusters that don't exist.
+
+Hierarchical clustering also known as hierarchical cluster analysis (HCA) is also a method of cluster analysis which seeks to build a hierarchy of clusters without having fixed number of cluster.
+
+reference: https://www.geeksforgeeks.org/difference-between-k-means-and-hierarchical-clustering/

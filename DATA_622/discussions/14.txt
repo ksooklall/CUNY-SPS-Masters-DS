@@ -1,0 +1,7 @@
+Ethics in AI
+
+There are many places where concerns of ethical AI is a very serious issue. From loan approval to medical finances, many people livelihoods are subject to this constraint. We currently live in a world where a lot of our decisions are made in the absense of a human on the other side.
+
+One solution to the financial sector would be to have someone to speak to if your loan is denied but that would be costly. However, humans also have some ethical issues.
+
+In the end we must is the AI better than us or just the same?

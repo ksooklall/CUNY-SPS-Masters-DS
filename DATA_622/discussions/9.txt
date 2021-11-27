@@ -1,0 +1,13 @@
+Support Vector Vachines
+
+Support vector machines (SVMs) are a set of supervised learning methods used for classification, regression and outliers detection.
+
+The advantages of support vector machines are:
+- Effective in high dimensional spaces.
+
+- Customizable with different Kernel functions, svms can be specified for the decision function
+
+The disadvantages of support vector machines include:
+- If the number of features is much greater than the number of samples over-fitting can be an issue.
+
+- SVMs do not directly provide probability estimates

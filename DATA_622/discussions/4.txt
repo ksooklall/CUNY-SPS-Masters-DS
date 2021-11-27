@@ -1,0 +1,3 @@
+Kenan Sooklall - LDA vs QDA
+
+I think the first and most obvious difference between LDA and QDA is that one is linear and the other is non-linear. LDA is like PCA but it focuses on maximizing the separability between labels. LDA tries to maximize the distance between label means, while minimizing the distance within labels. LDA estimates the means and covariance of the dataset while each class while QDA estimates the means and covariance of each class. If you data show linear separation between classes then LDA is a good start else QDA, if you model can fit an LDA function it will fit a QDA function but there will be no gain.

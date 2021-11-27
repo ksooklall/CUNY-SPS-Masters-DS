@@ -1,0 +1,10 @@
+Unsupervised Learning
+
+Based on your understanding, and for the industry domain you are in, when do you think you could be using unsupervised methods?
+
+When you know how many labels you want but can't seem to find the lines in the dataset an unsupervised model can help. Since these models make no assumptions and only try to divide the dataset in to K clusters. I find that K-means is a get start for unsupervised methods
+
+What would be some of the advantages of using unsupervised methods?
+ - Getting insight on the data before labeling or modeling
+
+- They can be pretty fast compare to supervised learning

@@ -1,0 +1,7 @@
+Ai and The Brain
+
+The article talks about teaching an AI how to learn better using the human brain as reference. The approach is solid since the human brain is probably the most complex organic machine we will every interact with; however the brain has some very serious down falls when it comes to learning that we wouldn't want to replicate. The first that comes to mind is memory storage. We don't store memory like computers, our brains record and saves certain parts that are the most "important parts" and "throws away" the rest. That's why you can't remember what you ate 3 years ago for dinner but you know you did eat. Even the "important parts" can later become altered when trying to retrieve them.
+
+An AI with a similar memory structure would be horrible a certain tasks and might require more work than the time it saves up.
+
+This is an on going topic of research and shows how much more work there is to do.

@@ -1,0 +1,7 @@
+Kenan Sooklall - Supervised/Unsupervised
+
+Supervised learning is a model that learns from labeled data while unsupervised learning is finding relationships from unlabeled data. There is more work in the field of supervised learning than unsupervised.
+
+Supervised learningDriving a car, I learned to drive by watching my wife and eventually trying myself. This is the same as supervised learning because I was shown the target and had to learn from it
+
+Unsupervised learningGetting burned by the stove. I learned not to touch the flame of a stove after touching it the first time. There was no training data, I had to learn from unlabeled data.

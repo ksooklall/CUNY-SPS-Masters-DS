@@ -1,0 +1,11 @@
+PLS
+
+Principal component analysis suffers from the inability to separate samples by class. PCA reduces dimensions by looking for the axis of highest variance for the whole dataset as if it is all for one class.
+
+Partial Least Squares Discriminant Analysis (PLS) is a better choice over PCA when dimension reduction is required when attempting classification. PLS takes into account the latent structure in both datasets for binary classes
+
+PLS has the same initial conditions as PCA, mean=0 and std=1, then the data goes through a similar process and then output goes through a softmax function. The soft max reduces the output to be between 0 and 1, making them probabilities. From here the output is thresholded at 0.5, and we get the class.
+
+This is a highly over simplified explanation of PLS, so there is much more to learn.
+
+reference: https://www.youtube.com/watch?v=WKEGhyFx0Dg

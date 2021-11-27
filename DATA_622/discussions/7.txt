@@ -1,0 +1,16 @@
+Decision tree and Random forest
+
+Both decision tree and random forest are supervised machine learning algorithms. Decision trees can be inferred as a subset of random forest, since Random forest is a collection of decision trees.
+
+Decision tree - It handles data accurately and works best for a linear pattern. It handles large data easily and takes less time.
+
+Advantages - transparent process for both numerical and categorical datasets
+
+Disadvantages -May over fit, expensive pruning process, ooptimization difficult, complex calculations
+
+
+Random forest - The basic difference being it does not rely on a singular decision. It assembles randomized decisions based on several decisions and makes the final decision based on the majority.
+
+Advantages - Powerful and highly accurate, no need for normalizing, can handle several features at once, run trees in parallel ways
+
+Disadvantages - They are biased to certain features sometimes, slow convergence for high dimensional data, can not be used for linear method
