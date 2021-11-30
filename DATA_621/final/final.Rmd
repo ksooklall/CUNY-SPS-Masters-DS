@@ -1,7 +1,7 @@
 ---
 title: "Google Merchandise Store"
 author: "Kenan Sooklall"
-date: "10/13/2021"
+date: "11/29/2021"
 output: html_document
 ---
 
@@ -55,9 +55,6 @@ df <- df %>% mutate(date=ymd(date),
                     day=weekdays(date), 
                     month=months(date), 
                     year=year(date))
-
-factor_cols <- c('visitNumber', 'hits', 'pageviews', 'bounces', 'newVisits')
-df[factor_cols] <- lapply(df[factor_cols], factor)
 ```
 
 
@@ -218,8 +215,8 @@ Weekdays have the most activate sessions and the highest revenue. Revenue start 
 Channels are the medium on how users came to the GStore.
 
 ```{r}
-p1 <- session(df, channelGrouping, 12)
-p2 <- revenue(df, channelGrouping, 12)
+p1 <- session(df, channelGrouping, 7)
+p2 <- revenue(df, channelGrouping, 7)
 grid.arrange(p1, p2)
 ```
 
@@ -276,11 +273,14 @@ A pageview is each time a visitor views a page on your website.
 ```{r}
 p1 <- df %>% filter(!is.na(df$pageviews) & pageviews <=30) %>% 
     ggplot(aes(x=pageviews)) +
-    geom_histogram(binwidth=1)
+    geom_histogram(binwidth=1) +
+  geom_vline(xintercept=5, linetype='dashed', color='blue')
 
 p2 <- df %>% filter(!is.na(df$pageviews) & pageviews <=30) %>% group_by(pageviews) %>% summarise(revenue=sum(transactionRevenue)) %>%
     ggplot(aes(x=pageviews, y=revenue)) +
-    geom_col()
+    geom_col() + 
+    geom_vline(xintercept=5, linetype='dashed', color='blue')
+
 grid.arrange(p1, p2)
 ```
 
@@ -331,7 +331,6 @@ The target in this dataset is a revenue so we will begin with a randomforest reg
 
 ```{r, warning=F, error=F, message=F}
 library(tidymodels)
-library(xgboost)
 library(randomForest)
 library(vip)
 ```
@@ -361,7 +360,7 @@ Step order [here](https://recipes.tidymodels.org/articles/Ordering.html)
 ```{r}
 features <- c('transactionRevenue', 'channelGrouping', 'browser', 'operatingSystem', 'isMobile', 'deviceCategory', 'continent', 'subContinent', 'country', 'region', 'metro', 'city', 'networkDomain', 'hits', 'pageviews', 'source', 'medium', 'day', 'month')
 
-df_rec <- recipe(transactionRevenue ~ ., data=df_train %>% select(features)) %>%
+df_rec <- recipe(transactionRevenue ~ ., data=df_train %>% select(all_of(features))) %>%
   step_novel(operatingSystem, country, city, browser, medium, networkDomain, metro, source, region, subContinent) %>%
   step_other(operatingSystem, country, city, browser, medium, networkDomain, subContinent, metro, threshold = 0.01) %>%
   step_impute_knn(pageviews, hits)
@@ -424,16 +423,6 @@ rmse_val <- collect_metrics(rf_fit) %>% filter(.metric == 'rmse') %>% select(.es
 
 Our model has a RMSE of 1.08 on the test set which is a little better than on the training set of `r rmse_val`.
 
-Finally we can see how our model performed against the true revenue
-
-```{r}
-collect_predictions(rf_fit) %>% 
-  ggplot(aes(x=transactionRevenue, y=.pred)) + 
-  geom_abline(lty=2) + 
-  geom_point(alpha=0.5, color='blue')  + 
-  coord_fixed()
-```
-
 Feature importance
 
 ```{r}
@@ -466,14 +455,14 @@ p1 <- rf_df %>%
 #### Generalized Linear Model
 
 ```{r}
-# sapply(df_train %>% select(features), function(x) sum(is.na(x)))
-glm1 <- glm(transactionRevenue ~ ., data=smp %>% select(features), family='gaussian')
+glm1 <- glm(transactionRevenue ~., data=df_train %>% select(all_of(features)), family='gaussian')
 y_pred <- predict(glm1, newdata = df_test %>% select(features[2:19]))
 glm_df <- data.frame(y_pred=y_pred, y_true=df_test$transactionRevenue)
 ```
 
 ```{r}
 rmse <- sqrt(mean((glm_df$y_true - glm_df$y_pred)^2))
+print(rmse)
 p2 <- glm_df %>% 
   ggplot(aes(x=y_pred, y=y_true)) + 
     geom_point() +
