@@ -284,6 +284,25 @@ p2 <- df %>% filter(!is.na(df$pageviews) & pageviews <=30) %>% group_by(pageview
 grid.arrange(p1, p2)
 ```
 
+
+```{r}
+p1 <- df %>% filter(!is.na(df$hits) & hits <=100) %>% 
+    ggplot(aes(x=hits)) +
+    geom_histogram(binwidth=1) +
+  geom_vline(xintercept=5, linetype='dashed', color='blue') + 
+  coord_cartesian(xlim=c(0,100)) +
+  labs(title='Hits by Session verses Revenue') + 
+  theme(plot.title = element_text(hjust = 0.5)) 
+
+p2 <- df %>% filter(!is.na(df$hits) & hits <=100) %>% group_by(hits) %>% summarise(revenue=sum(transactionRevenue)) %>%
+    ggplot(aes(x=hits, y=revenue)) +
+    geom_col() + 
+    geom_vline(xintercept=5, linetype='dashed', color='blue') + 
+  coord_cartesian(xlim=c(0,100))
+
+grid.arrange(p1, p2)
+```
+
 The distribution of pageviews is very right skewed. This makes sense since we mostly use a small number of sites. Most of the revenue is generated from sites with a small number of pageviews.
 
 #### Country
@@ -325,6 +344,19 @@ continent - Americas
 country - United States
 city - New York
  
+```{r}
+corrplot(cor(df %>% filter(transactionRevenue>0) %>% select_if(is.numeric)))
+```
+
+ 
+##TODO: add correlation matrix
+        
+        
+        
+```{r}
+df %>% group_by(operatingSystem) %>% summarise(total=sum(transactionRevenue), n=n()) %>% mutate(pct_rev=total/sum(total), pct_count=n/sum(n)) %>% arrange(desc(pct_rev)) %>% head(10)
+```
+        
 ## Modeling
 
 The target in this dataset is a revenue so we will begin with a randomforest regression. Given the size of the dataset we will build a model on revenue greater than 0. The predictions will then be threshold to 0 for values between the 1st Quartile (17.03) and the Min (9.21) which is 13.12.
@@ -346,7 +378,7 @@ df_split <- df %>%
   initial_split(strata = transactionRevenue)
 
 df_train <- training(df_split)
-df_test <- training(df_split)
+df_test <- testing(df_split)
 
 set.seed(43)
 df_folds <- bootstraps(df_train, strata = transactionRevenue, times=10)
@@ -429,7 +461,9 @@ Feature importance
 imp_spec <- rf_spec %>%
   finalize_model(select_best(rf_tune, metric = 'rmse')) %>%
   set_engine('ranger', importance='permutation')
+```
 
+```{r}
 workflow() %>%
   add_recipe(df_rec) %>%
   add_model(imp_spec) %>%
@@ -449,7 +483,8 @@ rmse <- sqrt(mean((rf_df$y_true - rf_df$y_pred)^2))
 p1 <- rf_df %>% 
   ggplot(aes(x=y_pred, y=y_true)) + 
     geom_point() +
-    labs(title=paste0('Random Forest RMSE ',round(rmse,3)))
+    labs(title=paste0('Random Forest RMSE ',round(rmse,3))) + 
+    coord_cartesian(xlim=c(14,21))
 ```
 
 #### Generalized Linear Model
@@ -461,12 +496,12 @@ glm_df <- data.frame(y_pred=y_pred, y_true=df_test$transactionRevenue)
 ```
 
 ```{r}
-rmse <- sqrt(mean((glm_df$y_true - glm_df$y_pred)^2))
-print(rmse)
+rmse <- sqrt(mean((glm_df$y_true - glm_df$.pred)^2))
 p2 <- glm_df %>% 
-  ggplot(aes(x=y_pred, y=y_true)) + 
+  ggplot(aes(x=.pred, y=y_true)) + 
     geom_point() +
-    labs(title=paste0('GLM RMSE ',round(rmse,3)))
+    labs(title=paste0('GLM RMSE ',round(rmse,3))) + 
+  coord_cartesian(xlim=c(14,21))
 ```
 
 ### Model Evaluation
