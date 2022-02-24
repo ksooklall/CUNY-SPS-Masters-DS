@@ -1,2 +1,37 @@
 professor Schettini
 https://rpubs.com/nschettini/477120
+
+human metagenomics for diabetes
+https://www.kaggle.com/rwilliams7653/eda-of-human-metagenomics-for-diabetes
+https://www.kaggle.com/khayashima/metagenomics-first-model-kh
+
+idea1 - fasting and t2d
+idea2 - t2d and alzheimer
+idea3 - 1000 genome
+idea4 - PubMed, data professor
+SHAP for variable significance
+https://www.youtube.com/watch?v=IqT551LjKHw
+https://www.kaggle.com/dansbecker/shap-values
+
+
+T2 Diabetes
+
+Pancrease secreates insulin in to the blood stream when sugar levels are high.
+Beta-cells freely take in sugar from the blood stream and when levels get too high they secreat insulin into the blood
+
+Glucose is toxic at high levels
+Glucose can be stored in the liver, fat(adopose) or muscle
+
+
+
+Sources:
+https://www.healthline.com/health/top-10-deadliest-diseases#diabetes
+https://www.who.int/news-room/fact-sheets/detail/the-top-10-causes-of-death
+
+520 https://www.kaggle.com/andrewmvd/early-diabetes-classification
+768 https://www.kaggle.com/uciml/pima-indians-diabetes-database
+https://www.kaggle.com/mohith2409/diabetes
+https://www.kaggle.com/abhishekkingsley/diabetes-risk-factor-prediction
+
+https://archive-beta.ics.uci.edu/ml/datasets/diabetes+130+us+hospitals+for+years+1999+2008
+https://www.kaggle.com/brandao/diabetes/code

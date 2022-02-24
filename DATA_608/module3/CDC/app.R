@@ -43,7 +43,8 @@ server <- function(input, output, session) {
             group_by(State) %>% 
             summarise(crude_rate=sum(Crude.Rate))
         
-        plot_ly(p1, x = ~State, y = ~crude_rate, type='bar')
+        plot_ly(p1, x = ~reorder(State,crude_rate), y = ~crude_rate, type='bar') %>% 
+            layout(title='Crude Mortality Rate vs State')
     })
 
     # Question 2:
