@@ -1,0 +1,11 @@
+NYC virus tracker
+
+covid-19
+https://github.com/nychealth/covid-vaccine-data
+
+influenza
+https://health.data.ny.gov/Health/Influenza-Laboratory-Confirmed-Cases-By-County-Beg/jr8b-6gh6/
+https://dev.socrata.com/foundry/health.data.ny.gov/jr8b-6gh6
+
+NYC API
+https://dev.socrata.com/consumers/getting-started.html

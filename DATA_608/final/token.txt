@@ -1,0 +1,8 @@
+API key
+cnf87pr8h1zfy5oea1dnezcy7
+
+API secret
+2qpxtpinkt257y2x13s7sd4aa1lfsedj8cy4x51dybe1z4zo3m
+
+API token
+0BzBtm6k3yC5kdWuUsISd69Hw
