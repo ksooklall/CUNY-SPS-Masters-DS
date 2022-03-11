@@ -98,7 +98,7 @@
  \end{frontmatter}
 
 \hypertarget{introduction}{%
-\subsubsection{Introduction}\label{introduction}}
+\subsection{Introduction}\label{introduction}}
 
 Type 2 diabetes has reached epidemic proportions worldwide. According to
 the WHO diabetes has entered the top 10 causes of death, following a
@@ -111,15 +111,39 @@ doesn't produce enough insulin, or insulin can't be used effectively.
 Type 2 diabetes can be caused by a number of factors, including poor
 diet, lack of exercise, and being overweight.
 
-\hypertarget{data-analysis}{%
-\subsubsection{Data Analysis}\label{data-analysis}}
+\hypertarget{preprocessing}{%
+\subsection{Preprocessing}\label{preprocessing}}
 
-The dataset was obtained from UC Irvine and contains 101766 rows and 50
+The data set was obtained from UC Irvine and contains 101766 rows and 50
 columns. The patient column contains 71518 unique patients. To avoid
-overfitting on a single patient all duplicated patient data was dropped
-leaving the dataset with 71518 rows. The 50 columns can be broken down
+over fitting on a single patient all duplicated patient data was dropped
+leaving the data set with 71518 rows. The 50 columns can be broken down
 in to 5 parts, admission data, lab diagnosis, patient details, diagnosis
-data and diabetic drugs.
+data and diabetic drugs, Table 1.
+
+The data set has ``?'' to signify a missing value, so ``?'' were
+replaced with NaNs for all columns. The weight, payer code and medical
+specialty were dropped for having too many NaNs. Drug columns examide,
+citoglipton and glimepiride-pioglitazone were dropped because they only
+had 1 unique value. Encounter ID was dropped as it doesn't provide any
+informative information. Admission type, Discharge disposition,
+Admission source and race was dropped as it might make the model not
+useful and can lead to uninformative result.
+
+The target column readmitted was transformed with NO as 0 and all other
+values as 1. This remapping transforms readmitted from 3 unique values
+to 2, changing this analysis to binary classification.
+
+The diagnosis columns diag\_1,2 and 3 were mapped according to the icd9
+codes, then one hot encoded. The drug columns were mapped NO as 0 and
+all other values as 1.
+
+Columns to great interest are glucose serum test result and A1c test
+result. Glucose serum test is a numeric value that measures blood sugar
+level, a value of 126 mg/dL or higher indicates the patient is diabetic.
+The A1C test measures the percentage of your red blood cells that have
+sugar-coated hemoglobin, a value of 6.5\% or above indicates the patient
+is diabetic.
 
 \clearpage
 \onecolumn

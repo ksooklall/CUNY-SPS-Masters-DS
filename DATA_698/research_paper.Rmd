@@ -23,20 +23,23 @@ library(knitr)
 library(kableExtra)
 ```
 
-### Introduction
+## Introduction
 
 Type 2 diabetes has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is also responsible for the largest rise in male deaths among the top 10, with an 80% increase since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. The cause isn’t known. In type 2 diabetes, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. Type 2 diabetes can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
 
-### Data Analysis
+## Preprocessing
 
 The data set was obtained from UC Irvine and contains 101766 rows and 50 columns. The patient column contains 71518 unique patients. To avoid over fitting on a single patient all duplicated patient data was dropped leaving the data set with 71518 rows. The 50 columns can be broken down in to 5 parts, admission data, lab diagnosis, patient details, diagnosis data and diabetic drugs, Table 1.
 
 The data set has "?" to signify a missing value, so "?" were replaced with NaNs for all columns. The weight, payer code and medical specialty were dropped for having too many NaNs. Drug columns examide, citoglipton and glimepiride-pioglitazone were dropped because they only had 1 unique value.
-Encounter ID was dropped as it doesn't provide any informative information. Finally race was dropped as it might make the model not useful and can lead to misinformative result.
+Encounter ID was dropped as it doesn't provide any informative information. Admission type, Discharge disposition, Admission source and race was dropped as it might make the model not useful and can lead to uninformative result.
 
-The target column readmitted was transformed with NO as 0 and all other values as 1. This remapping transforms readmitted from 3 unique values to 2, changing this analysis to binary classification.
+The target column readmitted was transformed with NO as 0 and all other values as 1. This remapping transforms readmitted from 3 unique values to 2, changing this analysis to binary classification. The age column was bucketed into young (age<30), adult (30<age<60) and old (age>60) then one hot encoded.
 
-Nomi
+The diagnosis columns diag_1,2 and 3 were mapped according to the icd9 codes, then one hot encoded.
+The drug columns were mapped NO as 0 and all other values as 1. The only NaN rows were diagnosis, so they were all dropped as imputation is not possible.
+
+Columns to great interest are glucose serum test result and A1c test result. Glucose serum test is a numeric value that measures blood sugar level, a value of 126 mg/dL or higher indicates the patient is diabetic. The A1C test measures the percentage of your red blood cells that have sugar-coated hemoglobin, a value of 6.5% or above indicates the patient is diabetic.
 
 \clearpage
 \onecolumn
@@ -54,13 +57,29 @@ kable(df) %>%
 \clearpage
 \twocolumn
 
+### Exploratory Data Analysis
+
+The data set is a balanced based on gender but skewed on age which is expected.  
+
 ![Age vs Readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/age.jpg){#id .class width=350 height=200px}
 
 ### Modeling
 
+Five different models. Logistic Regression, Random Forest Classifier, AdaBoost Classifier, Gradient Boosting Classifier and multi-layer preceptron were used. The results of training are in Table 3. 
+
+The first models were trained on all features.
+SHapley Additive exPlanations (Shap) values are used to determine what features played the largest role in the patient being readmitted. It is important to point out the SHAP values do not provide causality.
+
+The second round of modeling is done with a specific set of features that will help the model more
+
+The last round of modeling is done with glucose serum test result and A1c test result as those are the features that a patient can control through diet or exercise
 
 ### Results and Dicussion
 
+Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. 
 
 ### Conclusion
 
+## References
+
+https://www.cdc.gov/diabetes/basics/getting-tested.html#:~:text=This%20measures%20your%20blood%20sugar,higher%20indicates%20you%20have%20diabetes.

@@ -1,3 +1,5 @@
+Only use logistic regression and random forest
+
 professor Schettini
 https://rpubs.com/nschettini/477120
 

@@ -8,8 +8,8 @@ library(dplyr)
 library(plotly)
 library(shiny)
 library(shinythemes)
-
-df <- read.csv('/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_608/module3/data/cleaned-cdc-mortality-1999-2010-2.csv')
+#'/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_608/module3/CDC/
+df <- read.csv('cleaned-cdc-mortality-1999-2010-2.csv')
 
 ui <- fluidPage(
     theme=shinytheme('cyborg'),
@@ -67,4 +67,4 @@ server <- function(input, output, session) {
 }
 
 # Run the application 
-shinyApp(ui = ui, server = server)
+#shinyApp(ui = ui, server = server)
