@@ -9,3 +9,6 @@ https://dev.socrata.com/foundry/health.data.ny.gov/jr8b-6gh6
 
 NYC API
 https://dev.socrata.com/consumers/getting-started.html
+
+Creating model
+https://www.youtube.com/watch?v=vPEmxa028u4

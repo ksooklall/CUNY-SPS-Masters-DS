@@ -132,11 +132,15 @@ useful and can lead to uninformative result.
 
 The target column readmitted was transformed with NO as 0 and all other
 values as 1. This remapping transforms readmitted from 3 unique values
-to 2, changing this analysis to binary classification.
+to 2, changing this analysis to binary classification. The age column
+was bucketed into young (age\textless30), adult
+(30\textless age\textless60) and old (age\textgreater60) then one hot
+encoded.
 
 The diagnosis columns diag\_1,2 and 3 were mapped according to the icd9
 codes, then one hot encoded. The drug columns were mapped NO as 0 and
-all other values as 1.
+all other values as 1. The only NaN rows were diagnosis, so they were
+all dropped as imputation is not possible.
 
 Columns to great interest are glucose serum test result and A1c test
 result. Glucose serum test is a numeric value that measures blood sugar
@@ -216,6 +220,27 @@ Feature.Name & Type & Description.and.Values & missing\\
 \clearpage
 \twocolumn
 
+\hypertarget{exploratory-data-analysis}{%
+\subsubsection{Exploratory Data
+Analysis}\label{exploratory-data-analysis}}
+
+The data set is slightly skewed with 42982 (60\%) patients not being
+readmitted and 28533 (40\%) readmitted. Gender is well balanced at 53\%
+male and 47\% female. Age is skewed more toward the older population,
+which is expected for a disease that is more common in the older
+population. All other numeric variables follow a similar distribution.
+
+Figure 2 shows a weak relationship with drugs taken and a patient being
+readmitted. The only drug with a high readmission is insulin which is
+expected since insulin plays a major role in a patient becoming
+diabetic. A1Cresults has an unexpected relationship with readmission,
+patients who have not been readmitted have a higher ``\textgreater8\%''
+than those readmitted. Glucose serum test is more inline with
+expectation with normal values causing less readmission, Figure 3
+
+\clearpage
+\onecolumn
+
 \begin{figure}
 \hypertarget{id}{%
 \centering
@@ -224,14 +249,87 @@ Feature.Name & Type & Description.and.Values & missing\\
 }
 \end{figure}
 
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=7.29167in,height=4.16667in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/drug.jpg}
+\caption{Drug admission vs readmission}\label{id}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=3.64583in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/A1Cresults.jpg}
+\caption{A1Cresults vs readmission}\label{id}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=3.64583in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg}
+\caption{Max Glucose Serum vs readmission}\label{id}
+}
+\end{figure}
+
+\clearpage
+\twocolumn
+
 \hypertarget{modeling}{%
 \subsubsection{Modeling}\label{modeling}}
+
+Logistic Regression and Random Forest Classifier were trained multiple
+times with different combinations of features. The dataset was split
+into training and testing with the test set containing 15\% of the data.
+Numeric columns were standardized by subtracting the mean and dividing
+by the standard deviation thus having a mean of 0 and std of 1. The
+first dataset contained all features that were determined to be
+important through the exploratory data analysis.
+
+\begin{itemize}
+\tightlist
+\item
+  features = {[}gender, old, young, adult, time\_in\_hospital,
+  num\_lab\_procedures, num\_procedures, num\_medications,
+  number\_diagnoses, diabetesMed, change{]}
+\item
+  glucose\_tests = {[}max\_glu\_serum\_num, A1Cresult\_num{]}
+\item
+  num\_cols = {[}time\_in\_hospital,num\_lab\_procedures,
+  num\_medications,number\_diagnoses{]}
+\end{itemize}
+
+The results of training for both models are in Table 3.
+
+Logistic Regression performed worst than random forest on both training
+and testing. Random forest overfitted on the training set with 99\%
+accuracy and only 60\% accuracy on the test set.
+
+SHapley Additive exPlanations (Shap) values are used to determine what
+features played the largest role in the patient being readmitted. It is
+important to point out the SHAP values do not provide causality.
+
+The second round of modeling is done with a specific set of features
+that will help the model more
+
+The last round of modeling is done with glucose serum test result and
+A1c test result as those are the features that a patient can control
+through diet or exercise
 
 \hypertarget{results-and-dicussion}{%
 \subsubsection{Results and Dicussion}\label{results-and-dicussion}}
 
+Diabetes is a very complex disease and this analysis has shown how
+difficult it is to predict and manage once a patient is positive.
+
 \hypertarget{conclusion}{%
 \subsubsection{Conclusion}\label{conclusion}}
+
+\hypertarget{references}{%
+\subsection{References}\label{references}}
+
+https://www.cdc.gov/diabetes/basics/getting-tested.html\#:\textasciitilde:text=This\%20measures\%20your\%20blood\%20sugar,higher\%20indicates\%20you\%20have\%20diabetes.
 
 
 \end{document}

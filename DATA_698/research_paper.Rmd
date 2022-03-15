@@ -59,24 +59,49 @@ kable(df) %>%
 
 ### Exploratory Data Analysis
 
-The data set is a balanced based on gender but skewed on age which is expected.  
+The data set is slightly skewed with 42982 (60%) patients not being readmitted and 28533 (40%) readmitted. Gender is well balanced at 53% male and 47% female. Age is skewed more toward the older population, which is expected for a disease that is more common in the older population. All other numeric variables follow a similar distribution.
+
+Figure 2 shows a weak relationship with drugs taken and a patient being readmitted. The only drug with a high readmission is insulin which is expected since insulin plays a major role in a patient becoming diabetic. A1Cresults has an unexpected relationship with readmission, patients who have not been readmitted have a higher ">8%" than those readmitted. Glucose serum test is more inline with expectation with normal values causing less readmission, Figure 3
+
+\clearpage
+\onecolumn
 
 ![Age vs Readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/age.jpg){#id .class width=350 height=200px}
 
+![Drug admission vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/drug.jpg){#id .class width=700 height=400px}
+
+![A1Cresults vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/A1Cresults.jpg){#id .class width=350 height=200px}
+
+![Max Glucose Serum vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg){#id .class width=350 height=200px}
+
+\clearpage
+\twocolumn
+
 ### Modeling
 
-Five different models. Logistic Regression, Random Forest Classifier, AdaBoost Classifier, Gradient Boosting Classifier and multi-layer preceptron were used. The results of training are in Table 3. 
+Logistic Regression and Random Forest Classifier were trained multiple times with different combinations of features. The dataset was split into training and testing with the test set containing 15% of the data. Numeric columns were standardized by subtracting the mean and dividing by the standard deviation thus having a mean of 0 and std of 1. The first dataset contained all features that were determined to be important through the exploratory data analysis.
 
-The first models were trained on all features.
-SHapley Additive exPlanations (Shap) values are used to determine what features played the largest role in the patient being readmitted. It is important to point out the SHAP values do not provide causality.
+ - features = [gender, old, young, adult, time_in_hospital, num_lab_procedures, 
+            num_procedures, num_medications, number_diagnoses, diabetesMed, change]
+ - glucose_tests = [max_glu_serum_num, A1Cresult_num]
+ - num_cols = [time_in_hospital,num_lab_procedures, num_medications,number_diagnoses]
+
+The results of training for both models are in Table 3. 
+
+
+Logistic Regression performed worst than random forest on both training and testing. Random forest overfitted on the training set with 99% accuracy and only 60% accuracy on the test set. 
+
+Both model were then pushed through SHapley Additive exPlanations (Shap) values. Shap valuesare used to determine what features played the largest role in the patient being readmitted. It is important to point out the SHAP values do not provide causality.
 
 The second round of modeling is done with a specific set of features that will help the model more
 
-The last round of modeling is done with glucose serum test result and A1c test result as those are the features that a patient can control through diet or exercise
+The last round of modeling is done with glucose serum test result and A1c test result as those are the features that a patient can control through diet or exercise.
 
 ### Results and Dicussion
 
 Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. 
+
+
 
 ### Conclusion
 
