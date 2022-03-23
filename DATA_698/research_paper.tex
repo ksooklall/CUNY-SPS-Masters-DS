@@ -90,15 +90,25 @@
     \cortext[cor1]{Corresponding author}
   
   \begin{abstract}
-  This is the abstract.
-
-  It consists of two paragraphs.
+  Type 2 diabetes is a disease that affects many around the world and
+  continues to cause wide ranging problems. In this paper three models
+  with various combinations of features that involve patient admission
+  id, diabetic drug use, lab data and others were trained to predict the
+  probability of a patient being readmitted. The results enforce the
+  difficulties of making predictions with patients affected by type 2
+  diabetes. The first two models have an F1-score of 55\% while the last
+  got to 60\% on the test set. Age always played a large role in
+  predicting readmission followed by A1C result and blood glucose level.
+  Diabetic drugs Metformin and glipizide Many were determined to be
+  important in a patient being readmitted. The initial cause of the
+  hospital visit, ie. emergency, trauma, were determined to be the most
+  important variable.
   \end{abstract}
   
  \end{frontmatter}
 
 \hypertarget{introduction}{%
-\subsection{Introduction}\label{introduction}}
+\subsubsection{Introduction}\label{introduction}}
 
 Type 2 diabetes has reached epidemic proportions worldwide. According to
 the WHO diabetes has entered the top 10 causes of death, following a
@@ -111,23 +121,25 @@ doesn't produce enough insulin, or insulin can't be used effectively.
 Type 2 diabetes can be caused by a number of factors, including poor
 diet, lack of exercise, and being overweight.
 
+Throughout this paper diabetes is a shorthand for type 2 diabetes.
+
 \hypertarget{preprocessing}{%
-\subsection{Preprocessing}\label{preprocessing}}
+\subsubsection{Preprocessing}\label{preprocessing}}
 
 The data set was obtained from UC Irvine and contains 101766 rows and 50
-columns. The patient column contains 71518 unique patients. To avoid
-over fitting on a single patient all duplicated patient data was dropped
-leaving the data set with 71518 rows. The 50 columns can be broken down
-in to 5 parts, admission data, lab diagnosis, patient details, diagnosis
-data and diabetic drugs, Table 1.
+columns. The patient column contains 71518 unique patients with 28784
+readmitted and 28781 not readmitted. To avoid over fitting on a single
+patient all duplicated patient data was dropped. Then downsampling was
+conducted for the minority class leaving the data set with 57568 rows.
+The 50 columns can be broken down in to 5 parts, admission data, lab
+diagnosis, patient details, diagnosis data and diabetic drugs, Table 1.
 
 The data set has ``?'' to signify a missing value, so ``?'' were
 replaced with NaNs for all columns. The weight, payer code and medical
 specialty were dropped for having too many NaNs. Drug columns examide,
 citoglipton and glimepiride-pioglitazone were dropped because they only
 had 1 unique value. Encounter ID was dropped as it doesn't provide any
-informative information. Admission type, Discharge disposition,
-Admission source and race was dropped as it might make the model not
+informative information. Race was dropped as it might make the model not
 useful and can lead to uninformative result.
 
 The target column readmitted was transformed with NO as 0 and all other
@@ -141,6 +153,13 @@ The diagnosis columns diag\_1,2 and 3 were mapped according to the icd9
 codes, then one hot encoded. The drug columns were mapped NO as 0 and
 all other values as 1. The only NaN rows were diagnosis, so they were
 all dropped as imputation is not possible.
+
+Admission type ID, Discharge disposition ID and Admission source ID were
+mapping according to the source paper with a few major changes.
+Discharge disposition ID was reduced to ``other'' , ``home'' and NaN.
+Admission source ID was reduced to ``emergency'', ``referral'',
+``other'' and NaN. Admission type ID was not changed from the source
+except replacing NULL and not available with NaN.
 
 Columns to great interest are glucose serum test result and A1c test
 result. Glucose serum test is a numeric value that measures blood sugar
@@ -230,21 +249,30 @@ male and 47\% female. Age is skewed more toward the older population,
 which is expected for a disease that is more common in the older
 population. All other numeric variables follow a similar distribution.
 
-Figure 2 shows a weak relationship with drugs taken and a patient being
+There is a weak relationship with drugs taken and a patient being
 readmitted. The only drug with a high readmission is insulin which is
 expected since insulin plays a major role in a patient becoming
-diabetic. A1Cresults has an unexpected relationship with readmission,
-patients who have not been readmitted have a higher ``\textgreater8\%''
-than those readmitted. Glucose serum test is more inline with
-expectation with normal values causing less readmission, Figure 3
+diabetic. Figure NUM shows that most of the readmitting comes from older
+individuals with high A1C results, with 1200+ patients have greater than
+88\%. Surprisingly some adults and youngsters who were not readmitted
+also have high A1C results, greater than 8\%.
 
-\clearpage
-\onecolumn
+Figure NUM shows how time in hospital is right skewed with no
+distinction between the target. Figure NUM-NUM shoes the number of lab
+procedures and number of medications are normally distributed with the
+former having a spike at the start and the ladder being slightly right
+skewed. As seen from Figure NUM the number of diagnoses has a spike at 9
+with more individual being readmitted, after that the count is less than
+20.
+
+Figure NUM doesn't show a distinction between age and glucose serum test
+for those who were readmitted. The older population is represented the
+most and the younger population the least.
 
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=3.64583in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/age.jpg}
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/age.jpg}
 \caption{Age vs Readmission}\label{id}
 }
 \end{figure}
@@ -252,15 +280,7 @@ expectation with normal values causing less readmission, Figure 3
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=7.29167in,height=4.16667in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/drug.jpg}
-\caption{Drug admission vs readmission}\label{id}
-}
-\end{figure}
-
-\begin{figure}
-\hypertarget{id}{%
-\centering
-\includegraphics[width=3.64583in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/A1Cresults.jpg}
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/A1Cresults.jpg}
 \caption{A1Cresults vs readmission}\label{id}
 }
 \end{figure}
@@ -268,7 +288,7 @@ expectation with normal values causing less readmission, Figure 3
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=3.64583in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg}
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg}
 \caption{Max Glucose Serum vs readmission}\label{id}
 }
 \end{figure}
@@ -279,57 +299,168 @@ expectation with normal values causing less readmission, Figure 3
 \hypertarget{modeling}{%
 \subsubsection{Modeling}\label{modeling}}
 
-Logistic Regression and Random Forest Classifier were trained multiple
-times with different combinations of features. The dataset was split
-into training and testing with the test set containing 15\% of the data.
-Numeric columns were standardized by subtracting the mean and dividing
-by the standard deviation thus having a mean of 0 and std of 1. The
-first dataset contained all features that were determined to be
-important through the exploratory data analysis.
+SVM, Logistic Regression and Random Forest Classifier were trained with
+cross validation using different combinations of features. Model hyper
+parameters were tuned with grid search. The dataset was split into
+training and testing with the test set containing 15\% of the data. The
+best models were fitted to the training set with the best parameters and
+then feature importances are plotted. Numeric columns were standardized
+by subtracting the mean and dividing by the standard deviation thus
+having a mean of 0 and std of 1. All other columns were fed into the
+model without further processing.
 
-\begin{itemize}
-\tightlist
-\item
-  features = {[}gender, old, young, adult, time\_in\_hospital,
-  num\_lab\_procedures, num\_procedures, num\_medications,
-  number\_diagnoses, diabetesMed, change{]}
-\item
-  glucose\_tests = {[}max\_glu\_serum\_num, A1Cresult\_num{]}
-\item
-  num\_cols = {[}time\_in\_hospital,num\_lab\_procedures,
-  num\_medications,number\_diagnoses{]}
-\end{itemize}
+The first dataset used all features, lab data, drug data and patient
+data. - features: gender, old, young, adult, time\_in\_hospital,
+num\_lab\_procedures, num\_procedures, num\_medications,
+number\_diagnoses, diabetesMed, change, max\_glu\_serum\_num,
+A1Cresult\_num - num\_cols = {[}time\_in\_hospital,num\_lab\_procedures,
+num\_medications,number\_diagnoses{]}
 
-The results of training for both models are in Table 3.
+The results produced very similar scores for all models with random
+forest producing the best. The results of the random forest are in Table
+NUM and feature importance in Figure NUM. The number of lab procedures
+and number of medications played the strongest role in model prediction
+followed by the time in hospital. These features make intuitive sense
+since someone how is taking a lot of medications and has to stay in the
+hospital for extended period of times will be someone that might return.
 
-Logistic Regression performed worst than random forest on both training
-and testing. Random forest overfitted on the training set with 99\%
-accuracy and only 60\% accuracy on the test set.
-
-SHapley Additive exPlanations (Shap) values are used to determine what
-features played the largest role in the patient being readmitted. It is
-important to point out the SHAP values do not provide causality.
-
-The second round of modeling is done with a specific set of features
-that will help the model more
+The second dataset contained all features that were determined to be
+important through the exploratory data analysis except the drug columns.
+Again there was similar results with model performances. The features of
+importance are shown in Figure NUM. Age and gender have the lowest
+importance while A1C result and glucose levels were the highest.
 
 The last round of modeling is done with glucose serum test result and
-A1c test result as those are the features that a patient can control
-through diet or exercise
+A1C test result as those are the features that a patient can control
+through diet or exercise. Age was also added to this dataset to see if
+it plays a bigger role. The dataset was filter for rows that only
+contain values for both features leaving 208 rows. Both glucose serum
+test and A1c test results were one hot encoded.
+
+\clearpage
+\onecolumn
+
+TABLEs and FEATURE IMPORTANCE PLOTS
+
+\clearpage
+\twocolumn
 
 \hypertarget{results-and-dicussion}{%
 \subsubsection{Results and Dicussion}\label{results-and-dicussion}}
 
 Diabetes is a very complex disease and this analysis has shown how
-difficult it is to predict and manage once a patient is positive.
+difficult it is to predict and manage once a patient is positive. The 3
+models build from various combinations of features produced slight
+better predictions than flipping a coin. The last two models show that
+managing A1C results and blood glucose levels play a very important role
+in being readmitted. Another important variable that we have no control
+over is age.
+
+Other features like time\_in\_hospital, num\_lab\_procedures,
+number\_diagnoses and num\_medications didn't play as large a role as
+what we would have expected; however the eda did propose that fact. When
+all features were used the reason for admission and discharge scored the
+highest in feature importance.
+
+The last model highlighted the importance of age even if one has good
+control of their A1C and blood glucose. Although it's not explicitly
+stated the process of a patient passing away after initial admission
+(readmittiong = 0) explain the initial skewness of the data.
+
+\clearpage
+\onecolumn
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-3}Model 1 Classification Report}
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+target & precision & recall & f1.score & support\\
+\hline
+no & 0.59 & 0.48 & 0.53 & 4377\\
+\hline
+yes & 0.55 & 0.66 & 0.60 & 4258\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg}
+\caption{Model 1 Feature Importance}\label{id}
+}
+\end{figure}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-4}Model 2 Classification Report}
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+target & precision & recall & f1.score & support\\
+\hline
+no & 0.55 & 0.47 & 0.51 & 763\\
+\hline
+yes & 0.53 & 0.61 & 0.57 & 745\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg}
+\caption{Model 2 Feature Importance}\label{id}
+}
+\end{figure}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-5}Model 3 Classification Report}
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+target & precision & recall & f1.score & support\\
+\hline
+no & 0.00 & 0 & 0.00 & 6\\
+\hline
+yes & 0.81 & 1 & 0.89 & 25\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg}
+\caption{Model 3 Feature Importance}\label{id}
+}
+\end{figure}
+
+\clearpage
+\twocolumn
 
 \hypertarget{conclusion}{%
 \subsubsection{Conclusion}\label{conclusion}}
 
+According to the mayo clinic type 2 diabetes is disease in the way the
+body regulates and uses glucose as a fuel. This long-term (chronic)
+condition results in too much sugar circulating in the bloodstream.
+Eventually, high blood sugar levels can lead to disorders of the
+circulatory, nervous and immune systems. Although there are many
+diabetic medication metformin and glipizide showed large importance
+followed by insulin. The reason a diabetic patient goes to the hospital
+is the most important factor iin determining if they will be readmitted
+in the future.
+
 \hypertarget{references}{%
-\subsection{References}\label{references}}
+\subsubsection{References}\label{references}}
 
 https://www.cdc.gov/diabetes/basics/getting-tested.html\#:\textasciitilde:text=This\%20measures\%20your\%20blood\%20sugar,higher\%20indicates\%20you\%20have\%20diabetes.
+
+https://www.mayoclinic.org/diseases-conditions/type-2-diabetes/symptoms-causes/syc-20351193
 
 
 \end{document}

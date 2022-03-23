@@ -14,15 +14,16 @@ def get_influenza_data():
 
     client = Socrata('health.data.ny.gov', '0BzBtm6k3yC5kdWuUsISd69Hw')
     result= client.get('jr8b-6gh6', limit=5000)
-    nyc = {'QUEENS': 'Queens', 'KINGS': 'Brooklyn', 'NEW YORK': 'Manhattan', 'RICHMOND', 'Staten Island', 'BRONX': 'Bronx'}
+    #nyc = {'QUEENS': 'Queens', 'KINGS': 'Brooklyn', 'NEW YORK': 'Manhattan', 'RICHMOND', 'Staten Island', 'BRONX': 'Bronx'}
 
     # Filter for NYC
-    df = pd.DataFrame.from_records(result).query('region == "NYC"')
+    df = pd.DataFrame.from_records(result).query('region == "NYC"').drop(['region'], axis=1).iloc[:, :-5]
 
     # Added latitude and longitude columns
     df[['latitude', 'longitude']] = pd.DataFrame(data=[i for i in df['geocoded_column'].map(lambda x: [x['latitude'], x['longitude']])], columns=['latitude', 'longitude'])
-    df.to_csv('influenza.csv', index=False)
-    import pdb; pdb.set_trace()
+    df.to_csv('nyc_influenza.csv', index=False)
+    return df
+
 
 def covid_virus_data():
     data = {'hosp_death':'https://raw.githubusercontent.com/nychealth/coronavirus-data/master/latest/hosp_death_last28days-by-modzcta.csv',
