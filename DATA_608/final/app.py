@@ -44,7 +44,9 @@ inf_f2 = px.bar(idf, x='cdcweek', y='count', color='county')
 
 
 app.layout = html.Div([
-    dbc.Row(dbc.Col(html.Img(src=app.get_asset_url('covid-19.png'), style={'height': '100%', 'width': '50%'}))),
+    dbc.Row([dbc.Col(html.Img(src=app.get_asset_url('covid-19.png'), style={'height': '100%', 'width': '75%'})),
+             dbc.Col(html.Img(src=app.get_asset_url('influenza.png'), style={'height': '100%', 'width': '75%'}))
+             ]),
     dcc.Dropdown(options=['INFLUENZA', 'COVID-19'], value=['COVID-19'], id='dropdown', placeholder='Select a virus'),
     dbc.Row(
     [

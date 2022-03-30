@@ -63,49 +63,44 @@ kable(df) %>%
 
 The data set is slightly skewed with 42982 (60%) patients not being readmitted and 28533 (40%) readmitted. Gender is well balanced at 53% male and 47% female. Age is skewed more toward the older population, which is expected for a disease that is more common in the older population. All other numeric variables follow a similar distribution.
 
-There is a weak relationship with drugs taken and a patient being readmitted. The only drug with a high readmission is insulin which is expected since insulin plays a major role in a patient becoming diabetic. Figure NUM shows that most of the readmitting comes from older individuals with high A1C results, with 1200+ patients have greater than 88%. Surprisingly some adults and youngsters who were not readmitted also have high A1C results, greater than 8%. 
+There is a weak relationship with drugs taken and a patient being readmitted. The only drug with a high readmission is insulin which is expected since insulin plays a major role in a patient becoming diabetic. Figure 1 shows that most of the readmitting comes from older individuals. The older population is represented the most and the younger population the least. Figure 2 shows that A1C results greater than 8% have a big affect on readmission; however, for patients who didn't get readmitted there are a lot of adults with A1C results of greater than 8%. Figure 3 shows a big spike for normal glucose levels for both classes. There is also very similar levels of all age groups between both classes. For both A1C results and max glucose serum the younger portion of the population contributed the least to readmission. 
 
-Figure NUM shows how time in hospital is right skewed with no distinction between the target. Figure NUM-NUM shoes the number of lab procedures and number of medications are normally distributed with the former having a spike at the start and the ladder being slightly right skewed. As seen from Figure NUM the number of diagnoses has a spike at 9 with more individual being readmitted, after that the count is less than 20.  
-
-Figure NUM doesn't show a distinction between age and glucose serum test for those who were readmitted. The older population is represented the most and the younger population the least.
-
+Figure 4 shows how time in hospital is right skewed with no distinction between classes. Figure 5 and 6 shows the number of lab procedures and number of medications are normally distributed with the former having a spike at the start and the ladder being slightly right skewed.
 
 ![Age vs Readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/age.jpg){#id .class width=300 height=200px}
 
 ![A1Cresults vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/A1Cresults.jpg){#id .class width=300 height=200px}
 
-![Max Glucose Serum vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg){#id .class width=300 height=200px}
+![Max Glucose Serum vs readmission](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glu_serum.jpg){#id .class width=300 height=200px}
 
-\clearpage
-\twocolumn
+![Time in hospital](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/time_in_hospital.jpg){#id .class width=300 height=200px}
+
+
+![Number of lab procedures](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/num_lab_procedures.jpg){#id .class width=300 height=200px}
+
+![Number of medications](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/num_medications.jpg){#id .class width=300 height=200px}
 
 ### Modeling
 
-SVM, Logistic Regression and Random Forest Classifier were trained with cross validation using different combinations of features. Model hyper parameters were tuned with grid search. The dataset was split into training and testing with the test set containing 15% of the data. The best models were fitted to the training set with the best parameters and then feature importances are plotted.
-Numeric columns were standardized by subtracting the mean and dividing by the standard deviation thus having a mean of 0 and std of 1. All other columns were fed into the model without further processing.
+Three models SVM, Logistic Regression and Random Forest Classifier were trained with cross validation using different combinations of features. Model hyper parameters were tuned with grid search. The dataset was split into training and testing with the test set containing 15% of the data. The best models were fitted to the training set with the best parameters and then feature importances are plotted. Numeric columns were standardized by subtracting the mean and dividing by the standard deviation thus having a mean of 0 and std of 1. All other columns were fed into the model without further processing unless specified.
 
-The first dataset used all features, lab data, drug data and patient data. 
- - features: gender, old, young, adult, time_in_hospital, num_lab_procedures, num_procedures, num_medications, number_diagnoses, diabetesMed, change, max_glu_serum_num, A1Cresult_num
- - num_cols = [time_in_hospital,num_lab_procedures, num_medications,number_diagnoses]
+The first dataset used all features, lab data, drug data and patient data. This model includes gender, old, young, adult, time in hospital, num lab procedures, num procedures, num medications, number diagnoses, diabetesMed, change, max glu serum num, and A1Cresult num. Max glu serum num, and A1Cresult num were engineered to become binary with 0 as normal and all other values as 1.
 
-The results produced very similar scores for all models with random forest producing the best. The results of the random forest are in Table NUM and feature importance in Figure NUM. The number of lab procedures and number of medications played the strongest role in model prediction followed by the time in hospital. These features make intuitive sense since someone how is taking a lot of medications and has to stay in the hospital for extended period of times will be someone that might return.
+The results produced very similar scores for all models with random forest producing the best score.
+
+The results of the model 1 from Table 1 show higher recall for the positive class and higher precision for the negative class. The high recall states the model is good at catching false negative so if the model predicts that you won't get readmitted it's more likey to be correct. The higher precision over recall for the negative class states the model is good at catching false positive. Model 1 has higher f1-score for the positive class. The feature importance in Figure 2 shows highest importance with the admission type id followed by number of diagnoses. These feature importance makes sense since an admission type id of "emergency" and having a lot of diagnoses intuitively correlate to a patient being readmitted.
+
+The number of lab procedures and number of medications played the strongest role in model prediction followed by the time in hospital. These features make intuitive sense since someone how is taking a lot of medications and has to stay in the hospital for extended period of times will be someone that might return.
 
 The second dataset contained all features that were determined to be important through the exploratory data analysis except the drug columns. Again there was similar results with model performances. The features of importance are shown in Figure NUM. Age and gender have the lowest importance while A1C result and glucose levels were the highest. 
 
 The last round of modeling is done with glucose serum test result and A1C test result as those are the features that a patient can control through diet or exercise. Age was also added to this dataset to see if it plays a bigger role. The dataset was filter for rows that only contain values for both features leaving 208 rows. Both glucose serum test and A1c test results were one hot encoded. 
 
-\clearpage
-\onecolumn
-
-TABLEs and FEATURE IMPORTANCE PLOTS
-
-\clearpage
-\twocolumn
 ### Results and Dicussion
 
 Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. The 3 models build from various combinations of features produced slight better predictions than flipping a coin. The last two models show that managing A1C results and blood glucose levels play a very important role in being readmitted. Another important variable that we have no control over is age.
 
-Other features like time_in_hospital, num_lab_procedures, number_diagnoses and num_medications didn't play as large a role as what we would have expected; however the eda did propose that fact. When all features were used the reason for admission and discharge scored the highest in feature importance. 
+Other features like time in hospital, num lab procedures, number diagnoses and num medications didn't play as large a role as what we would have expected; however the eda did propose that fact. When all features were used the reason for admission and discharge scored the highest in feature importance. 
 
 The last model highlighted the importance of age even if one has good control of their A1C and blood glucose. Although it's not explicitly stated the process of a patient passing away after initial admission (readmittiong = 0) explain the initial skewness of the data.
 
@@ -117,32 +112,30 @@ The last model highlighted the importance of age even if one has good control of
 df <- read.csv(paste0(path, '/m1_classification_report.csv'))
 kable(df, caption='Model 1 Classification Report')
 ```
-
 ![Model 1 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg){#id .class width=600 height=300px}
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m2_classification_report.csv'))
 kable(df, caption='Model 2 Classification Report')
 ```
-
 ![Model 2 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg){#id .class width=600 height=300px}
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m3_classification_report.csv'))
 kable(df, caption='Model 3 Classification Report')
 ```
-
 ![Model 3 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg){#id .class width=600 height=300px}
+
 ```{r, echo=F}
-df <- read.csv(paste0(path, '/m3_classification_report.csv'))
+df <- read.csv(paste0(path, '/m4_classification_report.csv'))
 kable(df, caption='Model 4 Classification Report')
 ```
-
-![Model 4 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg){#id .class width=600 height=300px}
+![Model 4 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg){#id .class width=600 height=300px}
 
 
 \clearpage
 \twocolumn
+
 ### Conclusion
 
 According to the mayo clinic type 2 diabetes is disease in the way the body regulates and uses glucose as a fuel. This long-term (chronic) condition results in too much sugar circulating in the bloodstream. Eventually, high blood sugar levels can lead to disorders of the circulatory, nervous and immune systems. Although there are many diabetic medication metformin and glipizide showed large importance followed by insulin. The reason a diabetic patient goes to the hospital is the most important factor iin determining if they will be readmitted in the future.

@@ -252,22 +252,20 @@ population. All other numeric variables follow a similar distribution.
 There is a weak relationship with drugs taken and a patient being
 readmitted. The only drug with a high readmission is insulin which is
 expected since insulin plays a major role in a patient becoming
-diabetic. Figure NUM shows that most of the readmitting comes from older
-individuals with high A1C results, with 1200+ patients have greater than
-88\%. Surprisingly some adults and youngsters who were not readmitted
-also have high A1C results, greater than 8\%.
+diabetic. Figure 1 shows that most of the readmitting comes from older
+individuals. The older population is represented the most and the
+younger population the least. Figure 2 shows that A1C results greater
+than 8\% have a big affect on readmission; however, for patients who
+didn't get readmitted there are a lot of adults with A1C results of
+greater than 8\%. Figure 3 shows a big spike for normal glucose levels
+for both classes. There is also very similar levels of all age groups
+between both classes. For both A1C results and max glucose serum the
+younger portion of the population contributed the least to readmission.
 
-Figure NUM shows how time in hospital is right skewed with no
-distinction between the target. Figure NUM-NUM shoes the number of lab
-procedures and number of medications are normally distributed with the
-former having a spike at the start and the ladder being slightly right
-skewed. As seen from Figure NUM the number of diagnoses has a spike at 9
-with more individual being readmitted, after that the count is less than
-20.
-
-Figure NUM doesn't show a distinction between age and glucose serum test
-for those who were readmitted. The older population is represented the
-most and the younger population the least.
+Figure 4 shows how time in hospital is right skewed with no distinction
+between classes. Figure 5 and 6 shows the number of lab procedures and
+number of medications are normally distributed with the former having a
+spike at the start and the ladder being slightly right skewed.
 
 \begin{figure}
 \hypertarget{id}{%
@@ -288,41 +286,64 @@ most and the younger population the least.
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glucose_serum.jpg}
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/max_glu_serum.jpg}
 \caption{Max Glucose Serum vs readmission}\label{id}
 }
 \end{figure}
 
-\clearpage
-\twocolumn
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/time_in_hospital.jpg}
+\caption{Time in hospital}\label{id}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/num_lab_procedures.jpg}
+\caption{Number of lab procedures}\label{id}
+}
+\end{figure}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=3.125in,height=2.08333in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/num_medications.jpg}
+\caption{Number of medications}\label{id}
+}
+\end{figure}
 
 \hypertarget{modeling}{%
 \subsubsection{Modeling}\label{modeling}}
 
-SVM, Logistic Regression and Random Forest Classifier were trained with
-cross validation using different combinations of features. Model hyper
-parameters were tuned with grid search. The dataset was split into
-training and testing with the test set containing 15\% of the data. The
-best models were fitted to the training set with the best parameters and
-then feature importances are plotted. Numeric columns were standardized
-by subtracting the mean and dividing by the standard deviation thus
-having a mean of 0 and std of 1. All other columns were fed into the
-model without further processing.
+Three models SVM, Logistic Regression and Random Forest Classifier were
+trained with cross validation using different combinations of features.
+Model hyper parameters were tuned with grid search. The dataset was
+split into training and testing with the test set containing 15\% of the
+data. The best models were fitted to the training set with the best
+parameters and then feature importances are plotted. Numeric columns
+were standardized by subtracting the mean and dividing by the standard
+deviation thus having a mean of 0 and std of 1. All other columns were
+fed into the model without further processing unless specified.
 
 The first dataset used all features, lab data, drug data and patient
-data. - features: gender, old, young, adult, time\_in\_hospital,
-num\_lab\_procedures, num\_procedures, num\_medications,
-number\_diagnoses, diabetesMed, change, max\_glu\_serum\_num,
-A1Cresult\_num - num\_cols = {[}time\_in\_hospital,num\_lab\_procedures,
-num\_medications,number\_diagnoses{]}
+data. This model includes gender, old, young, adult, time in hospital,
+num lab procedures, num procedures, num medications, number diagnoses,
+diabetesMed, change, max glu serum num, and A1Cresult num. Max glu serum
+num, and A1Cresult num were engineered to become binary with 0 as normal
+and all other values as 1.
 
 The results produced very similar scores for all models with random
-forest producing the best. The results of the random forest are in Table
-NUM and feature importance in Figure NUM. The number of lab procedures
-and number of medications played the strongest role in model prediction
-followed by the time in hospital. These features make intuitive sense
-since someone how is taking a lot of medications and has to stay in the
-hospital for extended period of times will be someone that might return.
+forest producing the best score.
+
+The results of the model 1 from Table 1 show and feature importance in
+Figure 2. The number of lab procedures and number of medications played
+the strongest role in model prediction followed by the time in hospital.
+These features make intuitive sense since someone how is taking a lot of
+medications and has to stay in the hospital for extended period of times
+will be someone that might return.
 
 The second dataset contained all features that were determined to be
 important through the exploratory data analysis except the drug columns.
@@ -337,14 +358,6 @@ it plays a bigger role. The dataset was filter for rows that only
 contain values for both features leaving 208 rows. Both glucose serum
 test and A1c test results were one hot encoded.
 
-\clearpage
-\onecolumn
-
-TABLEs and FEATURE IMPORTANCE PLOTS
-
-\clearpage
-\twocolumn
-
 \hypertarget{results-and-dicussion}{%
 \subsubsection{Results and Dicussion}\label{results-and-dicussion}}
 
@@ -356,10 +369,10 @@ managing A1C results and blood glucose levels play a very important role
 in being readmitted. Another important variable that we have no control
 over is age.
 
-Other features like time\_in\_hospital, num\_lab\_procedures,
-number\_diagnoses and num\_medications didn't play as large a role as
-what we would have expected; however the eda did propose that fact. When
-all features were used the reason for admission and discharge scored the
+Other features like time in hospital, num lab procedures, number
+diagnoses and num medications didn't play as large a role as what we
+would have expected; however the eda did propose that fact. When all
+features were used the reason for admission and discharge scored the
 highest in feature importance.
 
 The last model highlighted the importance of age even if one has good
@@ -424,9 +437,9 @@ yes & 0.53 & 0.61 & 0.57 & 745\\
 \hline
 target & precision & recall & f1.score & support\\
 \hline
-no & 0.00 & 0 & 0.00 & 6\\
+no & 0.00 & 0 & 0.00 & 11\\
 \hline
-yes & 0.81 & 1 & 0.89 & 25\\
+yes & 0.65 & 1 & 0.78 & 20\\
 \hline
 \end{tabular}
 \end{table}
@@ -436,6 +449,29 @@ yes & 0.81 & 1 & 0.89 & 25\\
 \centering
 \includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg}
 \caption{Model 3 Feature Importance}\label{id}
+}
+\end{figure}
+
+\begin{table}
+
+\caption{\label{tab:unnamed-chunk-6}Model 4 Classification Report}
+\centering
+\begin{tabular}[t]{l|r|r|r|r}
+\hline
+target & precision & recall & f1.score & support\\
+\hline
+no & 0.53 & 0.59 & 0.56 & 4335\\
+\hline
+yes & 0.53 & 0.47 & 0.50 & 4300\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg}
+\caption{Model 4 Feature Importance}\label{id}
 }
 \end{figure}
 
