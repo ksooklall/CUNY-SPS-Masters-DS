@@ -82,9 +82,7 @@
 \begin{frontmatter}
 
   \title{Readmission rates fo Type 2 Diabetics}
-    \author[CUNY-SPS]{Kenan Sooklall%
-  %
-  \fnref{Corresponding Author}}
+    \author[CUNY-SPS]{Kenan Sooklall}
    \ead{ksooklall100@gmail.com} 
       \affiliation[]{CUNY School of Professional Studies}
     \cortext[cor1]{Corresponding author}
@@ -122,6 +120,22 @@ Type 2 diabetes can be caused by a number of factors, including poor
 diet, lack of exercise, and being overweight.
 
 Throughout this paper diabetes is a shorthand for type 2 diabetes.
+According to the source the dataset represents 10 years (1999-2008) of
+clinical care at 130 US hospitals and integrated delivery networks. It
+includes over 50 features representing patient and hospital outcomes.
+The data contained information that satisfied the following criteria. It
+is an inpatient encounter (a hospital admission). It is a diabetic
+encounter, that is, one during which any kind of diabetes was entered to
+the system as a diagnosis. The length of stay was at least 1 day and at
+most 14 days. Laboratory tests were performed during the encounter.
+Medications were administered during the encounter.
+
+The data contains such attributes as patient number, race, gender, age,
+admission type, time in hospital, medical specialty of admitting
+physician, number of lab test performed, HbA1c test result, diagnosis,
+number of medication, diabetic medications, number of outpatient,
+inpatient, and emergency visits in the year before the hospitalization,
+etc.
 
 \hypertarget{preprocessing}{%
 \subsubsection{Preprocessing}\label{preprocessing}}
@@ -338,9 +352,20 @@ and all other values as 1.
 The results produced very similar scores for all models with random
 forest producing the best score.
 
-The results of the model 1 from Table 1 show and feature importance in
-Figure 2. The number of lab procedures and number of medications played
-the strongest role in model prediction followed by the time in hospital.
+The results of the model 1 from Table 1 show higher recall for the
+positive class and higher precision for the negative class. The high
+recall states the model is good at catching false negative so if the
+model predicts that you won't get readmitted it's more likey to be
+correct. The higher precision over recall for the negative class states
+the model is good at catching false positive. Model 1 has higher
+f1-score for the positive class. The feature importance in Figure 2
+shows highest importance with the admission type id followed by number
+of diagnoses. These feature importance makes sense since an admission
+type id of ``emergency'' and having a lot of diagnoses intuitively
+correlate to a patient being readmitted.
+
+The number of lab procedures and number of medications played the
+strongest role in model prediction followed by the time in hospital.
 These features make intuitive sense since someone how is taking a lot of
 medications and has to stay in the hospital for extended period of times
 will be someone that might return.
@@ -490,6 +515,25 @@ diabetic medication metformin and glipizide showed large importance
 followed by insulin. The reason a diabetic patient goes to the hospital
 is the most important factor iin determining if they will be readmitted
 in the future.
+
+\hypertarget{source-citation}{%
+\subsubsection{Source \& Citation}\label{source-citation}}
+
+The data are submitted on behalf of the Center for Clinical and
+Translational Research, Virginia Commonwealth University, a recipient of
+NIH CTSA grant UL1 TR00058 and a recipient of the CERNER data. John
+Clore (jclore `@' vcu.edu), Krzysztof J. Cios (kcios `@' vcu.edu), Jon
+DeShazo (jpdeshazo `@' vcu.edu), and Beata Strack (strackb `@' vcu.edu).
+This data is a de-identified abstract of the Health Facts database
+(Cerner Corporation, Kansas City, MO).
+
+https://archive-beta.ics.uci.edu/ml/datasets/diabetes+130+us+hospitals+for+years+1999+2008
+
+Beata Strack, Jonathan P. DeShazo, Chris Gennings, Juan L. Olmo,
+Sebastian Ventura, Krzysztof J. Cios, and John N. Clore, ``Impact of
+HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000
+Clinical Database Patient Records,'' BioMed Research International,
+vol.~2014, Article ID 781670, 11 pages, 2014.
 
 \hypertarget{references}{%
 \subsubsection{References}\label{references}}

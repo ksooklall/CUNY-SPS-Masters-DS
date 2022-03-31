@@ -14,7 +14,6 @@ geojson_url = urlopen('https://raw.githubusercontent.com/nychealth/coronavirus-d
 geojson = json.load(geojson_url)
 
 df = pd.read_csv('https://raw.githubusercontent.com/nychealth/coronavirus-data/master/totals/data-by-modzcta.csv').assign(MODZCTA= lambda x: x['MODIFIED_ZCTA'].astype(str))
-
 idf = pd.read_csv('nyc_influenza.csv')
 
 cov_f1 = px.choropleth(df,
@@ -34,8 +33,9 @@ cov_f2 = px.choropleth(df,
                     featureidkey='properties.MODZCTA',
                     projection='mercator',
                     color='COVID_CONFIRMED_DEATH_RATE',
-                    hover_data=['NEIGHBORHOOD_NAME']
+                    hover_data=['NEIGHBORHOOD_NAME', 'POP_DENOMINATOR']
                     )
+
 cov_f2.update_geos(fitbounds="locations", visible=False)
 cov_f2.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 

@@ -106,6 +106,18 @@ function calc(){
     t.innerHTML = divis(document.getElementById('num').value, 3);
 }
 </script>
+
+<script>
+function reverseString(str) {
+    return str.split("").reverse().join("");
+}
+
+function calc2(){
+    var a = document.getElementById("target2");
+    a.innerHTML = reverseString(document.getElementById('string_input').value);
+}
+</script>
+
 <p>
 <form>
     <input id="num" type="number" size="4">
@@ -113,7 +125,15 @@ function calc(){
 </form>
 </p>
 
+<p>
+<form>
+    <input id="string_input" type="string" size="4">
+    <input type="button" value="reverse" onClick="reverseString();">
+</form>
+</p>
+
 <div id="target"></div>
+<div id="target2"></div>
 
 <script type="text/javascript" src="other_script.js"></script>
 

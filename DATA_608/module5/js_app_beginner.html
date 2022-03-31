@@ -1,0 +1,47 @@
+<html>
+<body>
+
+<h2> Function 1 </h2>
+<h3>A function to reverse a word</h3>
+    <input id="input_word" type="text" placeholder="input_word to reverse" width="100px">
+  <button type="submit" onclick="reverses()"> Reverse</button>
+
+  <p id="output"></p>
+
+<br><br>
+
+<h2> Function 2 </h2>
+<h3>A function that takes an input number, and prints a table with  20 multiples of
+the number, in order 5x4 </h3>
+    <input id="number" type="number" placeholder="Please enter a number" width="100px">
+  <button type="submit" onclick="calculate()"> Calculate</button>
+  <p id="output2"></p>
+
+
+<script type="text/javascript">
+
+  function reverses(){
+      document.getElementById("output").innerHTML = document.getElementById('input_word').value.split("").reverse().join("")
+
+  }
+
+function calculate(){
+
+       var w = document.getElementById('number').value
+       var n = parseInt(w)
+       var list = []
+       for (let i = 0; i < 20 ; i++){
+          var n_new = n*(i+1)
+           if (i % 5 == 0) {
+               list.push("<p>");
+           }
+          list.push(n_new)
+          var list2 = list.join(" ")
+       }
+       document.getElementById("output2").innerHTML = list2
+  }
+
+
+</script>
+
+</body></html>

@@ -1,14 +1,13 @@
 ---
-title: Readmission rates fo Type 2 Diabetics
+title: Analysis of readmission rates for Type 2 Diabetics
 author:
   - name: Kenan Sooklall
     email: ksooklall100@gmail.com
     affiliation: CUNY-SPS
-    footnote: Corresponding Author
 address:
   - address: CUNY School of Professional Studies
 layout: 5p
-abstract: |
+abstract: 
   Type 2 diabetes is a disease that affects many around the world and continues to cause wide ranging problems. In this paper three models with various combinations of features that involve patient admission id, diabetic drug use, lab data and others were trained to predict the probability of a patient being readmitted. The results enforce the difficulties of making predictions with patients affected by type 2 diabetes. The first two models have an F1-score of 55% while the last got to 60% on the test set. Age always played a large role in predicting readmission followed by A1C result and blood glucose level. Diabetic drugs Metformin and glipizide Many were determined to be important in a patient being readmitted. The initial cause of the hospital visit, ie. emergency, trauma, were determined to be the most important variable.
 date: "2022-05-03"
 output: rticles::elsevier_article
@@ -24,7 +23,10 @@ path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/'
 
 Type 2 diabetes has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is also responsible for the largest rise in male deaths among the top 10, with an 80% increase since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. The cause isn’t known. In type 2 diabetes, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. Type 2 diabetes can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
 
-Throughout this paper diabetes is a shorthand for type 2 diabetes.
+Throughout this paper diabetes is a shorthand for type 2 diabetes. According to the source the dataset represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. The data contained information that satisfied the following criteria. It is an inpatient encounter (a hospital admission). It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis. The length of stay was at least 1 day and at most 14 days.
+Laboratory tests were performed during the encounter. Medications were administered during the encounter.
+
+The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test result, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.
 
 ### Preprocessing
 
@@ -139,6 +141,14 @@ kable(df, caption='Model 4 Classification Report')
 ### Conclusion
 
 According to the mayo clinic type 2 diabetes is disease in the way the body regulates and uses glucose as a fuel. This long-term (chronic) condition results in too much sugar circulating in the bloodstream. Eventually, high blood sugar levels can lead to disorders of the circulatory, nervous and immune systems. Although there are many diabetic medication metformin and glipizide showed large importance followed by insulin. The reason a diabetic patient goes to the hospital is the most important factor iin determining if they will be readmitted in the future.
+
+### Source & Citation
+
+The data are submitted on behalf of the Center for Clinical and Translational Research, Virginia Commonwealth University, a recipient of NIH CTSA grant UL1 TR00058 and a recipient of the CERNER data. John Clore (jclore '@' vcu.edu), Krzysztof J. Cios (kcios '@' vcu.edu), Jon DeShazo (jpdeshazo '@' vcu.edu), and Beata Strack (strackb '@' vcu.edu). This data is a de-identified abstract of the Health Facts database (Cerner Corporation, Kansas City, MO).
+
+https://archive-beta.ics.uci.edu/ml/datasets/diabetes+130+us+hospitals+for+years+1999+2008
+
+Beata Strack, Jonathan P. DeShazo, Chris Gennings, Juan L. Olmo, Sebastian Ventura, Krzysztof J. Cios, and John N. Clore, “Impact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Records,” BioMed Research International, vol. 2014, Article ID 781670, 11 pages, 2014.
 
 
 ### References
