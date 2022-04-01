@@ -42,7 +42,7 @@
 \hypersetup{breaklinks=true,
             bookmarks=true,
             pdfauthor={},
-            pdftitle={Readmission rates fo Type 2 Diabetics},
+            pdftitle={Analysis of readmission rates for Type 2 Diabetics},
             colorlinks=false,
             urlcolor=blue,
             linkcolor=magenta,
@@ -81,7 +81,7 @@
 
 \begin{frontmatter}
 
-  \title{Readmission rates fo Type 2 Diabetics}
+  \title{Analysis of readmission rates for Type 2 Diabetics}
     \author[CUNY-SPS]{Kenan Sooklall}
    \ead{ksooklall100@gmail.com} 
       \affiliation[]{CUNY School of Professional Studies}
@@ -340,17 +340,36 @@ data. The best models were fitted to the training set with the best
 parameters and then feature importances are plotted. Numeric columns
 were standardized by subtracting the mean and dividing by the standard
 deviation thus having a mean of 0 and std of 1. All other columns were
-fed into the model without further processing unless specified.
+fed into the model without further processing unless specified. After
+trying many combinations of features 4 specific sets stood out.
 
-The first dataset used all features, lab data, drug data and patient
-data. This model includes gender, old, young, adult, time in hospital,
-num lab procedures, num procedures, num medications, number diagnoses,
-diabetesMed, change, max glu serum num, and A1Cresult num. Max glu serum
-num, and A1Cresult num were engineered to become binary with 0 as normal
-and all other values as 1.
+The first model is trained on a using all features, lab data, drug data
+and patient data. This model includes gender, old, young, adult, time in
+hospital, num lab procedures, num procedures, num medications, number
+diagnoses, diabetesMed, change, max glu serum num, and A1Cresult num.
+Max glu serum num, and A1Cresult num were engineered to become binary
+with 0 as normal and all other values as 1. The training set contained
+48931 patients and 8636 for testing.
 
-The results produced very similar scores for all models with random
-forest producing the best score.
+The second model focused specifically on A1C levels. All rows with NaN
+values for A1Cresults were dropped and then the A1C column was one hot
+encoded for the 3 unique cases. Along with A1Cresults age, gender and
+insulin were used in this model. The training set contained 48931
+patients for training and 8636 for testing. For this model the training
+set contained 8492 patients and 1499 for testing. The third model
+focused on A1C leves along with blood glucose levels. All row containing
+NaN for both A1C and max glu serum were dropped leaving only only 207
+rows for training and testing. This very small dataset produced the most
+extreme results. The final model focused on the drug columns. Since no
+rows were dropped the sample size is the same as model 1 except it had
+21 features.
+
+\hypertarget{results}{%
+\subsubsection{Results}\label{results}}
+
+The results from cross validation produced very similar scores for all
+architectures but random forest produced the best score most of the
+time.
 
 The results of the model 1 from Table 1 show higher recall for the
 positive class and higher precision for the negative class. The high
@@ -358,52 +377,35 @@ recall states the model is good at catching false negative so if the
 model predicts that you won't get readmitted it's more likey to be
 correct. The higher precision over recall for the negative class states
 the model is good at catching false positive. Model 1 has higher
-f1-score for the positive class. The feature importance in Figure 2
+f1-score for the positive class. The feature importance in Figure 7
 shows highest importance with the admission type id followed by number
 of diagnoses. These feature importance makes sense since an admission
 type id of ``emergency'' and having a lot of diagnoses intuitively
 correlate to a patient being readmitted.
 
-The number of lab procedures and number of medications played the
-strongest role in model prediction followed by the time in hospital.
-These features make intuitive sense since someone how is taking a lot of
-medications and has to stay in the hospital for extended period of times
-will be someone that might return.
+Table 2 and Figure 8 show the results of model 2. The importance of age
+played a very strong role for this model, almost twice as important as
+the importance of being young. A1C result and gender play a much smaller
+role. The classification report doesn't show any metric that stand out.
+The F1-score for the positive label is 6 points higher than the
+negative.
 
-The second dataset contained all features that were determined to be
-important through the exploratory data analysis except the drug columns.
-Again there was similar results with model performances. The features of
-importance are shown in Figure NUM. Age and gender have the lowest
-importance while A1C result and glucose levels were the highest.
+The results for model 3 are expected when the sample size is so small.
+From table 3 we see 0 for both precision and recall for the negative
+label. If this model predicted a patient won't be readmitted it
+shouldn't be trusted at all. Likewise the recall is 100 for the positive
+label with the precision at 65, stating this model would be accuracte if
+it predicts the patient will be readmitted. The feature importance,
+Figure 9 tells a strange story. Glucose greater than 200 has the most
+importance but high A1C levels are at the bottom with age being in the
+middle.
 
-The last round of modeling is done with glucose serum test result and
-A1C test result as those are the features that a patient can control
-through diet or exercise. Age was also added to this dataset to see if
-it plays a bigger role. The dataset was filter for rows that only
-contain values for both features leaving 208 rows. Both glucose serum
-test and A1c test results were one hot encoded.
-
-\hypertarget{results-and-dicussion}{%
-\subsubsection{Results and Dicussion}\label{results-and-dicussion}}
-
-Diabetes is a very complex disease and this analysis has shown how
-difficult it is to predict and manage once a patient is positive. The 3
-models build from various combinations of features produced slight
-better predictions than flipping a coin. The last two models show that
-managing A1C results and blood glucose levels play a very important role
-in being readmitted. Another important variable that we have no control
-over is age.
-
-Other features like time in hospital, num lab procedures, number
-diagnoses and num medications didn't play as large a role as what we
-would have expected; however the eda did propose that fact. When all
-features were used the reason for admission and discharge scored the
-highest in feature importance.
-
-The last model highlighted the importance of age even if one has good
-control of their A1C and blood glucose. Although it's not explicitly
-stated the process of a patient passing away after initial admission
-(readmittiong = 0) explain the initial skewness of the data.
+Finally model 4 has similar results as model 2 except recall is better
+for the negative class. The drugs glipizide and rosiglitazone were the
+most import according to Figure 10. Change being the second most
+important does have some intuitive reasoning. A patient that is already
+on diabetic medication being readmitted and then changing their
+medication is more likely to return.
 
 \clearpage
 \onecolumn
@@ -502,6 +504,29 @@ yes & 0.53 & 0.47 & 0.50 & 4300\\
 
 \clearpage
 \twocolumn
+
+\hypertarget{dicussion}{%
+\subsubsection{Dicussion}\label{dicussion}}
+
+Diabetes is a very complex disease and this analysis has shown how
+difficult it is to predict and manage once a patient is positive. The 4
+models build from various combinations of features produced slight
+better predictions than flipping a coin. Model 2 and 3 produced
+non-intutitavely results, we would expected very high blood glucose
+level (\textgreater300) and very high A1C results (\textgreater8) to
+play the strongest role; however they didn't. One explination could be
+that the patients passed aways before being readmitted. Figure 1 showed
+that most of the dataset comes from the elderly population so it's very
+possible. Having such high results over the age of 60 is more
+detrimental to one health as opposed to an younger person.
+
+Other features like time in hospital, num lab procedures, number
+diagnoses and num medications didn't play as large a role as what we
+would have expected; however the Figures 4-6 did propose that fact.
+
+Furthermoer the four models trained here are by no means the best use of
+the dataset nor were they exhaustive. Along with different combinations
+of features and feature engineering more results could be found.
 
 \hypertarget{conclusion}{%
 \subsubsection{Conclusion}\label{conclusion}}
