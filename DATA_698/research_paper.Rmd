@@ -8,7 +8,7 @@ address:
   - address: CUNY School of Professional Studies
 layout: 5p
 abstract: 
-  Type 2 diabetes is a disease that affects many around the world and continues to cause wide ranging problems. In this paper three models with various combinations of features that involve patient admission id, diabetic drug use, lab data and others were trained to predict the probability of a patient being readmitted. The results enforce the difficulties of making predictions with patients affected by type 2 diabetes. The first two models have an F1-score of 55% while the last got to 60% on the test set. Age always played a large role in predicting readmission followed by A1C result and blood glucose level. Diabetic drugs Metformin and glipizide Many were determined to be important in a patient being readmitted. The initial cause of the hospital visit, ie. emergency, trauma, were determined to be the most important variable.
+  Type 2 diabetes is a disease that affects many around the world and continues to cause wide ranging problems. In this paper four models with various combinations of features that involve patient admission id, diabetic drug use, lab data and others were trained to predict the probability of a patient being readmitted. The results enforce the difficulties of making predictions with patients affected by type 2 diabetes. All models have an F1-score of ~55% while the model three has an F1-score of  to 78% only for the positive label. For all models age always played a large role in predicting readmission. Diabetic drugs glipizide and rosiglitazone were determined to be important in a patient being readmitted. The initial cause of the hospital visit, was determined to be the most important variable when using all features.
 date: "2022-05-03"
 output: rticles::elsevier_article
 ---
@@ -21,26 +21,21 @@ path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/'
 
 ### Introduction
 
-Type 2 diabetes has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is also responsible for the largest rise in male deaths among the top 10, with an 80% increase since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. The cause isn’t known. In type 2 diabetes, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. Type 2 diabetes can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
+Type 2 diabetes has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. In type 2 diabetes, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. Type 2 diabetes can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
 
 Throughout this paper diabetes is a shorthand for type 2 diabetes. According to the source the dataset represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. The data contained information that satisfied the following criteria. It is an inpatient encounter (a hospital admission). It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis. The length of stay was at least 1 day and at most 14 days.
 Laboratory tests were performed during the encounter. Medications were administered during the encounter.
 
-The data contains such attributes as patient number, race, gender, age, admission type, time in hospital, medical specialty of admitting physician, number of lab test performed, HbA1c test result, diagnosis, number of medication, diabetic medications, number of outpatient, inpatient, and emergency visits in the year before the hospitalization, etc.
-
 ### Preprocessing
 
-The data set was obtained from UC Irvine and contains 101766 rows and 50 columns. The patient column contains 71518 unique patients with 28784 readmitted and 28781 not readmitted. To avoid over fitting on a single patient all duplicated patient data was dropped. Then downsampling was conducted for the minority class leaving the data set with 57568 rows. The 50 columns can be broken down in to 5 parts, admission data, lab diagnosis, patient details, diagnosis data and diabetic drugs, Table 1.
+The data set was obtained from UC Irvine and contains 101766 rows and 50 columns. The patient column contains 71518 unique patients with 28784 readmitted and 28781 not readmitted. To avoid over fitting on a single patient all duplicated patient data was dropped. Then down sampling was conducted for the minority class leaving the data set with 57568 rows. The 50 columns can be broken down in to 5 parts, admission data, lab diagnosis, patient details, diagnosis data and diabetic drugs, Table 1.
 
-The data set has "?" to signify a missing value, so "?" were replaced with NaNs for all columns. The weight, payer code and medical specialty were dropped for having too many NaNs. Drug columns examide, citoglipton and glimepiride-pioglitazone were dropped because they only had 1 unique value.
-Encounter ID was dropped as it doesn't provide any informative information. Race was dropped as it might make the model not useful and can lead to uninformative result.
+All "?" signify a missing value, so "?" were replaced with NaNs for all columns. The weight, payer code and medical specialty were dropped for having too many NaNs. Drug columns examide, citoglipton and glimepiride-pioglitazone were dropped because they had 1 unique value. Encounter ID was dropped as it doesn't provide any informative information. Race was dropped as it might make the model not useful and can lead to uninformative result.
 
 The target column readmitted was transformed with NO as 0 and all other values as 1. This remapping transforms readmitted from 3 unique values to 2, changing this analysis to binary classification. The age column was bucketed into young (age<30), adult (30<age<60) and old (age>60) then one hot encoded.
 
 The diagnosis columns diag_1,2 and 3 were mapped according to the icd9 codes, then one hot encoded.
-The drug columns were mapped NO as 0 and all other values as 1. The only NaN rows were diagnosis, so they were all dropped as imputation is not possible.
-
-Admission type ID, Discharge disposition ID and Admission source ID were mapping according to the source paper with a few major changes. Discharge disposition ID was reduced to "other" , "home" and NaN. Admission source ID was reduced to "emergency", "referral", "other" and NaN. Admission type ID was not changed from the source except replacing NULL and not available with NaN.
+The drug columns were mapped NO as 0 and all other values as 1. The only NaN rows were diagnosis, so they were all dropped as imputation is not possible. Admission type ID, Discharge disposition ID and Admission source ID were mapping according to the source paper with a few major changes. Discharge disposition ID was reduced to "other" , "home" and NaN. Admission source ID was reduced to "emergency", "referral", "other" and NaN. Admission type ID was not changed from the source except replacing NULL and not available with NaN.
 
 Columns to great interest are glucose serum test result and A1c test result. Glucose serum test is a numeric value that measures blood sugar level, a value of 126 mg/dL or higher indicates the patient is diabetic. The A1C test measures the percentage of your red blood cells that have sugar-coated hemoglobin, a value of 6.5% or above indicates the patient is diabetic.
 
@@ -59,7 +54,6 @@ kable(df) %>%
 
 \clearpage
 \twocolumn
-
 
 ### Exploratory Data Analysis
 
@@ -84,24 +78,22 @@ Figure 4 shows how time in hospital is right skewed with no distinction between 
 
 ### Modeling
 
-Three models SVM, Logistic Regression and Random Forest Classifier were trained with cross validation using different combinations of features. Model hyper parameters were tuned with grid search. The dataset was split into training and testing with the test set containing 15% of the data. The best models were fitted to the training set with the best parameters and then feature importances are plotted. Numeric columns were standardized by subtracting the mean and dividing by the standard deviation thus having a mean of 0 and std of 1. All other columns were fed into the model without further processing unless specified. After trying many combinations of features 4 specific sets stood out. 
+Three models SVM, Logistic Regression and Random Forest Classifier were trained with cross validation using different combinations of features and tuned with grid search. The dataset was split into training and testing with the test set containing 15% of the data. Numeric columns were standardized by subtracting the mean and dividing by the standard deviation thus having a mean of 0 and std of 1. All other columns were fed into the model without further processing unless specified. After trying many combinations of features 4 specific sets stood out. 
 
-The first model is trained on a using all features, lab data, drug data and patient data. This model includes gender, old, young, adult, time in hospital, num lab procedures, num procedures, num medications, number diagnoses, diabetesMed, change, max glu serum num, and A1Cresult num. Max glu serum num, and A1Cresult num were engineered to become binary with 0 as normal and all other values as 1. The training set contained 48931 patients and 8636 for testing.
-
-The second model focused specifically on A1C levels. All rows with NaN values for A1Cresults were dropped and then the A1C column was one hot encoded for the 3 unique cases. Along with A1Cresults age, gender and insulin were used in this model. The training set contained 48931 patients for training and 8636 for testing. For this model the training set contained 8492 patients and 1499 for testing. The third model focused on A1C leves along with blood glucose levels. All row containing NaN for both A1C and max glu serum were dropped leaving only only 207 rows for training and testing. This very small dataset produced the most extreme results. The final model focused on the drug columns. Since no rows were dropped the sample size is the same as model 1 except it had 21 features.
+The first model is trained on a using all features, lab data, patient data except drug data. Max glu serum and A1C result were engineered to become binary with 0 as normal and all other values as 1. The training set contained 48931 patients and 8636 for testing. The second model focused on A1C levels along with age, gender and insulin. All rows with NaN values for A1C results were dropped and then the A1C column was one hot encoded for the 3 unique cases. This model the training set contained 8492 patients and 1499 for testing. The third model focused on A1C levels and blood glucose levels. All row containing NaN for both A1C and max glu serum were dropped leaving only only 207 rows for training and testing. This very small dataset produced the most extreme results. The final model focused on the drug columns. Since no rows were dropped the sample size is the same as model 1 except it has 21 features.
 
 ### Results
 
 The results from cross validation produced very similar scores for all architectures but random forest produced the best score most of the time.
 
-The results of the model 1 from Table 1 show higher recall for the positive class and higher precision for the negative class. The high recall states the model is good at catching false negative so if the model predicts that you won't get readmitted it's more likey to be correct. The higher precision over recall for the negative class states the model is good at catching false positive. Model 1 has higher f1-score for the positive class. The feature importance in Figure 7 shows highest importance with the admission type id followed by number of diagnoses. These feature importance makes sense since an admission type id of "emergency" and having a lot of diagnoses intuitively correlate to a patient being readmitted.
+The results of the model 1 from Table 1 show higher recall for the positive class and higher precision for the negative class. The high recall states the model is good at catching false negative so if the model predicts that you won't get readmitted it's more likely to be correct. The higher precision over recall for the negative class states the model is good at catching false positive. Model 1 has higher f1-score for the positive class. The feature importance in Figure 7 shows highest importance with the admission type id followed by number of diagnoses. These feature importance makes sense since an admission type id of "emergency" and having a lot of diagnoses intuitively correlate to a patient being readmitted.
 
 Table 2 and Figure 8 show the results of model 2. The importance of age played a very strong role for this model, almost twice as important as the importance of being young. A1C result and gender play a much smaller role. The classification report doesn't show any metric that stand out. The F1-score for the positive label is 6 points higher than the negative.
 
-The results for model 3 are expected when the sample size is so small. From table 3 we see 0 for both precision and recall for the negative label. If this model predicted a patient won't be readmitted it shouldn't be trusted at all. Likewise the recall is 100 for the positive label with the precision at 65, stating this model would be accuracte if it predicts the patient will be readmitted. The feature importance, Figure 9 tells a strange story. Glucose greater than 200 has the most importance but high A1C levels are at the bottom with age being in the middle.
+The results for model 3 are expected when the sample size is so small. From table 3 we see 0 for both precision and recall for the negative label. If this model predicted a patient won't be readmitted it shouldn't be trusted at all. Likewise this model would be accurate if it predicts the patient will be readmitted. Figure 9 tells a strange story. Glucose greater than 200 has the most importance but high A1C levels are at the bottom with age being in the middle.
 
 Finally model 4 has similar results as model 2 except recall is better for the negative class. 
-The drugs glipizide and rosiglitazone were the most import according to Figure 10. Change being the second most important does have some intuitive reasoning. A patient that is already on diabetic medication being readmitted and then changing their medication is more likely to return.
+The drugs glipizide and rosiglitazone were the most import according to Figure 10. Change being the second most important does have some intuitive reasoning.
 
 \clearpage
 \onecolumn
@@ -111,6 +103,7 @@ df <- read.csv(paste0(path, '/m1_classification_report.csv'))
 kable(df, caption='Model 1 Classification Report')
 ```
 ![Model 1 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg){#id .class width=600 height=300px}
+
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m2_classification_report.csv'))
@@ -129,37 +122,31 @@ df <- read.csv(paste0(path, '/m4_classification_report.csv'))
 kable(df, caption='Model 4 Classification Report')
 ```
 ![Model 4 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg){#id .class width=600 height=300px}
-
-
 \clearpage
 \twocolumn
 
-
 ### Dicussion
 
-Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. The 4 models build from various combinations of features produced slight better predictions than flipping a coin. Model 2 and 3 produced non-intutitavely results, we would expected very high blood glucose level (>300) and very high A1C results (>8) to play the strongest role; however they didn't. One explination could be that the patients passed aways before being readmitted. Figure 1 showed that most of the dataset comes from the elderly population so it's very possible. Having such high results over the age of 60 is more detrimental to one health as opposed to an younger person.
+Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. The 4 models build from various combinations of features produced slight better predictions than flipping a coin. Model 2 and 3 produced non-intuitively results, we would expected very high blood glucose level (>300) and very high A1C results (>8) to play the strongest role; however they didn't. One explanation could be that the patients passed a ways before being readmitted. Figure 1 showed that most of the data set comes from the elderly population so it's very possible. Having such high results over the age of 60 is more detrimental to one health as opposed to an younger person.
 
-Other features like time in hospital, num lab procedures, number diagnoses and num medications didn't play as large a role as what we would have expected; however the Figures 4-6 did propose that fact. 
-
-Furthermoer the four models trained here are by no means the best use of the dataset nor were they exhaustive. Along with different combinations of features and feature engineering more results could be found.
+Other features like time in hospital, num lab procedures, number diagnoses and num medications didn't play as large a role as what we would have expected; however the Figures 4-6 did propose that fact. Furthermore the four models trained here are by no means the best use of the dataset nor were they exhaustive. Along with different combinations of features and feature engineering more results could be found.
 
 
 ### Conclusion
 
-According to the mayo clinic type 2 diabetes is disease in the way the body regulates and uses glucose as a fuel. This long-term (chronic) condition results in too much sugar circulating in the bloodstream. Eventually, high blood sugar levels can lead to disorders of the circulatory, nervous and immune systems. Although there are many diabetic medication metformin and glipizide showed large importance followed by insulin. The reason a diabetic patient goes to the hospital is the most important factor iin determining if they will be readmitted in the future.
+According to the mayo clinic type 2 diabetes is disease in the way the body regulates and uses glucose as a fuel. This long-term (chronic) condition results in too much sugar circulating in the bloodstream. Eventually, high blood sugar levels can lead to disorders of the circulatory, nervous and immune systems. Although there are many diabetic medications glipizide and rosiglitazone showed large importance followed by insulin. However age seems to be the most important variable for patients to be readmitted to the hospital. 
 
 ### Source & Citation
 
 The data are submitted on behalf of the Center for Clinical and Translational Research, Virginia Commonwealth University, a recipient of NIH CTSA grant UL1 TR00058 and a recipient of the CERNER data. John Clore (jclore '@' vcu.edu), Krzysztof J. Cios (kcios '@' vcu.edu), Jon DeShazo (jpdeshazo '@' vcu.edu), and Beata Strack (strackb '@' vcu.edu). This data is a de-identified abstract of the Health Facts database (Cerner Corporation, Kansas City, MO).
-
-https://archive-beta.ics.uci.edu/ml/datasets/diabetes+130+us+hospitals+for+years+1999+2008
 
 Beata Strack, Jonathan P. DeShazo, Chris Gennings, Juan L. Olmo, Sebastian Ventura, Krzysztof J. Cios, and John N. Clore, “Impact of HbA1c Measurement on Hospital Readmission Rates: Analysis of 70,000 Clinical Database Patient Records,” BioMed Research International, vol. 2014, Article ID 781670, 11 pages, 2014.
 
 
 ### References
 
-https://www.cdc.gov/diabetes/basics/getting-tested.html#:~:text=This%20measures%20your%20blood%20sugar,higher%20indicates%20you%20have%20diabetes.
+https://www.cdc.gov/diabetes/basics/getting-tested
 
 https://www.mayoclinic.org/diseases-conditions/type-2-diabetes/symptoms-causes/syc-20351193
 
+https://archive-beta.ics.uci.edu/ml/datasets/diabetes+130+us+hospitals+for+years+1999+2008
