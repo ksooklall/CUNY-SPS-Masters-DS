@@ -14,7 +14,15 @@ geojson_url = urlopen('https://raw.githubusercontent.com/nychealth/coronavirus-d
 geojson = json.load(geojson_url)
 
 df = pd.read_csv('https://raw.githubusercontent.com/nychealth/coronavirus-data/master/totals/data-by-modzcta.csv').assign(MODZCTA= lambda x: x['MODIFIED_ZCTA'].astype(str))
-idf = pd.read_csv('nyc_influenza.csv')
+
+cdf = pd.read_csv('https://raw.githubusercontent.com/nychealth/coronavirus-data/master/trends/cases-by-day.csv', parse_dates=['date_of_interest'])
+cdf = cdf.groupby(pd.Grouper(key='date_of_interest', freq='W-SAT'))['CASE_COUNT'].sum().reset_index()
+
+idf = pd.read_csv('nyc_influenza.csv').assign(weekendingdate=lambda x: pd.to_datetime(x['weekendingdate']))
+
+ci_df = cdf.merge(idf[['weekendingdate', 'count']], left_on='date_of_interest', right_on='weekendingdate', how='inner').\
+    rename(columns={'CASE_COUNT': 'covid19','count' :'influenza', 'weekendingdate': 'week'}).\
+    drop(['date_of_interest'], axis=1)
 
 cov_f1 = px.choropleth(df,
                     geojson=geojson,
@@ -42,11 +50,13 @@ cov_f2.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 inf_f1 = px.bar(idf, x='cdcweek', y='count', color='disease')
 inf_f2 = px.bar(idf, x='cdcweek', y='count', color='county')
 
+ci_f = px.line(ci_df, x='week', y=['covid19', 'influenza'])
 
 app.layout = html.Div([
     dbc.Row([dbc.Col(html.Img(src=app.get_asset_url('covid-19.png'), style={'height': '100%', 'width': '75%'})),
              dbc.Col(html.Img(src=app.get_asset_url('influenza.png'), style={'height': '100%', 'width': '75%'}))
              ]),
+    dcc.Graph(id='ci', figure=ci_f),
     dcc.Dropdown(options=['INFLUENZA', 'COVID-19'], value=['COVID-19'], id='dropdown', placeholder='Select a virus'),
     dbc.Row(
     [
