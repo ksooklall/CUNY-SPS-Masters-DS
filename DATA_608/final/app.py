@@ -47,13 +47,14 @@ cov_f2 = px.choropleth(df,
 cov_f2.update_geos(fitbounds="locations", visible=False)
 cov_f2.update_layout(margin={"r":0,"t":0,"l":0,"b":0})
 
-inf_f1 = px.bar(idf, x='cdcweek', y='count', color='disease')
-inf_f2 = px.bar(idf, x='cdcweek', y='count', color='county')
+inf_f1 = px.bar(idf.groupby(['weekendingdate', 'disease'])['count'].sum().reset_index(), x='weekendingdate', y='count', color='disease')
+inf_f2 = px.bar(idf, x='weekendingdate', y='count', color='county')
 
-ci_f = px.line(ci_df, x='week', y=['covid19', 'influenza'])
+ci_f = px.line(ci_df, x='week', y=['covid19', 'influenza'], title='Weekly virus cases')
 
 app.layout = html.Div([
     dbc.Row([dbc.Col(html.Img(src=app.get_asset_url('covid-19.png'), style={'height': '100%', 'width': '75%'})),
+             dbc.Col(html.H2('NYC Virus Tracker', style={'textAlign': 'center'}), width=4),
              dbc.Col(html.Img(src=app.get_asset_url('influenza.png'), style={'height': '100%', 'width': '75%'}))
              ]),
     dcc.Graph(id='ci', figure=ci_f),
