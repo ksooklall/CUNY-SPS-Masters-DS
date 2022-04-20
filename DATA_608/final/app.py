@@ -22,7 +22,12 @@ idf = pd.read_csv('nyc_influenza.csv').assign(weekendingdate=lambda x: pd.to_dat
 
 ci_df = cdf.merge(idf[['weekendingdate', 'count']], left_on='date_of_interest', right_on='weekendingdate', how='inner').\
     rename(columns={'CASE_COUNT': 'covid19','count' :'influenza', 'weekendingdate': 'week'}).\
-    drop(['date_of_interest'], axis=1)
+    drop(['date_of_interest'], axis=1).\
+    groupby('week').agg({'covid19': 'first', 'influenza': 'sum'}).\
+    reset_index()
+
+covid_df = ci_df[['week', 'covid19']]
+influenza_df = ci_df[['week', 'influenza']]
 
 cov_f1 = px.choropleth(df,
                     geojson=geojson,
@@ -51,13 +56,19 @@ inf_f1 = px.bar(idf.groupby(['weekendingdate', 'disease'])['count'].sum().reset_
 inf_f2 = px.bar(idf, x='weekendingdate', y='count', color='county')
 
 ci_f = px.line(ci_df, x='week', y=['covid19', 'influenza'], title='Weekly virus cases')
+cov_right = px.line(covid_df, x='week', y='covid19', title='Weekly Covid19 cases')
+inf_right = px.line(influenza_df, x='week', y='influenza', title='Weekly Influenza cases', color_discrete_sequence=['red'])
 
 app.layout = html.Div([
     dbc.Row([dbc.Col(html.Img(src=app.get_asset_url('covid-19.png'), style={'height': '100%', 'width': '75%'})),
              dbc.Col(html.H2('NYC Virus Tracker', style={'textAlign': 'center'}), width=4),
              dbc.Col(html.Img(src=app.get_asset_url('influenza.png'), style={'height': '100%', 'width': '75%'}))
              ]),
-    dcc.Graph(id='ci', figure=ci_f),
+    dbc.Row([
+        dbc.Col(dcc.Graph(id='inf_right', figure=inf_right)),
+        dbc.Col(dcc.Graph(id='cv_right', figure=cov_right)),
+        dbc.Col(dcc.Graph(id='ci', figure=ci_f))
+    ]),
     dcc.Dropdown(options=['INFLUENZA', 'COVID-19'], value=['COVID-19'], id='dropdown', placeholder='Select a virus'),
     dbc.Row(
     [
