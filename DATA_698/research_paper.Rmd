@@ -21,10 +21,10 @@ path = '/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/'
 
 ### Introduction
 
-Type 2 diabetes has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. In type 2 diabetes, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. Type 2 diabetes can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
+Type 2 diabetes (T2D) has reached epidemic proportions worldwide. According to the WHO diabetes has entered the top 10 causes of death, following a significant percentage increase of 70% since 2000. Diabetes is a group of diseases that affect insulin production and use. In type 1 diabetes, the pancreas can’t produce insulin. In T2D, the pancreas doesn’t produce enough insulin, or insulin can’t be used effectively. T2D can be caused by a number of factors, including poor diet, lack of exercise, and being overweight.
 
-Throughout this paper diabetes is a shorthand for type 2 diabetes. According to the source the dataset represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. The data contained information that satisfied the following criteria. It is an inpatient encounter (a hospital admission). It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis. The length of stay was at least 1 day and at most 14 days.
-Laboratory tests were performed during the encounter. Medications were administered during the encounter.
+Throughout this paper diabetes is a shorthand for T2D. According to the source the dataset represents 10 years (1999-2008) of clinical care at 130 US hospitals and integrated delivery networks. It includes over 50 features representing patient and hospital outcomes. The data contained information that satisfied the following criteria. It is an inpatient encounter (a hospital admission). It is a diabetic encounter, that is, one during which any kind of diabetes was entered to the system as a diagnosis. The length of stay was at least 1 day and at most 14 days.
+Laboratory tests were performed during the encounter. Medications were administered during the encounter. The target variable is readmission for diabetic patient, all models are build to predict if a patient will required readmission.
 
 ### Preprocessing
 
@@ -98,30 +98,38 @@ The drugs glipizide and rosiglitazone were the most import according to Figure 1
 \clearpage
 \onecolumn
 
+
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m1_classification_report.csv'))
 kable(df, caption='Model 1 Classification Report')
 ```
-![Model 1 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg){#id .class width=600 height=300px}
+
+![Model 1 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg){#id .class width=600px height=275}
 
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m2_classification_report.csv'))
 kable(df, caption='Model 2 Classification Report')
 ```
-![Model 2 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg){#id .class width=600 height=300px}
+
+![Model 2 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg){#id .class width=600px height=275}
+
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m3_classification_report.csv'))
 kable(df, caption='Model 3 Classification Report')
 ```
-![Model 3 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg){#id .class width=600 height=300px}
+
+![Model 3 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg){#id .class width=600px height=275}
+
 
 ```{r, echo=F}
 df <- read.csv(paste0(path, '/m4_classification_report.csv'))
 kable(df, caption='Model 4 Classification Report')
 ```
-![Model 4 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg){#id .class width=600 height=300px}
+
+![Model 4 Feature Importance](/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg){#id .class width=600px height=250}
+
 \clearpage
 \twocolumn
 
@@ -129,7 +137,11 @@ kable(df, caption='Model 4 Classification Report')
 
 Diabetes is a very complex disease and this analysis has shown how difficult it is to predict and manage once a patient is positive. The 4 models build from various combinations of features produced slight better predictions than flipping a coin. Model 2 and 3 produced non-intuitively results, we would expected very high blood glucose level (>300) and very high A1C results (>8) to play the strongest role; however they didn't. One explanation could be that the patients passed a ways before being readmitted. Figure 1 showed that most of the data set comes from the elderly population so it's very possible. Having such high results over the age of 60 is more detrimental to one health as opposed to an younger person.
 
+Model 3 suffered the worst with 0 precision and recall for the negative class, stating that a combination of A1C result and blood glucose doesn't help for knowing if a patient will not return; however as stated earlier this model has the smallest sample size so more data is needed.
+
 Other features like time in hospital, num lab procedures, number diagnoses and num medications didn't play as large a role as what we would have expected; however the Figures 4-6 did propose that fact. Furthermore the four models trained here are by no means the best use of the dataset nor were they exhaustive. Along with different combinations of features and feature engineering more results could be found.
+
+Overall the best model is model 1 with the highest F1-score for both positive and negative labels. The random forest was able to find some signal among the noise; however this model is very actionable.
 
 
 ### Conclusion

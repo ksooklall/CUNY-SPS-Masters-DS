@@ -108,25 +108,27 @@
 \hypertarget{introduction}{%
 \subsubsection{Introduction}\label{introduction}}
 
-Type 2 diabetes has reached epidemic proportions worldwide. According to
-the WHO diabetes has entered the top 10 causes of death, following a
-significant percentage increase of 70\% since 2000. Diabetes is a group
-of diseases that affect insulin production and use. In type 1 diabetes,
-the pancreas can't produce insulin. In type 2 diabetes, the pancreas
+Type 2 diabetes (T2D) has reached epidemic proportions worldwide.
+According to the WHO diabetes has entered the top 10 causes of death,
+following a significant percentage increase of 70\% since 2000. Diabetes
+is a group of diseases that affect insulin production and use. In type 1
+diabetes, the pancreas can't produce insulin. In T2D, the pancreas
 doesn't produce enough insulin, or insulin can't be used effectively.
-Type 2 diabetes can be caused by a number of factors, including poor
-diet, lack of exercise, and being overweight.
+T2D can be caused by a number of factors, including poor diet, lack of
+exercise, and being overweight.
 
-Throughout this paper diabetes is a shorthand for type 2 diabetes.
-According to the source the dataset represents 10 years (1999-2008) of
-clinical care at 130 US hospitals and integrated delivery networks. It
-includes over 50 features representing patient and hospital outcomes.
-The data contained information that satisfied the following criteria. It
-is an inpatient encounter (a hospital admission). It is a diabetic
-encounter, that is, one during which any kind of diabetes was entered to
-the system as a diagnosis. The length of stay was at least 1 day and at
-most 14 days. Laboratory tests were performed during the encounter.
-Medications were administered during the encounter.
+Throughout this paper diabetes is a shorthand for T2D. According to the
+source the dataset represents 10 years (1999-2008) of clinical care at
+130 US hospitals and integrated delivery networks. It includes over 50
+features representing patient and hospital outcomes. The data contained
+information that satisfied the following criteria. It is an inpatient
+encounter (a hospital admission). It is a diabetic encounter, that is,
+one during which any kind of diabetes was entered to the system as a
+diagnosis. The length of stay was at least 1 day and at most 14 days.
+Laboratory tests were performed during the encounter. Medications were
+administered during the encounter. The target variable is readmission
+for diabetic patient, all models are build to predict if a patient will
+required readmission.
 
 \hypertarget{preprocessing}{%
 \subsubsection{Preprocessing}\label{preprocessing}}
@@ -405,7 +407,7 @@ yes & 0.55 & 0.66 & 0.60 & 4258\\
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg}
+\includegraphics[width=6.25in,height=2.86458in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m1_feature_importance.jpg}
 \caption{Model 1 Feature Importance}\label{id}
 }
 \end{figure}
@@ -428,7 +430,7 @@ yes & 0.53 & 0.61 & 0.57 & 745\\
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg}
+\includegraphics[width=6.25in,height=2.86458in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m2_feature_importance.jpg}
 \caption{Model 2 Feature Importance}\label{id}
 }
 \end{figure}
@@ -451,7 +453,7 @@ yes & 0.65 & 1 & 0.78 & 20\\
 \begin{figure}
 \hypertarget{id}{%
 \centering
-\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg}
+\includegraphics[width=6.25in,height=2.86458in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m3_feature_importance.jpg}
 \caption{Model 3 Feature Importance}\label{id}
 }
 \end{figure}
@@ -471,8 +473,16 @@ yes & 0.53 & 0.47 & 0.50 & 4300\\
 \end{tabular}
 \end{table}
 
-\includegraphics[width=6.25in,height=3.125in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg}
-\clearpage \twocolumn
+\begin{figure}
+\hypertarget{id}{%
+\centering
+\includegraphics[width=6.25in,height=2.60417in]{/home/kenan/Documents/learning/masters/CUNY-SPS-Masters-DS/DATA_698/graphs/m4_feature_importance.jpg}
+\caption{Model 4 Feature Importance}\label{id}
+}
+\end{figure}
+
+\clearpage
+\twocolumn
 
 \hypertarget{dicussion}{%
 \subsubsection{Dicussion}\label{dicussion}}
@@ -489,12 +499,21 @@ most of the data set comes from the elderly population so it's very
 possible. Having such high results over the age of 60 is more
 detrimental to one health as opposed to an younger person.
 
+Model 3 suffered the worst with 0 precision and recall for the negative
+class, stating that a combination of A1C result and blood glucose
+doesn't help for knowing if a patient will not return; however as stated
+earlier this model has the smallest sample size so more data is needed.
+
 Other features like time in hospital, num lab procedures, number
 diagnoses and num medications didn't play as large a role as what we
 would have expected; however the Figures 4-6 did propose that fact.
 Furthermore the four models trained here are by no means the best use of
 the dataset nor were they exhaustive. Along with different combinations
 of features and feature engineering more results could be found.
+
+Overall the best model is model 1 with the highest F1-score for both
+positive and negative labels. The random forest was able to find some
+signal among the noise; however this model is very actionable.
 
 \hypertarget{conclusion}{%
 \subsubsection{Conclusion}\label{conclusion}}
